@@ -82,7 +82,7 @@ export interface ScheduleItem {
 export interface DailyStatistic {
   day: string;
   totalCommunications: number;
-  topCards: { cardId: string; usageCount: number }[];
+  entries: { cardId: string; usageCount: number }[];
 }
 
 export interface AuthTokens {

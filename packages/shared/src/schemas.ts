@@ -46,7 +46,7 @@ export const createCardSchema = z.object({
     .string()
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
     .optional(),
-  priority: z.number().int().min(0).max(100).default(0),
+  priority: z.number().int().min(0).max(100).optional(),
   ttsText: z.string().min(1).max(200),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
