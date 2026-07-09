@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+coverage/
+*.log
+.env
+.env.local
+.env.*.local
+!.env.example
+.DS_Store
+*.tsbuildinfo
+packages/database/generated/
+packages/database/prisma/migrations/**/migration_lock.toml.bak
+.pnpm-store/

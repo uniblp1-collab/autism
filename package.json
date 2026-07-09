@@ -1,0 +1,21 @@
+{
+  "name": "autism-connect",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter=./apps/* run dev",
+    "build": "pnpm --recursive --filter=./apps/* --filter=./packages/* run build",
+    "lint": "pnpm --recursive run lint",
+    "test": "pnpm --recursive run test",
+    "prisma:generate": "pnpm --filter @autism-connect/database run generate",
+    "prisma:migrate": "pnpm --filter @autism-connect/database run migrate",
+    "prisma:seed": "pnpm --filter @autism-connect/database run seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,0 +1,217 @@
+// Prisma schema — единственный источник истины для структуры БД.
+// Любое изменение сопровождается миграцией: `pnpm prisma:migrate --name <описание>`.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARENT
+  SPECIALIST
+  ADMIN
+}
+
+enum SpeechLevel {
+  NONE
+  SINGLE_WORDS
+  PHRASES
+  SENTENCES
+}
+
+enum CardSource {
+  LIBRARY
+  CUSTOM
+  AI_GENERATED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PARENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  children Child[]
+
+  @@map("users")
+}
+
+model Child {
+  id           String      @id @default(uuid())
+  userId       String
+  name         String
+  age          Int
+  photoUrl     String?
+  speechLevel  SpeechLevel @default(NONE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favoriteCategories ChildFavoriteCategory[]
+  customCards        Card[]
+  favorites          Favorite[]
+  history            History[]
+  schedules          Schedule[]
+  statistics         Statistics[]
+
+  @@index([userId])
+  @@map("children")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  title     String
+  icon      String
+  order     Int       @default(0)
+  isSystem  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  cards           Card[]
+  favoriteOfChild ChildFavoriteCategory[]
+
+  @@map("categories")
+}
+
+model ChildFavoriteCategory {
+  childId    String
+  categoryId String
+
+  child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([childId, categoryId])
+  @@map("child_favorite_categories")
+}
+
+model Card {
+  id         String     @id @default(uuid())
+  categoryId String
+  childId    String?
+  title      String
+  imageUrl   String
+  color      String     @default("#4F46E5")
+  priority   Int        @default(0)
+  ttsText    String
+  source     CardSource @default(LIBRARY)
+  isCustom   Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+
+  category         Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  child            Child?             @relation(fields: [childId], references: [id], onDelete: Cascade)
+  favorites        Favorite[]
+  historyItems     HistoryItem[]
+  scheduleItems    ScheduleItem[]
+  statisticEntries StatisticEntry[]
+
+  @@index([categoryId])
+  @@index([childId])
+  @@index([title])
+  @@map("cards")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  childId   String
+  cardId    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, cardId])
+  @@map("favorites")
+}
+
+model History {
+  id           String   @id @default(uuid())
+  childId      String
+  sentenceText String
+  createdAt    DateTime @default(now())
+
+  child Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  items HistoryItem[]
+
+  @@index([childId, createdAt])
+  @@map("history")
+}
+
+model HistoryItem {
+  id        String @id @default(uuid())
+  historyId String
+  cardId    String
+  position  Int
+
+  history History @relation(fields: [historyId], references: [id], onDelete: Cascade)
+  card    Card    @relation(fields: [cardId], references: [id], onDelete: Restrict)
+
+  @@index([historyId])
+  @@map("history_items")
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  childId   String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child Child          @relation(fields: [childId], references: [id], onDelete: Cascade)
+  items ScheduleItem[]
+
+  @@index([childId])
+  @@map("schedules")
+}
+
+model ScheduleItem {
+  id          String    @id @default(uuid())
+  scheduleId  String
+  cardId      String?
+  title       String
+  order       Int       @default(0)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  card     Card?    @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
+  @@index([scheduleId, order])
+  @@map("schedule_items")
+}
+
+model Statistics {
+  id                  String   @id @default(uuid())
+  childId             String
+  day                 DateTime @db.Date
+  totalCommunications Int      @default(0)
+  createdAt           DateTime @default(now())
+
+  child   Child             @relation(fields: [childId], references: [id], onDelete: Cascade)
+  entries StatisticEntry[]
+
+  @@unique([childId, day])
+  @@map("statistics")
+}
+
+model StatisticEntry {
+  id           String @id @default(uuid())
+  statisticsId String
+  cardId       String
+  usageCount   Int    @default(0)
+
+  statistics Statistics @relation(fields: [statisticsId], references: [id], onDelete: Cascade)
+  card       Card       @relation(fields: [cardId], references: [id], onDelete: Restrict)
+
+  @@unique([statisticsId, cardId])
+  @@map("statistic_entries")
+}
