@@ -61,17 +61,25 @@ pnpm --filter @autism-connect/frontend run dev         # http://localhost:3000
 Демо-аккаунт после seed: `demo@autismconnect.dev` / `Password123!` (один ребёнок,
 утреннее расписание из 4 шагов).
 
-## Через Docker Compose
+## Через Docker Compose (OrbStack/Docker Desktop)
 
 ```bash
-cp packages/docker/.env.example packages/docker/.env
-cp apps/backend/.env.example apps/backend/.env
-cp apps/frontend/.env.example apps/frontend/.env
-docker compose -f packages/docker/docker-compose.yml up --build
+./packages/docker/dev-up.sh
 ```
 
-Поднимает `postgres`, `minio`, `backend` (миграции и seed выполняются автоматически
-при старте контейнера) и `frontend`.
+Одной командой: копирует `packages/docker/.env.example` в корневой `.env` (если его ещё
+нет), собирает и поднимает `postgres`, `minio`, `backend`, `frontend`, дожидается
+`GET /health` backend'а и прогоняет `prisma migrate deploy` + сид (идемпотентно —
+безопасно перезапускать). После этого:
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001
+- MinIO-консоль: http://localhost:9001 (`minioadmin` / `minioadmin`)
+
+Уборка (останавливает и опционально удаляет контейнеры/volumes/образы):
+```bash
+./packages/docker/dev-clean.sh
+```
 
 Для e2e-тестов backend — отдельная БД:
 ```bash
@@ -102,6 +110,11 @@ use-case'ов модулей `cards`, `history`, `schedule`, `statistics` — р
   файлы загружаются через админку/MinIO после первого запуска, не хранятся в репозитории.
   Разрешение через `next/image`, но при показе они выглядят как «битые» до загрузки
   реальных ассетов.
-- Docker-образы описаны, но не собирались в текущей песочнице (нет Docker-демона);
-  проверено локальным Postgres + `next build`/`nest build` + полным прогоном API
-  и клика по golden path в headless-браузере.
+- Оба `Dockerfile` не собирались end-to-end в текущей песочнице — исходящие pull'ы
+  базовых образов с Docker Hub блокируются сетевой политикой окружения. Вместо этого
+  каждый шаг проверен эквивалентно вне контейнера: `docker compose config` валиден,
+  `pnpm install --frozen-lockfile` с тем же набором манифестов, что копирует каждый
+  Dockerfile, проходит успешно, standalone-сборка фронтенда запущена как отдельный
+  процесс с точной структурой файлов, которую производит финальный стейдж, а бэкенд
+  проверен собранным (`nest build` + `node dist/main.js`) с привязкой к `0.0.0.0`,
+  рабочим `/health` (без auth, без префикса `/api`) и CORS, отражающим `FRONTEND_URL`.

@@ -12,8 +12,14 @@ async function bootstrap() {
   });
   app.useLogger(new JsonLoggerService());
 
-  app.enableCors({ origin: true, credentials: true });
-  app.setGlobalPrefix("api");
+  const config = app.get(ConfigService);
+
+  app.enableCors({
+    origin: config.get<string>("FRONTEND_URL", "http://localhost:3000"),
+    credentials: true,
+  });
+  // /health остаётся вне префикса — liveness-проверка для dev-up.sh/оркестратора.
+  app.setGlobalPrefix("api", { exclude: ["health"] });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -23,9 +29,9 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  const config = app.get(ConfigService);
   const port = config.get<number>("PORT", 4000);
-  await app.listen(port);
+  // 0.0.0.0, а не localhost — иначе backend недоступен из других контейнеров/с хоста (Docker).
+  await app.listen(port, "0.0.0.0");
 }
 
 bootstrap();

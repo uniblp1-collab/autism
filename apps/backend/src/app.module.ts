@@ -5,6 +5,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RequestIdMiddleware } from "./common/logger/request-id.middleware";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
+import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/presentation/auth.module";
 import { ChildrenModule } from "./modules/children/presentation/children.module";
 import { CategoriesModule } from "./modules/categories/presentation/categories.module";
@@ -26,6 +27,7 @@ import { StatisticsModule } from "./modules/statistics/presentation/statistics.m
       }),
     }),
     PrismaModule,
+    HealthModule,
     AuthModule,
     ChildrenModule,
     CategoriesModule,

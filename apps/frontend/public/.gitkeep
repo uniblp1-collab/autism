@@ -1,0 +1,1 @@
+# Статические файлы Next.js (favicon, robots.txt и т.п.). Папка должна существовать для multi-stage Docker build (COPY .next/static + public).
