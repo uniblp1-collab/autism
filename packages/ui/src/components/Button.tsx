@@ -2,6 +2,7 @@
 
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import clsx from "clsx";
+import { radiusTokens } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,7 +14,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const { tokens } = useTheme();
 
     const palette: Record<NonNullable<ButtonProps["variant"]>, { bg: string; fg: string; border: string }> = {
-      primary: { bg: tokens.accent, fg: tokens.accentText, border: tokens.accent },
+      primary: { bg: tokens.accent, fg: "#FFFFFF", border: tokens.accent },
       secondary: { bg: tokens.surface, fg: tokens.textPrimary, border: tokens.border },
       danger: { bg: tokens.danger, fg: "#FFFFFF", border: tokens.danger },
     };
@@ -23,14 +24,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={clsx(
-          "rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors duration-150",
+          "px-4 py-2 transition-colors duration-150",
           "focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
         style={{
           backgroundColor: colors.bg,
           color: colors.fg,
-          borderColor: colors.border,
+          border: `1px solid ${colors.border}`,
+          borderRadius: radiusTokens.sm,
+          fontSize: 14,
+          fontWeight: 500,
           // @ts-expect-error CSS custom property for focus ring color
           "--tw-ring-color": tokens.focusRing,
           ...style,

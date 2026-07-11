@@ -2,6 +2,7 @@
 
 import { forwardRef, InputHTMLAttributes } from "react";
 import clsx from "clsx";
+import { radiusTokens } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -17,21 +18,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1">
         {label ? (
-          <label htmlFor={inputId} className="text-sm font-medium" style={{ color: tokens.textPrimary }}>
+          <label htmlFor={inputId} style={{ color: tokens.textPrimary, fontSize: 14, fontWeight: 500 }}>
             {label}
           </label>
         ) : null}
         <input
           ref={ref}
           id={inputId}
-          className={clsx(
-            "rounded-lg border-2 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2",
-            className,
-          )}
+          className={clsx("px-3 py-2 focus:outline-none focus-visible:ring-2", className)}
           style={{
-            backgroundColor: tokens.background,
+            backgroundColor: tokens.surface,
             color: tokens.textPrimary,
-            borderColor: error ? tokens.danger : tokens.border,
+            border: `1px solid ${error ? tokens.danger : tokens.border}`,
+            borderRadius: radiusTokens.sm,
+            fontSize: 14,
+            fontWeight: 400,
             // @ts-expect-error CSS custom property for focus ring color
             "--tw-ring-color": tokens.focusRing,
             ...style,
@@ -39,9 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...rest}
         />
         {error ? (
-          <span className="text-xs" style={{ color: tokens.danger }}>
-            {error}
-          </span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: tokens.danger }}>{error}</span>
         ) : null}
       </div>
     );

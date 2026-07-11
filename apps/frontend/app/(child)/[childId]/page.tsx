@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { CardButton, MIN_TOUCH_TARGET_PX } from "@autism-connect/ui";
+import {
+  CardButton,
+  CategoryPill,
+  ScheduleTile,
+  SentenceBuilderPanel,
+  useTheme,
+} from "@autism-connect/ui";
 import { Card } from "@autism-connect/shared";
 import { useCategories, useCards } from "../../../features/cards/useCards";
 import { useFavorites } from "../../../features/cards/useFavorites";
@@ -11,10 +17,13 @@ import { useCompleteScheduleItem, useSchedules } from "../../../features/schedul
 
 const FAVORITES_TAB = "__favorites__";
 const SCHEDULE_TAB = "__schedule__";
+const FAVORITES_COLOR = "#633806"; // тон "Эмоции" — переиспользуется для пилюли «Избранное»
+const SCHEDULE_COLOR = "#0C447C"; // тон "Транспорт" — переиспользуется для пилюли «Расписание»
 
 export default function ChildScreenPage() {
   const params = useParams<{ childId: string }>();
   const childId = params.childId;
+  const { tokens } = useTheme();
 
   const { data: categories = [] } = useCategories();
   const { data: favorites = [] } = useFavorites(childId);
@@ -31,56 +40,55 @@ export default function ChildScreenPage() {
   const completeItem = useCompleteScheduleItem(childId);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <nav className="flex gap-2 overflow-x-auto border-b-2 border-gray-200 p-3">
-        <button
-          type="button"
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: tokens.background }}>
+      <nav className="flex gap-2 overflow-x-auto p-3" style={{ borderBottom: `1px solid ${tokens.border}` }}>
+        <CategoryPill
+          label="Избранное"
+          icon="star"
+          color={FAVORITES_COLOR}
+          active={activeTab === FAVORITES_TAB}
           onClick={() => setActiveTab(FAVORITES_TAB)}
-          className="shrink-0 rounded-xl border-2 px-4 py-2 text-sm font-semibold"
-          aria-pressed={activeTab === FAVORITES_TAB}
-        >
-          ⭐ Избранное
-        </button>
+        />
         {categories.map((category) => (
-          <button
+          <CategoryPill
             key={category.id}
-            type="button"
+            label={category.title}
+            icon={category.icon}
+            color={category.color}
             onClick={() => setActiveTab(category.id)}
-            className="shrink-0 rounded-xl border-2 px-4 py-2 text-sm font-semibold"
-            aria-pressed={activeTab === category.id}
-          >
-            {category.icon} {category.title}
-          </button>
+            active={activeTab === category.id}
+          />
         ))}
-        <button
-          type="button"
+        <CategoryPill
+          label="Расписание"
+          icon="calendar"
+          color={SCHEDULE_COLOR}
+          active={activeTab === SCHEDULE_TAB}
           onClick={() => setActiveTab(SCHEDULE_TAB)}
-          className="shrink-0 rounded-xl border-2 px-4 py-2 text-sm font-semibold"
-          aria-pressed={activeTab === SCHEDULE_TAB}
-        >
-          📅 Расписание
-        </button>
+        />
       </nav>
 
       <main className="flex-1 overflow-y-auto p-4 pb-40">
         {activeTab === SCHEDULE_TAB ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {schedules.map((schedule) => (
               <section key={schedule.id}>
-                <h2 className="mb-2 text-lg font-bold">{schedule.title}</h2>
-                <div className="flex flex-col gap-2">
-                  {schedule.items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => completeItem.mutate({ itemId: item.id, isCompleted: !item.isCompleted })}
-                      className="flex items-center gap-3 rounded-xl border-2 p-4 text-left text-lg"
-                      style={{ minHeight: MIN_TOUCH_TARGET_PX }}
-                    >
-                      <span aria-hidden>{item.isCompleted ? "✅" : "⬜"}</span>
-                      {item.title}
-                    </button>
-                  ))}
+                <h2 className="mb-3" style={{ fontSize: 18, fontWeight: 500, color: tokens.textPrimary }}>
+                  {schedule.title}
+                </h2>
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {schedule.items.map((item, index) => {
+                    const firstUpcomingIndex = schedule.items.findIndex((i) => !i.isCompleted);
+                    const state = item.isCompleted ? "done" : index === firstUpcomingIndex ? "current" : "upcoming";
+                    return (
+                      <ScheduleTile
+                        key={item.id}
+                        title={item.title}
+                        state={state}
+                        onClick={() => completeItem.mutate({ itemId: item.id, isCompleted: !item.isCompleted })}
+                      />
+                    );
+                  })}
                 </div>
               </section>
             ))}
@@ -100,29 +108,12 @@ export default function ChildScreenPage() {
         )}
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 flex items-center gap-3 border-t-2 border-gray-200 bg-white p-3">
-        <div className="flex flex-1 gap-2 overflow-x-auto">
-          {selectedCards.map((card, index) => (
-            <button
-              key={`${card.id}-${index}`}
-              type="button"
-              onClick={() => removeAt(index)}
-              className="shrink-0 rounded-lg border-2 px-3 py-2 text-sm"
-              style={{ borderColor: card.color }}
-            >
-              {card.title}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => speak()}
-          disabled={selectedCards.length === 0}
-          className="shrink-0 rounded-xl bg-indigo-600 px-6 py-3 text-lg font-bold text-white disabled:opacity-40"
-          style={{ minHeight: MIN_TOUCH_TARGET_PX, minWidth: MIN_TOUCH_TARGET_PX }}
-        >
-          🔊 Сказать
-        </button>
+      <footer className="fixed inset-x-0 bottom-0 p-3" style={{ borderTop: `1px solid ${tokens.border}`, backgroundColor: tokens.background }}>
+        <SentenceBuilderPanel
+          words={selectedCards.map((card) => ({ id: card.id, title: card.title }))}
+          onRemoveWord={removeAt}
+          onSpeak={() => speak()}
+        />
       </footer>
     </div>
   );

@@ -32,8 +32,12 @@ export type UpdateChildInput = z.infer<typeof updateChildSchema>;
 
 export const createCategorySchema = z.object({
   title: z.string().min(1).max(60),
-  icon: z.string().min(1).max(10),
-  order: z.number().int().min(0).default(0),
+  icon: z.string().min(1).max(30),
+  color: z
+    .string()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+    .optional(),
+  order: z.number().int().min(0).optional(),
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 

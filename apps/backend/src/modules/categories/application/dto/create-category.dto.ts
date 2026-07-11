@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Min, MaxLength } from "class-validator";
+import { IsHexColor, IsInt, IsOptional, IsString, Min, MaxLength } from "class-validator";
 
 export class CreateCategoryDto {
   @IsString()
@@ -6,8 +6,12 @@ export class CreateCategoryDto {
   title: string;
 
   @IsString()
-  @MaxLength(10)
+  @MaxLength(30)
   icon: string;
+
+  @IsOptional()
+  @IsHexColor()
+  color?: string;
 
   @IsOptional()
   @IsInt()

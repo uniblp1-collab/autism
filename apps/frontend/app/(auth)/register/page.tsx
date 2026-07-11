@@ -20,7 +20,7 @@ export default function RegisterPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-6">
-      <h1 className="text-2xl font-bold">Регистрация родителя</h1>
+      <h1 className="text-2xl font-medium">Регистрация родителя</h1>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <Input
           label="Email"

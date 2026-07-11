@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button, Input } from "@autism-connect/ui";
+import { AvatarInitials, Button, Input, useTheme } from "@autism-connect/ui";
 import { SpeechLevel } from "@autism-connect/shared";
 import { useChildren, useCreateChild } from "../../../features/children/useChildren";
 
@@ -13,6 +13,7 @@ const SPEECH_LEVEL_LABELS: Record<SpeechLevel, string> = {
 };
 
 export default function ChildrenPage() {
+  const { tokens } = useTheme();
   const { data: children = [], isLoading } = useChildren();
   const createChild = useCreateChild();
   const [name, setName] = useState("");
@@ -30,22 +31,33 @@ export default function ChildrenPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <section>
-        <h1 className="mb-4 text-xl font-bold">Дети</h1>
+        <h1 className="mb-4" style={{ fontSize: 20, fontWeight: 500 }}>
+          Дети
+        </h1>
         {isLoading ? <p>Загрузка...</p> : null}
         <ul className="flex flex-col gap-2">
           {children.map((child) => (
-            <li key={child.id} className="rounded-lg border-2 border-gray-200 p-3">
-              <p className="font-semibold">{child.name}</p>
-              <p className="text-sm text-gray-600">
-                Возраст: {child.age} · {SPEECH_LEVEL_LABELS[child.speechLevel]}
-              </p>
+            <li
+              key={child.id}
+              className="flex items-center gap-3"
+              style={{ backgroundColor: tokens.surface, borderRadius: 14, padding: 16 }}
+            >
+              <AvatarInitials name={child.name} />
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 500, color: tokens.textPrimary }}>{child.name}</p>
+                <p style={{ fontSize: 13, fontWeight: 400, color: tokens.textSecondary }}>
+                  Возраст: {child.age} · {SPEECH_LEVEL_LABELS[child.speechLevel]}
+                </p>
+              </div>
             </li>
           ))}
         </ul>
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Добавить ребёнка</h2>
+        <h2 className="mb-4" style={{ fontSize: 16, fontWeight: 500 }}>
+          Добавить ребёнка
+        </h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <Input label="Имя" required value={name} onChange={(e) => setName(e.target.value)} />
           <Input
@@ -57,10 +69,11 @@ export default function ChildrenPage() {
             value={age}
             onChange={(e) => setAge(Number(e.target.value))}
           />
-          <label className="flex flex-col gap-1 text-sm font-medium">
+          <label className="flex flex-col gap-1" style={{ fontSize: 14, fontWeight: 500, color: tokens.textPrimary }}>
             Уровень речи
             <select
-              className="rounded-lg border-2 border-gray-300 px-3 py-2"
+              className="px-3 py-2"
+              style={{ border: `1px solid ${tokens.border}`, borderRadius: 10, backgroundColor: tokens.surface }}
               value={speechLevel}
               onChange={(e) => setSpeechLevel(e.target.value as SpeechLevel)}
             >

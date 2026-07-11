@@ -2,30 +2,32 @@
 
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import clsx from "clsx";
-import { MIN_TOUCH_TARGET_PX } from "../theme/tokens";
+import { MIN_TOUCH_TARGET_PX, paddingTokens, radiusTokens, resolveCategoryColorToken } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
+import { Icon } from "./Icon";
 
 export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
-  /** Заголовок карточки (подпись под изображением). */
+  /** Подпись карточки (sentence case, напр. «Позавтракать») — DESIGN.md §1. */
   title: string;
-  /** URL изображения карточки; если не задан — показывается только текст/иконка. */
+  /** URL изображения карточки; данные из БД/MinIO, не хардкод. */
   imageUrl?: string | null;
-  /** Цвет акцента карточки — это ДАННЫЕ (из БД/админки), а не хардкод компонента. */
-  accentColor?: string;
-  /** Выбрана ли карточка (например, уже добавлена в собираемое предложение). */
+  /** Цвет категории карточки из БД — 800-й тон; фон вычисляется по формуле DESIGN.md §3.4. */
+  accentColor: string;
+  /** Ключ иконки из реестра Tabler Icons — резервный визуал, пока нет imageUrl. */
+  icon?: string;
   selected?: boolean;
   size?: "default" | "large";
 }
 
 /**
- * Единственный способ отрисовать кликабельную карточку в зоне ребёнка.
- * Гарантирует минимальный тач-таргет и запрещает мигающие анимации —
- * разработчик физически не может обойти эти ограничения, описывая карточку инлайн.
+ * Единственный способ отрисовать кликабельную карточку в зоне ребёнка (DESIGN.md §6.3).
+ * Плоский дизайн: заливка category-100, подпись/иконка — category-800, без теней и градиентов.
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
-  ({ title, imageUrl, accentColor, selected, size = "default", className, ...rest }, ref) => {
+  ({ title, imageUrl, accentColor, icon, selected, size = "default", className, ...rest }, ref) => {
     const { tokens } = useTheme();
     const dimension = size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : MIN_TOUCH_TARGET_PX;
+    const { bg, fg } = resolveCategoryColorToken(accentColor);
 
     return (
       <button
@@ -33,7 +35,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         type="button"
         aria-pressed={selected}
         className={clsx(
-          "flex flex-col items-center justify-center gap-1 rounded-2xl border-4 p-2",
+          "flex flex-col items-center justify-center gap-2",
           "transition-transform duration-150 ease-out active:scale-95",
           "focus:outline-none focus-visible:ring-4",
           className,
@@ -41,25 +43,26 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         style={{
           minWidth: dimension,
           minHeight: dimension,
-          backgroundColor: selected ? tokens.accent : tokens.surface,
-          color: selected ? tokens.accentText : tokens.textPrimary,
-          borderColor: accentColor ?? tokens.border,
+          backgroundColor: bg,
+          color: fg,
+          borderRadius: radiusTokens.md,
+          padding: paddingTokens.tile,
+          border: selected ? `2px solid ${fg}` : "none",
           // @ts-expect-error CSS custom property for focus ring color
           "--tw-ring-color": tokens.focusRing,
         }}
         {...rest}
       >
         {imageUrl ? (
-          // Ленивая загрузка вне видимой области — соответствует бюджету производительности (раздел 15 ТЗ).
+          // Ленивая загрузка вне видимой области — бюджет производительности (ARCHITECTURE.md §7).
           // eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image
-          <img
-            src={imageUrl}
-            alt=""
-            loading="lazy"
-            className="h-12 w-12 object-contain sm:h-16 sm:w-16"
-          />
+          <img src={imageUrl} alt="" loading="lazy" className="h-10 w-10 object-contain sm:h-12 sm:w-12" />
+        ) : icon ? (
+          <Icon name={icon} size={32} />
         ) : null}
-        <span className="text-center text-sm font-semibold sm:text-base">{title}</span>
+        <span className="text-center" style={{ fontSize: 21, fontWeight: 500 }}>
+          {title}
+        </span>
       </button>
     );
   },

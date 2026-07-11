@@ -8,11 +8,12 @@ async function seedCategoriesAndCards() {
   for (const category of seedCategories) {
     const record = await prisma.category.upsert({
       where: { id: `00000000-0000-4000-8000-${category.order.toString().padStart(12, "0")}` },
-      update: { title: category.title, icon: category.icon, order: category.order },
+      update: { title: category.title, icon: category.icon, color: category.color, order: category.order },
       create: {
         id: `00000000-0000-4000-8000-${category.order.toString().padStart(12, "0")}`,
         title: category.title,
         icon: category.icon,
+        color: category.color,
         order: category.order,
         isSystem: true,
       },

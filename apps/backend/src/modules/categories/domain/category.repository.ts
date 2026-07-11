@@ -5,6 +5,7 @@ export const CATEGORY_REPOSITORY = Symbol("CATEGORY_REPOSITORY");
 export interface CreateCategoryData {
   title: string;
   icon: string;
+  color: string;
   order: number;
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { radiusTokens } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
 
 export interface ModalProps {
@@ -23,17 +24,22 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl border-2 p-6 shadow-xl"
-        style={{ backgroundColor: tokens.background, borderColor: tokens.border, color: tokens.textPrimary }}
+        className="w-full max-w-md p-6"
+        style={{
+          backgroundColor: tokens.surface,
+          border: `1px solid ${tokens.border}`,
+          borderRadius: radiusTokens.lg,
+          color: tokens.textPrimary,
+        }}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 500 }}>{title}</h2>
           <button
             type="button"
             aria-label="Закрыть"
-            className="rounded-md px-2 py-1 text-sm focus:outline-none focus-visible:ring-2"
-            style={{ color: tokens.textSecondary }}
+            className="px-2 py-1 focus:outline-none focus-visible:ring-2"
+            style={{ color: tokens.textSecondary, fontSize: 14, borderRadius: radiusTokens.sm }}
             onClick={onClose}
           >
             ✕

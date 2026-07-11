@@ -15,9 +15,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "food",
     title: "Еда",
-    icon: "🍎",
+    icon: "apple",
     order: 1,
-    color: "#F97316",
+    color: "#712B13",
     words: [
       "Яблоко", "Банан", "Хлеб", "Сыр", "Молоко", "Яйцо", "Каша", "Суп",
       "Макароны", "Картофель", "Морковь", "Огурец", "Помидор", "Курица",
@@ -31,9 +31,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "drinks",
     title: "Напитки",
-    icon: "🥤",
+    icon: "cup",
     order: 2,
-    color: "#38BDF8",
+    color: "#085041",
     words: [
       "Вода", "Сок", "Чай", "Компот", "Кефир", "Какао", "Лимонад",
       "Молочный коктейль", "Морс", "Газировка",
@@ -42,9 +42,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "toys",
     title: "Игрушки",
-    icon: "🧸",
+    icon: "puzzle",
     order: 3,
-    color: "#F472B6",
+    color: "#3C3489",
     words: [
       "Мишка", "Кукла", "Машинка", "Мяч", "Кубики", "Пазл", "Конструктор",
       "Пирамидка", "Юла", "Скакалка", "Пластилин", "Раскраска",
@@ -56,9 +56,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "actions",
     title: "Действия",
-    icon: "🏃",
+    icon: "run",
     order: 4,
-    color: "#22C55E",
+    color: "#791F1F",
     words: [
       "Идти", "Бежать", "Прыгать", "Сидеть", "Стоять", "Спать", "Есть",
       "Пить", "Играть", "Читать", "Рисовать", "Мыть руки", "Одеваться",
@@ -72,9 +72,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "feelings",
     title: "Чувства",
-    icon: "😊",
+    icon: "mood-smile",
     order: 5,
-    color: "#FACC15",
+    color: "#633806",
     words: [
       "Радость", "Грусть", "Злость", "Страх", "Удивление", "Спокойствие",
       "Усталость", "Боль", "Скука", "Любовь", "Стыд", "Гордость",
@@ -83,9 +83,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "people",
     title: "Люди",
-    icon: "👪",
+    icon: "users",
     order: 6,
-    color: "#A855F7",
+    color: "#72243E",
     words: [
       "Мама", "Папа", "Бабушка", "Дедушка", "Брат", "Сестра", "Друг",
       "Воспитатель", "Врач", "Учитель", "Я", "Логопед", "Тётя", "Дядя",
@@ -95,9 +95,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "places",
     title: "Места",
-    icon: "🏠",
+    icon: "home",
     order: 7,
-    color: "#0EA5E9",
+    color: "#6B4226",
     words: [
       "Дом", "Школа", "Детский сад", "Магазин", "Парк", "Больница",
       "Кухня", "Спальня", "Ванная", "Улица", "Двор", "Площадка",
@@ -108,9 +108,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "clothes",
     title: "Одежда",
-    icon: "👕",
+    icon: "shirt",
     order: 8,
-    color: "#EC4899",
+    color: "#444441",
     words: [
       "Футболка", "Штаны", "Куртка", "Шапка", "Носки", "Обувь", "Платье",
       "Шорты", "Перчатки", "Шарф", "Пижама", "Ботинки", "Свитер", "Ремень",
@@ -121,9 +121,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "animals",
     title: "Животные",
-    icon: "🐶",
+    icon: "paw",
     order: 9,
-    color: "#84CC16",
+    color: "#27500A",
     words: [
       "Собака", "Кошка", "Птица", "Рыбка", "Лошадь", "Корова", "Свинья",
       "Курица", "Заяц", "Лиса", "Медведь", "Слон", "Лев", "Тигр",
@@ -135,9 +135,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "transport",
     title: "Транспорт",
-    icon: "🚗",
+    icon: "car",
     order: 10,
-    color: "#F59E0B",
+    color: "#0C447C",
     words: [
       "Машина", "Автобус", "Поезд", "Самолёт", "Велосипед", "Корабль",
       "Метро", "Трамвай", "Вертолёт", "Скорая помощь", "Такси", "Грузовик",
@@ -146,9 +146,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "hygiene",
     title: "Гигиена",
-    icon: "🧼",
+    icon: "bath",
     order: 11,
-    color: "#14B8A6",
+    color: "#0E6B6B",
     words: [
       "Зубная щётка", "Мыло", "Полотенце", "Расчёска", "Шампунь",
       "Туалет", "Салфетка", "Ванна", "Горшок",
@@ -157,9 +157,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "health",
     title: "Здоровье",
-    icon: "🩺",
+    icon: "stethoscope",
     order: 12,
-    color: "#EF4444",
+    color: "#9B1C1C",
     words: [
       "Болит", "Температура", "Лекарство", "Пластырь", "Укол", "Врач",
       "Больно", "Хорошо себя чувствую",
@@ -168,9 +168,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "time",
     title: "Время",
-    icon: "⏰",
+    icon: "clock",
     order: 13,
-    color: "#6366F1",
+    color: "#2F4F8C",
     words: [
       "Утро", "День", "Вечер", "Ночь", "Сегодня", "Завтра", "Вчера",
       "Сейчас", "Потом",
@@ -179,9 +179,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "weather",
     title: "Погода",
-    icon: "☀️",
+    icon: "sun",
     order: 14,
-    color: "#0284C7",
+    color: "#8C6A0B",
     words: [
       "Солнце", "Дождь", "Снег", "Ветер", "Облако", "Радуга", "Гроза",
       "Жарко", "Холодно",
@@ -190,9 +190,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "colors",
     title: "Цвета",
-    icon: "🎨",
+    icon: "palette",
     order: 15,
-    color: "#D946EF",
+    color: "#8C3F8C",
     words: [
       "Красный", "Синий", "Жёлтый", "Зелёный", "Оранжевый", "Фиолетовый",
       "Розовый", "Белый", "Чёрный", "Коричневый",
@@ -201,17 +201,17 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "numbers",
     title: "Цифры",
-    icon: "🔢",
+    icon: "number-123",
     order: 16,
-    color: "#7C3AED",
+    color: "#3A4750",
     words: ["Один", "Два", "Три", "Четыре", "Пять", "Шесть", "Семь", "Восемь", "Девять", "Десять"],
   },
   {
     slug: "school",
     title: "Школа",
-    icon: "🎒",
+    icon: "school",
     order: 17,
-    color: "#059669",
+    color: "#5C4A1E",
     words: [
       "Ручка", "Карандаш", "Книга", "Тетрадь", "Портфель", "Парта",
       "Доска", "Ножницы", "Клей", "Линейка",
@@ -220,9 +220,9 @@ export const seedCategories: SeedCategory[] = [
   {
     slug: "holidays",
     title: "Праздники",
-    icon: "🎉",
+    icon: "gift",
     order: 18,
-    color: "#DB2777",
+    color: "#A6337A",
     words: [
       "День рождения", "Новый год", "Подарок", "Торт", "Шарики",
       "Праздник", "Гости", "Свечи",

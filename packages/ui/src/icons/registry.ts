@@ -1,0 +1,59 @@
+import {
+  IconApple,
+  IconBath,
+  IconCalendar,
+  IconCar,
+  IconCheck,
+  IconClock,
+  IconCup,
+  IconGift,
+  IconHome,
+  IconMoodSmile,
+  IconNumber123,
+  IconPalette,
+  IconPaw,
+  IconPuzzle,
+  IconRun,
+  IconSchool,
+  IconShirt,
+  IconStar,
+  IconStethoscope,
+  IconSun,
+  IconTag,
+  IconUsers,
+  type Icon as TablerIcon,
+} from "@tabler/icons-react";
+
+// Tabler Icons (outline) — DESIGN.md §7. Единственный набор иконок в приложении,
+// эмодзи не используются. Ключ — это то, что хранится в Category.icon (см. seed.ts);
+// расширять реестр по мере роста библиотеки категорий, не подставлять эмодзи обратно.
+export const iconRegistry: Record<string, TablerIcon> = {
+  apple: IconApple,
+  cup: IconCup,
+  puzzle: IconPuzzle,
+  users: IconUsers,
+  run: IconRun,
+  "mood-smile": IconMoodSmile,
+  paw: IconPaw,
+  shirt: IconShirt,
+  car: IconCar,
+  bath: IconBath,
+  stethoscope: IconStethoscope,
+  clock: IconClock,
+  sun: IconSun,
+  palette: IconPalette,
+  "number-123": IconNumber123,
+  school: IconSchool,
+  gift: IconGift,
+  home: IconHome,
+  star: IconStar,
+  calendar: IconCalendar,
+  check: IconCheck,
+  tag: IconTag,
+};
+
+export const FALLBACK_ICON_KEY = "tag";
+
+export function resolveIcon(key: string): TablerIcon {
+  return iconRegistry[key] ?? iconRegistry[FALLBACK_ICON_KEY];
+}

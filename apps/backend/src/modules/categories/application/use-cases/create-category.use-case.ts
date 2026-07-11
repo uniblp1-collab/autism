@@ -8,6 +8,11 @@ export class CreateCategoryUseCase {
   constructor(@Inject(CATEGORY_REPOSITORY) private readonly categoryRepository: CategoryRepository) {}
 
   execute(dto: CreateCategoryDto): Promise<Category> {
-    return this.categoryRepository.create({ title: dto.title, icon: dto.icon, order: dto.order ?? 0 });
+    return this.categoryRepository.create({
+      title: dto.title,
+      icon: dto.icon,
+      color: dto.color ?? "#5F5E5A",
+      order: dto.order ?? 0,
+    });
   }
 }

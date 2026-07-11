@@ -69,6 +69,7 @@ model Category {
   id        String    @id @default(uuid())
   title     String
   icon      String
+  color     String    @default("#5F5E5A")
   order     Int       @default(0)
   isSystem  Boolean   @default(false)
   createdAt DateTime  @default(now())

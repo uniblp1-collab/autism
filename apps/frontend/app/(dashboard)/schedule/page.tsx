@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Button, Input } from "@autism-connect/ui";
+import { Button, Icon, Input, useTheme } from "@autism-connect/ui";
 import { useUiStore } from "../../../store/uiStore";
 import { useCreateSchedule, useSchedules } from "../../../features/schedule/useSchedules";
 
 export default function SchedulePage() {
+  const { tokens } = useTheme();
   const selectedChildId = useUiStore((state) => state.selectedChildId);
   const { data: schedules = [], isLoading } = useSchedules(selectedChildId);
   const createSchedule = useCreateSchedule();
@@ -25,16 +26,22 @@ export default function SchedulePage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <section>
-        <h1 className="mb-4 text-xl font-bold">Расписание</h1>
+        <h1 className="mb-4" style={{ fontSize: 20, fontWeight: 500 }}>
+          Расписание
+        </h1>
         {isLoading ? <p>Загрузка...</p> : null}
         <ul className="flex flex-col gap-4">
           {schedules.map((schedule) => (
-            <li key={schedule.id} className="rounded-lg border-2 border-gray-200 p-3">
-              <p className="font-semibold">{schedule.title}</p>
+            <li key={schedule.id} style={{ backgroundColor: tokens.surface, borderRadius: 14, padding: 16 }}>
+              <p style={{ fontSize: 15, fontWeight: 500, color: tokens.textPrimary }}>{schedule.title}</p>
               <ol className="mt-2 flex flex-col gap-1">
                 {schedule.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-2 text-sm">
-                    <span aria-hidden>{item.isCompleted ? "✅" : "⬜"}</span>
+                  <li
+                    key={item.id}
+                    className="flex items-center gap-2"
+                    style={{ fontSize: 14, fontWeight: 400, color: item.isCompleted ? tokens.successText : tokens.textSecondary }}
+                  >
+                    {item.isCompleted ? <Icon name="check" size={16} strokeWidth={2.5} /> : <span className="inline-block h-4 w-4" />}
                     {item.title}
                   </li>
                 ))}
@@ -45,7 +52,9 @@ export default function SchedulePage() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Новое расписание</h2>
+        <h2 className="mb-4" style={{ fontSize: 16, fontWeight: 500 }}>
+          Новое расписание
+        </h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <Input label="Название (например, «Утро»)" required value={title} onChange={(e) => setTitle(e.target.value)} />
           <Button type="submit" disabled={createSchedule.isPending}>
