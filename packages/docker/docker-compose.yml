@@ -59,13 +59,13 @@ services:
       # NEXT_PUBLIC_* встраивается Next.js на этапе build, а не только в рантайм-окружение
       # контейнера — `environment:` ниже недостаточно (см. apps/frontend/Dockerfile).
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3001
+        NEXT_PUBLIC_API_URL: http://localhost:3001/api
     container_name: autism-connect-frontend
     restart: unless-stopped
     env_file:
       - ../../.env
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
     depends_on:
       - backend
     ports:
