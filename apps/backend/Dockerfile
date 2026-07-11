@@ -1,4 +1,8 @@
 FROM node:20-alpine AS base
+# Без этого Prisma не может определить версию OpenSSL в голом alpine-образе и молча
+# подставляет несуществующую openssl-1.1.x — движок падает при старте с
+# "Error loading shared library libssl.so.1.1". node:20-alpine идёт с OpenSSL 3.x.
+RUN apk add --no-cache openssl
 RUN corepack enable
 WORKDIR /app
 
