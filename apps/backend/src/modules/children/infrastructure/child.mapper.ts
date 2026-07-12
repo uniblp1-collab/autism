@@ -13,6 +13,8 @@ export class ChildMapper {
       record.photoUrl,
       record.speechLevel,
       (record.favoriteCategories ?? []).map((fc) => fc.categoryId),
+      record.difficultyLevel as 1 | 2 | 3,
+      record.unlockedCategoryIds,
       record.createdAt,
       record.updatedAt,
     );

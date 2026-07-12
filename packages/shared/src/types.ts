@@ -1,9 +1,10 @@
-import { CardSource, SpeechLevel, UserRole } from "./enums";
+import { CardSource, CardType, Gender, SpeechLevel, UserRole } from "./enums";
 
 export interface User {
   id: string;
   email: string;
   role: UserRole;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,6 +17,9 @@ export interface Child {
   photoUrl: string | null;
   speechLevel: SpeechLevel;
   favoriteCategoryIds: string[];
+  // Редакция 3 механики (TASK_REVISE_MECHANICS_AND_ADMIN.md §A.4/A.7).
+  difficultyLevel: 1 | 2 | 3;
+  unlockedCategoryIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +31,14 @@ export interface Category {
   color: string;
   order: number;
   isSystem: boolean;
+  /** true только у "Дай" — акцентная заливка в строке категорий. */
+  isPrimary: boolean;
+  /** Служебная категория-контейнер (Да/Нет, прилагательные) — не рендерится пилюлей. */
+  isHiddenFromNav: boolean;
+  /** Словоформа 1-го лица: "Есть" -> "Ем". */
+  phraseForm: string;
+  /** Шаблон сборки фразы: плейсхолдеры {verb}/{noun}/{adjective}. */
+  sentenceTemplate: string;
   createdAt: string;
 }
 
@@ -35,12 +47,23 @@ export interface Card {
   categoryId: string;
   childId: string | null;
   title: string;
-  imageUrl: string;
+  imageUrl: string | null;
   color: string;
   priority: number;
   ttsText: string;
+  /** Словоформа для вставки во фразу (винительный и т.д.): "каша" -> "кашу". */
+  phraseForm: string;
+  cardType: CardType;
+  /** Только для NOUN (собственный род) — используется для согласования прилагательного. */
+  gender: Gender | null;
+  /** Явные словоформы по родам — заполнены только при cardType === ADJECTIVE. */
+  phraseFormMasculine: string | null;
+  phraseFormFeminine: string | null;
+  phraseFormNeuter: string | null;
   source: CardSource;
   isCustom: boolean;
+  /** true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью. */
+  isSystemCard: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,4 +117,11 @@ export interface AuthTokens {
 export interface AuthenticatedUser {
   user: User;
   tokens: AuthTokens;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

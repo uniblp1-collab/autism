@@ -7,9 +7,14 @@ export interface CreateCategoryData {
   icon: string;
   color: string;
   order: number;
+  isPrimary?: boolean;
+  isHiddenFromNav?: boolean;
+  phraseForm?: string;
+  sentenceTemplate?: string;
 }
 
 export interface CategoryRepository {
+  /** По умолчанию не возвращает служебные категории (isHiddenFromNav) — они не показываются пилюлями. */
   findAll(): Promise<Category[]>;
   findById(id: string): Promise<Category | null>;
   create(data: CreateCategoryData): Promise<Category>;

@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { PASSWORD_HASHER, PasswordHasherPort } from "../../domain/password-hasher.port";
 import { USER_REPOSITORY, UserRepository } from "../../domain/user.repository";
 import { User } from "../../domain/user.entity";
-import { InvalidCredentialsException } from "../../domain/invalid-credentials.exception";
+import { AccountBlockedException, InvalidCredentialsException } from "../../domain/invalid-credentials.exception";
 import { LoginDto } from "../dto/login.dto";
 
 @Injectable()
@@ -21,6 +21,10 @@ export class LoginUseCase {
     const passwordMatches = await this.passwordHasher.compare(dto.password, user.passwordHash);
     if (!passwordMatches) {
       throw new InvalidCredentialsException();
+    }
+
+    if (!user.isActive) {
+      throw new AccountBlockedException();
     }
 
     return user;

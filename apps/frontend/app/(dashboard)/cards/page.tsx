@@ -1,24 +1,39 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button, Input, resolveCategoryColorToken, useTheme } from "@autism-connect/ui";
+import { CardType } from "@autism-connect/shared";
 import { useCategories, useCards, useCreateCard } from "../../../features/cards/useCards";
 import { useUiStore } from "../../../store/uiStore";
 
 export default function CardsPage() {
+  return (
+    <Suspense fallback={null}>
+      <CardsPageContent />
+    </Suspense>
+  );
+}
+
+function CardsPageContent() {
   const { tokens } = useTheme();
   const selectedChildId = useUiStore((state) => state.selectedChildId);
+  const searchParams = useSearchParams();
   const { data: categories = [] } = useCategories();
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState("");
-  const { data: cards = [], isLoading } = useCards({ categoryId, query: query || undefined });
+  const { data: cards = [], isLoading } = useCards({ categoryId, query: query || undefined, cardType: CardType.NOUN });
 
   const createCard = useCreateCard();
   const [title, setTitle] = useState("");
   const [ttsText, setTtsText] = useState("");
+  const [phraseForm, setPhraseForm] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [formCategoryId, setFormCategoryId] = useState("");
+  // Плитка «Добавить» в режиме редактирования экрана ребёнка ведёт сюда с предзаполненной
+  // категорией — полная форма создания карточки уже реализована здесь, дублировать её
+  // в самом экране ребёнка незачем.
+  const [formCategoryId, setFormCategoryId] = useState(searchParams.get("categoryId") ?? "");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -28,10 +43,12 @@ export default function CardsPage() {
       childId: selectedChildId ?? undefined,
       title,
       ttsText: ttsText || title,
-      imageUrl: imageUrl || "/cards/custom/placeholder.svg",
+      phraseForm: phraseForm || title,
+      imageUrl: imageUrl || undefined,
     });
     setTitle("");
     setTtsText("");
+    setPhraseForm("");
     setImageUrl("");
   }
 
@@ -99,13 +116,19 @@ export default function CardsPage() {
               ))}
             </select>
           </label>
-          <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input label="Название (именительный падеж)" required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            label="Словоформа для вставки во фразу (напр. «кашу» для «Ем кашу»)"
+            required
+            value={phraseForm}
+            onChange={(e) => setPhraseForm(e.target.value)}
+          />
           <Input
             label="Текст для озвучивания (необязательно)"
             value={ttsText}
             onChange={(e) => setTtsText(e.target.value)}
           />
-          <Input label="URL изображения" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+          <Input label="URL изображения (необязательно)" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
           <Button type="submit" disabled={createCard.isPending}>
             {createCard.isPending ? "Сохраняем..." : "Добавить карточку"}
           </Button>

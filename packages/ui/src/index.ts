@@ -4,6 +4,8 @@ export * from "./icons/registry";
 export * from "./components/Icon";
 export * from "./components/CardButton";
 export * from "./components/CategoryPill";
+export * from "./components/AddCardTile";
+export * from "./components/YesNoStickyPanel";
 export * from "./components/SentenceBuilderPanel";
 export * from "./components/ScheduleTile";
 export * from "./components/MetricCard";

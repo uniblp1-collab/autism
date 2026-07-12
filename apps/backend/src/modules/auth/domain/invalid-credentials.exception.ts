@@ -12,3 +12,11 @@ export class EmailAlreadyRegisteredException extends DomainException {
     super(`Email "${email}" уже зарегистрирован`, "EMAIL_ALREADY_REGISTERED", HttpStatus.CONFLICT);
   }
 }
+
+// Проверяется в AuthService (login/refresh), а не только отдельным guard'ом,
+// чтобы заблокированный пользователь не мог получить новые токены никаким путём.
+export class AccountBlockedException extends DomainException {
+  constructor() {
+    super("Аккаунт заблокирован администратором", "ACCOUNT_BLOCKED", HttpStatus.FORBIDDEN);
+  }
+}

@@ -33,6 +33,10 @@ export class RefreshTokenUseCase {
       throw new UnauthorizedException("Пользователь не найден");
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException("Аккаунт заблокирован администратором");
+    }
+
     return user;
   }
 }

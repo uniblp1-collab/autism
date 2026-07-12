@@ -10,7 +10,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
 
   async findAll(): Promise<Category[]> {
     const records = await this.prisma.category.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, isHiddenFromNav: false },
       orderBy: { order: "asc" },
     });
     return records.map(CategoryMapper.toDomain);

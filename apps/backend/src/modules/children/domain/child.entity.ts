@@ -1,4 +1,5 @@
 export type SpeechLevel = "NONE" | "SINGLE_WORDS" | "PHRASES" | "SENTENCES";
+export type DifficultyLevel = 1 | 2 | 3;
 
 export class Child {
   constructor(
@@ -9,6 +10,8 @@ export class Child {
     public readonly photoUrl: string | null,
     public readonly speechLevel: SpeechLevel,
     public readonly favoriteCategoryIds: string[],
+    public readonly difficultyLevel: DifficultyLevel,
+    public readonly unlockedCategoryIds: string[],
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

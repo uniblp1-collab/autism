@@ -12,12 +12,15 @@ export interface CategoryPillProps extends ButtonHTMLAttributes<HTMLButtonElemen
   /** Цвет категории из БД; используется только когда пилюля активна (DESIGN.md §6.2). */
   color: string;
   active?: boolean;
+  /** Категория "Дай" (Category.isPrimary) — всегда в акцентном цвете, даже не выбранная (ТЗ, часть A.2). */
+  isPrimary?: boolean;
 }
 
 /** Пилюля переключения категории/избранного/расписания в зоне ребёнка (DESIGN.md §6.2). */
-export function CategoryPill({ label, icon, color, active, className, ...rest }: CategoryPillProps) {
+export function CategoryPill({ label, icon, color, active, isPrimary, className, ...rest }: CategoryPillProps) {
   const { tokens } = useTheme();
   const activeTone = resolveCategoryColorToken(color);
+  const useAccentTone = active || isPrimary;
 
   return (
     <button
@@ -26,10 +29,11 @@ export function CategoryPill({ label, icon, color, active, className, ...rest }:
       className={clsx("flex shrink-0 items-center gap-1.5 whitespace-nowrap px-4 py-2", className)}
       style={{
         borderRadius: radiusTokens.full,
-        backgroundColor: active ? activeTone.bg : tokens.surfaceMuted,
-        color: active ? activeTone.fg : tokens.textSecondary,
+        backgroundColor: useAccentTone ? activeTone.bg : tokens.surfaceMuted,
+        color: useAccentTone ? activeTone.fg : tokens.textSecondary,
         fontSize: 14,
-        fontWeight: active ? 500 : 400,
+        fontWeight: useAccentTone ? 500 : 400,
+        border: isPrimary ? `2px solid ${activeTone.fg}` : "none",
       }}
       {...rest}
     >

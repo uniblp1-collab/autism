@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SpeechLevel } from "./enums";
+import { CardType, Gender, SpeechLevel } from "./enums";
 
 export const registerSchema = z.object({
   email: z.string().email(),
@@ -18,17 +18,28 @@ export const refreshTokenSchema = z.object({
 });
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 
+const difficultyLevelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
+
 export const createChildSchema = z.object({
   name: z.string().min(1).max(60),
   age: z.number().int().min(0).max(18),
   photoUrl: z.string().url().optional().nullable(),
   speechLevel: z.nativeEnum(SpeechLevel),
   favoriteCategoryIds: z.array(z.string().uuid()).optional(),
+  difficultyLevel: difficultyLevelSchema.optional(),
+  unlockedCategoryIds: z.array(z.string().uuid()).optional(),
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;
 
 export const updateChildSchema = createChildSchema.partial();
 export type UpdateChildInput = z.infer<typeof updateChildSchema>;
+
+// Настройки уровня сложности/доступных категорий — экран родителя (§A.7).
+export const updateChildSettingsSchema = z.object({
+  difficultyLevel: difficultyLevelSchema,
+  unlockedCategoryIds: z.array(z.string().uuid()),
+});
+export type UpdateChildSettingsInput = z.infer<typeof updateChildSettingsSchema>;
 
 export const createCategorySchema = z.object({
   title: z.string().min(1).max(60),
@@ -38,6 +49,10 @@ export const createCategorySchema = z.object({
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
     .optional(),
   order: z.number().int().min(0).optional(),
+  isPrimary: z.boolean().optional(),
+  isHiddenFromNav: z.boolean().optional(),
+  phraseForm: z.string().max(60).optional(),
+  sentenceTemplate: z.string().max(120).optional(),
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
@@ -45,13 +60,20 @@ export const createCardSchema = z.object({
   categoryId: z.string().uuid(),
   childId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(60),
-  imageUrl: z.string().min(1),
+  // Изображение загружается отдельно через POST /admin/cards/:id/image — необязательно при создании.
+  imageUrl: z.string().min(1).optional().nullable(),
   color: z
     .string()
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
     .optional(),
   priority: z.number().int().min(0).max(100).optional(),
   ttsText: z.string().min(1).max(200),
+  phraseForm: z.string().min(1).max(60),
+  cardType: z.nativeEnum(CardType).optional(),
+  gender: z.nativeEnum(Gender).optional().nullable(),
+  phraseFormMasculine: z.string().max(60).optional().nullable(),
+  phraseFormFeminine: z.string().max(60).optional().nullable(),
+  phraseFormNeuter: z.string().max(60).optional().nullable(),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 
@@ -63,6 +85,8 @@ export const searchCardsSchema = z.object({
   childId: z.string().uuid().optional(),
   query: z.string().max(100).optional(),
   includeCustom: z.boolean().optional(),
+  cardType: z.nativeEnum(CardType).optional(),
+  isSystemCard: z.boolean().optional(),
 });
 export type SearchCardsInput = z.infer<typeof searchCardsSchema>;
 
@@ -75,6 +99,10 @@ export type CreateFavoriteInput = z.infer<typeof createFavoriteSchema>;
 export const createHistorySchema = z.object({
   childId: z.string().uuid(),
   cardIds: z.array(z.string().uuid()).min(1),
+  // Категория-глагол не является карточкой, поэтому текст фразы (глагол + сущ./прил.)
+  // не всегда восстановим из одних только ttsText карточек — фронт может передать
+  // уже собранный текст явно; иначе бэкенд склеивает ttsText карточек по порядку.
+  sentenceText: z.string().max(200).optional(),
 });
 export type CreateHistoryInput = z.infer<typeof createHistorySchema>;
 
@@ -110,3 +138,16 @@ export const recordCardUsageSchema = z.object({
   cardId: z.string().uuid(),
 });
 export type RecordCardUsageInput = z.infer<typeof recordCardUsageSchema>;
+
+// --- Admin (Part B) ---
+
+export const updateUserStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+export type UpdateUserStatusInput = z.infer<typeof updateUserStatusSchema>;
+
+export const adminUsersQuerySchema = z.object({
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).max(100).optional(),
+});
+export type AdminUsersQueryInput = z.infer<typeof adminUsersQuerySchema>;

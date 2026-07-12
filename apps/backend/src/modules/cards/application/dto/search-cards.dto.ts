@@ -1,5 +1,12 @@
 import { Transform } from "class-transformer";
-import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
+import { CardType } from "../../domain/card.entity";
+
+const CARD_TYPES: CardType[] = ["NOUN", "ADJECTIVE"];
+
+function toBoolean({ value }: { value: unknown }): unknown {
+  return value === "true" || value === true;
+}
 
 export class SearchCardsDto {
   @IsOptional()
@@ -16,7 +23,16 @@ export class SearchCardsDto {
   query?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value === "true" || value === true)
+  @Transform(toBoolean)
   @IsBoolean()
   includeCustom?: boolean;
+
+  @IsOptional()
+  @IsEnum(CARD_TYPES)
+  cardType?: CardType;
+
+  @IsOptional()
+  @Transform(toBoolean)
+  @IsBoolean()
+  isSystemCard?: boolean;
 }

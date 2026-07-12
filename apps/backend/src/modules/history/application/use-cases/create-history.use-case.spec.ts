@@ -6,7 +6,27 @@ import { Card } from "../../../cards/domain/card.entity";
 import { EntityNotFoundException } from "../../../../common/exceptions/domain.exception";
 
 function buildCard(id: string, ttsText: string): Card {
-  return new Card(id, "category-1", null, ttsText, "/img.svg", "#000", 0, ttsText, "LIBRARY", false, new Date(), new Date());
+  return new Card(
+    id,
+    "category-1",
+    null,
+    ttsText,
+    "/img.svg",
+    "#000",
+    0,
+    ttsText,
+    ttsText,
+    "NOUN",
+    null,
+    null,
+    null,
+    null,
+    "LIBRARY",
+    false,
+    false,
+    new Date(),
+    new Date(),
+  );
 }
 
 describe("CreateHistoryUseCase", () => {
@@ -43,6 +63,27 @@ describe("CreateHistoryUseCase", () => {
     await useCase.execute({ childId: "child-1", cardIds: ["card-1", "card-2"] });
 
     expect(historyRepository.create).toHaveBeenCalledWith("child-1", "Хочу Яблоко", ["card-1", "card-2"]);
+  });
+
+  it("uses the explicit sentenceText override instead of joining card TTS texts", async () => {
+    cardRepository.findById.mockImplementation((id: string) =>
+      Promise.resolve(id === "card-1" ? buildCard("card-1", "Дай") : buildCard("card-2", "яблоко")),
+    );
+    historyRepository.create.mockResolvedValue(
+      new HistoryEntry("h1", "child-1", "Дай зелёное яблоко", ["card-1", "card-2"], new Date()),
+    );
+    historyRepository.countByChild.mockResolvedValue(1);
+
+    await useCase.execute({
+      childId: "child-1",
+      cardIds: ["card-1", "card-2"],
+      sentenceText: "Дай зелёное яблоко",
+    });
+
+    expect(historyRepository.create).toHaveBeenCalledWith("child-1", "Дай зелёное яблоко", [
+      "card-1",
+      "card-2",
+    ]);
   });
 
   it("throws when a referenced card does not exist", async () => {

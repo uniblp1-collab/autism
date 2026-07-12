@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { CreateUserData, UserRepository } from "../domain/user.repository";
+import { CreateUserData, FindParentsParams, FindParentsResult, UserRepository } from "../domain/user.repository";
 import { User } from "../domain/user.entity";
 import { UserMapper } from "./user.mapper";
 
@@ -21,5 +21,30 @@ export class PrismaUserRepository implements UserRepository {
   async create(data: CreateUserData): Promise<User> {
     const record = await this.prisma.user.create({ data });
     return UserMapper.toDomain(record);
+  }
+
+  async setActive(id: string, isActive: boolean): Promise<User> {
+    const record = await this.prisma.user.update({ where: { id }, data: { isActive } });
+    return UserMapper.toDomain(record);
+  }
+
+  async setPasswordHash(id: string, passwordHash: string): Promise<User> {
+    const record = await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+    return UserMapper.toDomain(record);
+  }
+
+  async findParents(params: FindParentsParams): Promise<FindParentsResult> {
+    const where = { role: "PARENT" as const };
+    const [records, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (params.page - 1) * params.pageSize,
+        take: params.pageSize,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { items: records.map(UserMapper.toDomain), total };
   }
 }

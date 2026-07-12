@@ -17,6 +17,7 @@ const NAV_ITEMS = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { tokens } = useTheme();
+  const user = useAuthStore((state) => state.user);
   const clear = useAuthStore((state) => state.clear);
 
   function handleLogout() {
@@ -41,6 +42,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {item.label}
             </Link>
           ))}
+          {user?.role === "ADMIN" ? (
+            <Link
+              href="/admin/users"
+              style={{ fontSize: 14, fontWeight: 500, color: tokens.accentText }}
+              className="underline-offset-4 hover:underline"
+            >
+              Админ-панель
+            </Link>
+          ) : null}
         </nav>
         <div className="flex items-center gap-4">
           <ChildSelector />

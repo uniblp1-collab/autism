@@ -10,6 +10,10 @@ export class CategoryMapper {
       record.color,
       record.order,
       record.isSystem,
+      record.isPrimary,
+      record.isHiddenFromNav,
+      record.phraseForm,
+      record.sentenceTemplate,
       record.createdAt,
     );
   }

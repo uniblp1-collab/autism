@@ -17,6 +17,8 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   icon?: string;
   selected?: boolean;
   size?: "default" | "large";
+  /** Показывает кнопку-крестик поверх карточки — только в режиме редактирования (ТЗ, часть A.7). */
+  onDelete?: () => void;
 }
 
 /**
@@ -24,12 +26,12 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  * Плоский дизайн: заливка category-100, подпись/иконка — category-800, без теней и градиентов.
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
-  ({ title, imageUrl, accentColor, icon, selected, size = "default", className, ...rest }, ref) => {
+  ({ title, imageUrl, accentColor, icon, selected, size = "default", onDelete, className, ...rest }, ref) => {
     const { tokens } = useTheme();
     const dimension = size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
 
-    return (
+    const button = (
       <button
         ref={ref}
         type="button"
@@ -64,6 +66,34 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
           {title}
         </span>
       </button>
+    );
+
+    if (!onDelete) return button;
+
+    // Крестик — отдельная кнопка поверх карточки, а не вложенная внутрь неё
+    // (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
+    // в режиме редактирования — обычный (не редактируемый) рендер разметку не меняет.
+    return (
+      <div className="relative inline-flex">
+        {button}
+        <button
+          type="button"
+          aria-label={`Удалить карточку «${title}»`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+          className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
+          style={{
+            backgroundColor: tokens.danger,
+            color: "#FFFFFF",
+            // @ts-expect-error CSS custom property for focus ring color
+            "--tw-ring-color": tokens.focusRing,
+          }}
+        >
+          <Icon name="x" size={16} strokeWidth={2.5} />
+        </button>
+      </div>
     );
   },
 );

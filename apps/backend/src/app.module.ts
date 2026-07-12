@@ -5,6 +5,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RequestIdMiddleware } from "./common/logger/request-id.middleware";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
+import { RolesGuard } from "./common/guards/roles.guard";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./modules/auth/presentation/auth.module";
 import { ChildrenModule } from "./modules/children/presentation/children.module";
@@ -14,6 +15,7 @@ import { FavoritesModule } from "./modules/favorites/presentation/favorites.modu
 import { HistoryModule } from "./modules/history/presentation/history.module";
 import { ScheduleModule } from "./modules/schedule/presentation/schedule.module";
 import { StatisticsModule } from "./modules/statistics/presentation/statistics.module";
+import { AdminModule } from "./modules/admin/presentation/admin.module";
 
 @Module({
   imports: [
@@ -36,8 +38,12 @@ import { StatisticsModule } from "./modules/statistics/presentation/statistics.m
     HistoryModule,
     ScheduleModule,
     StatisticsModule,
+    AdminModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

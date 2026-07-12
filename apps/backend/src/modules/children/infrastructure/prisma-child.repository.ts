@@ -35,6 +35,8 @@ export class PrismaChildRepository implements ChildRepository {
         age: data.age,
         photoUrl: data.photoUrl,
         speechLevel: data.speechLevel,
+        difficultyLevel: data.difficultyLevel,
+        unlockedCategoryIds: data.unlockedCategoryIds,
         favoriteCategories: data.favoriteCategoryIds
           ? { create: data.favoriteCategoryIds.map((categoryId) => ({ categoryId })) }
           : undefined,
@@ -52,6 +54,8 @@ export class PrismaChildRepository implements ChildRepository {
         age: data.age,
         photoUrl: data.photoUrl,
         speechLevel: data.speechLevel,
+        difficultyLevel: data.difficultyLevel,
+        unlockedCategoryIds: data.unlockedCategoryIds,
         favoriteCategories:
           data.favoriteCategoryIds !== undefined
             ? {

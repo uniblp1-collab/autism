@@ -40,11 +40,14 @@ async function refreshSession(): Promise<boolean> {
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
   const { accessToken } = useAuthStore.getState();
+  // FormData (загрузка файлов) — браузер сам проставляет Content-Type с boundary,
+  // явный "application/json" здесь сломал бы multipart-запрос.
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...options.headers,
     },

@@ -60,12 +60,14 @@ services:
       # контейнера — `environment:` ниже недостаточно (см. apps/frontend/Dockerfile).
       args:
         NEXT_PUBLIC_API_URL: http://localhost:3001/api
+        NEXT_PUBLIC_EDIT_MODE_ENABLED: "true"
     container_name: autism-connect-frontend
     restart: unless-stopped
     env_file:
       - ../../.env
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_EDIT_MODE_ENABLED: "true"
     depends_on:
       - backend
     ports:

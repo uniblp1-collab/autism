@@ -15,10 +15,11 @@ export class PrismaCardRepository implements CardRepository {
   }
 
   async search(filter: SearchCardsFilter): Promise<Card[]> {
-    const where: Prisma.CardWhereInput = { deletedAt: null };
+    const where: Prisma.CardWhereInput = { deletedAt: null, isSystemCard: filter.isSystemCard ?? false };
 
     if (filter.categoryId) where.categoryId = filter.categoryId;
     if (filter.query) where.title = { contains: filter.query, mode: "insensitive" };
+    if (filter.cardType) where.cardType = filter.cardType;
 
     if (filter.childId && filter.includeCustom) {
       where.OR = [{ childId: null }, { childId: filter.childId }];

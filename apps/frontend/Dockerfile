@@ -16,7 +16,9 @@ RUN pnpm install --frozen-lockfile
 # `environment:` в docker-compose.yml (тот применяется лишь при старте контейнера).
 FROM deps AS build
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_EDIT_MODE_ENABLED=true
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_EDIT_MODE_ENABLED=${NEXT_PUBLIC_EDIT_MODE_ENABLED}
 COPY . .
 RUN pnpm --filter @autism-connect/frontend run build
 

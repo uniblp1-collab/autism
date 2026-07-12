@@ -12,6 +12,8 @@ import {
   IconNumber123,
   IconPalette,
   IconPaw,
+  IconPencil,
+  IconPlus,
   IconPuzzle,
   IconRun,
   IconSchool,
@@ -21,6 +23,7 @@ import {
   IconSun,
   IconTag,
   IconUsers,
+  IconX,
   type Icon as TablerIcon,
 } from "@tabler/icons-react";
 
@@ -50,6 +53,9 @@ export const iconRegistry: Record<string, TablerIcon> = {
   calendar: IconCalendar,
   check: IconCheck,
   tag: IconTag,
+  plus: IconPlus,
+  x: IconX,
+  pencil: IconPencil,
 };
 
 export const FALLBACK_ICON_KEY = "tag";

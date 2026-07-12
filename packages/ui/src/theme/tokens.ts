@@ -99,6 +99,10 @@ export const categoryColorTokens: Record<string, CategoryColorToken> = {
   "#27500A": { bg: "#C0DD97", fg: "#27500A" }, // Животные (и временно "Природа", см. DESIGN.md §3.4)
   "#444441": { bg: "#D3D1C7", fg: "#444441" }, // Одежда
   "#0C447C": { bg: "#B5D4F4", fg: "#0C447C" }, // Транспорт
+  // Служебные карточки Да/Нет (isSystemCard) — редакция 3 механики, часть A.6.
+  // Цвета зафиксированы отдельно от 9 базовых категорий: Да — красный, Нет — синий.
+  "#B91C1C": { bg: "#F6C6C6", fg: "#7A1414" }, // Да
+  "#1D4ED8": { bg: "#C6D8FA", fg: "#1E3A8A" }, // Нет
 };
 
 function mixWithWhite(hex: string, whiteRatio: number): string {

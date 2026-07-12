@@ -26,7 +26,8 @@ export class CreateHistoryUseCase {
       words.push(card.ttsText);
     }
 
-    const entry = await this.historyRepository.create(dto.childId, words.join(" "), dto.cardIds);
+    const sentenceText = dto.sentenceText ?? words.join(" ");
+    const entry = await this.historyRepository.create(dto.childId, sentenceText, dto.cardIds);
 
     const total = await this.historyRepository.countByChild(dto.childId);
     if (total > MAX_HISTORY_ENTRIES_PER_CHILD) {

@@ -30,11 +30,23 @@ enum CardSource {
   AI_GENERATED
 }
 
+enum CardType {
+  NOUN
+  ADJECTIVE
+}
+
+enum Gender {
+  MASCULINE
+  FEMININE
+  NEUTER
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
   role         Role     @default(PARENT)
+  isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -44,14 +56,20 @@ model User {
 }
 
 model Child {
-  id           String      @id @default(uuid())
-  userId       String
-  name         String
-  age          Int
-  photoUrl     String?
-  speechLevel  SpeechLevel @default(NONE)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id                  String      @id @default(uuid())
+  userId              String
+  name                String
+  age                 Int
+  photoUrl            String?
+  speechLevel         SpeechLevel @default(NONE)
+  // Часть A.4/A.7 (редакция 3 механики): 1 — мгновенное озвучивание, 2 — видимая строка
+  // сборки, 3 — то же + шаг выбора прилагательного с согласованием по роду.
+  difficultyLevel     Int         @default(1)
+  // Категории-глаголы, доступные ребёнку; "Дай" всегда подразумевается доступной
+  // (проверяется в коде, не через отсутствие в этом списке — см. A.7).
+  unlockedCategoryIds String[]    @default([])
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   user               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   favoriteCategories ChildFavoriteCategory[]
@@ -65,15 +83,30 @@ model Child {
   @@map("children")
 }
 
+// Редакция 3 механики: категория теперь сам глагол ("Дай", "Болит", "Идти", "Есть",
+// "Мыться"), а не предметный домен ("Еда", "Напитки") — см. TASK_REVISE_MECHANICS_AND_ADMIN.md §A.1.
 model Category {
-  id        String    @id @default(uuid())
-  title     String
-  icon      String
-  color     String    @default("#5F5E5A")
-  order     Int       @default(0)
-  isSystem  Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
+  id       String  @id @default(uuid())
+  title    String
+  icon     String
+  color    String  @default("#5F5E5A")
+  order    Int     @default(0)
+  isSystem Boolean @default(false)
+  // true только у "Дай" — акцентная заливка в строке категорий (DESIGN.md).
+  isPrimary Boolean @default(false)
+  // Служебная категория-контейнер (для карточек Да/Нет и прилагательных) — не
+  // рендерится пилюлей в строке категорий. Расширение сверх снимка схемы из
+  // TASK_REVISE_MECHANICS_AND_ADMIN.md §A.1, понадобилось для непротиворечивого
+  // хранения Да/Нет/прилагательных без "магических" эвристик на фронте.
+  isHiddenFromNav Boolean @default(false)
+  // Словоформа 1-го лица для вставки в предложение: "Есть" -> "Ем".
+  phraseForm String @default("")
+  // Шаблон сборки фразы: {verb}/{noun}/{adjective}. Дефолт "{verb} {noun}" — безопасный,
+  // но не всегда естественный вариант; финальные шаблоны по категориям — открытый вопрос
+  // к заказчику (см. отчёт по задаче), не решать самостоятельно.
+  sentenceTemplate String    @default("{verb} {noun}")
+  createdAt        DateTime  @default(now())
+  deletedAt        DateTime?
 
   cards           Card[]
   favoriteOfChild ChildFavoriteCategory[]
@@ -96,16 +129,32 @@ model Card {
   id         String     @id @default(uuid())
   categoryId String
   childId    String?
-  title      String
-  imageUrl   String
-  color      String     @default("#4F46E5")
-  priority   Int        @default(0)
-  ttsText    String
-  source     CardSource @default(LIBRARY)
-  isCustom   Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  deletedAt  DateTime?
+  // Именительный падеж — для админки/библиотеки.
+  title    String
+  // Изображение теперь необязательно на момент создания — загружается отдельно
+  // через POST /admin/cards/:id/image (см. StorageModule).
+  imageUrl String?
+  color    String  @default("#4F46E5")
+  priority Int     @default(0)
+  ttsText  String
+  // Словоформа для вставки во фразу (винительный и т.д.): "каша" -> "кашу".
+  phraseForm String   @default("")
+  cardType   CardType @default(NOUN)
+  // Только для NOUN (собственный род существительного) и ADJECTIVE (см. поля ниже) —
+  // нужно для согласования на уровне сложности 3.
+  gender Gender?
+  // Явные словоформы прилагательного по родам — используются только при cardType: ADJECTIVE.
+  // Осознанно не автогенерация по правилам (проще и надёжнее для старта, см. TASK §A.4).
+  phraseFormMasculine String?
+  phraseFormFeminine  String?
+  phraseFormNeuter    String?
+  source              CardSource @default(LIBRARY)
+  isCustom            Boolean    @default(false)
+  // true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью, не в сетке категорий.
+  isSystemCard Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   category         Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   child            Child?             @relation(fields: [childId], references: [id], onDelete: Cascade)

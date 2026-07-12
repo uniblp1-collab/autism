@@ -13,6 +13,8 @@ export class SearchCardsUseCase {
       childId: dto.childId,
       query: dto.query,
       includeCustom: dto.includeCustom,
+      cardType: dto.cardType,
+      isSystemCard: dto.isSystemCard,
     });
   }
 }

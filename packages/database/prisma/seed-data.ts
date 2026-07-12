@@ -1,234 +1,159 @@
-// Данные базовой библиотеки категорий и карточек (300+).
-// Эти данные используются ТОЛЬКО seed-скриптом (packages/database/prisma/seed.ts) —
-// после первого запуска редактирование происходит через админку/API, а не правкой этого файла.
+// Данные базовой библиотеки категорий-глаголов и карточек — редакция 3 механики
+// (TASK_REVISE_MECHANICS_AND_ADMIN.md §A). Эти данные используются ТОЛЬКО seed-скриптом
+// (packages/database/prisma/seed.ts) — после первого запуска редактирование происходит
+// через админку/API, а не правкой этого файла.
+//
+// ВАЖНО про контент ниже: набор существительных на категорию (6 шт.) и конкретные
+// sentenceTemplate — временный, демонстрационный набор с безопасными дефолтами.
+// Финальное наполнение "Идти"/"Мыться" и точные шаблоны фраз для "Болит"/"Дай" —
+// открытые вопросы к заказчику (см. отчёт по задаче), не финальное решение.
 
-export interface SeedCategory {
+export type CardGender = "MASCULINE" | "FEMININE" | "NEUTER";
+
+export interface SeedNounCard {
+  title: string; // именительный падеж
+  phraseForm: string; // словоформа для вставки во фразу
+  gender: CardGender;
+}
+
+export interface SeedVerbCategory {
   slug: string;
-  title: string;
+  title: string; // сам глагол/просьба: "Дай", "Болит", ...
   icon: string;
   order: number;
   color: string;
-  words: string[];
+  isPrimary?: boolean;
+  phraseForm: string; // словоформа 1-го лица: "Есть" -> "Ем"
+  sentenceTemplate: string;
+  nouns: SeedNounCard[];
 }
 
-export const seedCategories: SeedCategory[] = [
+// Дефолтный шаблон "{verb} {noun}" — безопасный, но не всегда естественный
+// (см. §A.3 задачи: не додумывать финальные шаблоны самостоятельно).
+const DEFAULT_TEMPLATE = "{verb} {noun}";
+
+export const seedVerbCategories: SeedVerbCategory[] = [
   {
-    slug: "food",
-    title: "Еда",
-    icon: "apple",
-    order: 1,
-    color: "#712B13",
-    words: [
-      "Яблоко", "Банан", "Хлеб", "Сыр", "Молоко", "Яйцо", "Каша", "Суп",
-      "Макароны", "Картофель", "Морковь", "Огурец", "Помидор", "Курица",
-      "Рыба", "Печенье", "Шоколад", "Йогурт", "Апельсин", "Груша",
-      "Виноград", "Арбуз", "Мёд", "Творог", "Блины", "Пирог", "Салат",
-      "Котлета", "Сосиска", "Пельмени", "Оладьи", "Пицца", "Бутерброд",
-      "Каша овсяная", "Пюре", "Компот из ягод", "Мороженое", "Конфета",
-      "Орехи", "Изюм",
-    ],
-  },
-  {
-    slug: "drinks",
-    title: "Напитки",
-    icon: "cup",
-    order: 2,
-    color: "#085041",
-    words: [
-      "Вода", "Сок", "Чай", "Компот", "Кефир", "Какао", "Лимонад",
-      "Молочный коктейль", "Морс", "Газировка",
-    ],
-  },
-  {
-    slug: "toys",
-    title: "Игрушки",
-    icon: "puzzle",
-    order: 3,
-    color: "#3C3489",
-    words: [
-      "Мишка", "Кукла", "Машинка", "Мяч", "Кубики", "Пазл", "Конструктор",
-      "Пирамидка", "Юла", "Скакалка", "Пластилин", "Раскраска",
-      "Мыльные пузыри", "Робот", "Поезд", "Кораблик", "Кукольный домик",
-      "Волчок", "Городки", "Кегли", "Воздушный змей", "Мозаика",
-      "Плюшевый заяц", "Барабан", "Дудочка",
-    ],
-  },
-  {
-    slug: "actions",
-    title: "Действия",
-    icon: "run",
-    order: 4,
-    color: "#791F1F",
-    words: [
-      "Идти", "Бежать", "Прыгать", "Сидеть", "Стоять", "Спать", "Есть",
-      "Пить", "Играть", "Читать", "Рисовать", "Мыть руки", "Одеваться",
-      "Смотреть", "Слушать", "Говорить", "Помочь", "Дай", "Хочу", "Не хочу",
-      "Ещё", "Стоп", "Да", "Нет", "Открыть", "Закрыть", "Включить",
-      "Выключить", "Мыть", "Чистить зубы", "Обниматься", "Целовать",
-      "Плакать", "Смеяться", "Танцевать", "Петь", "Строить", "Бросать",
-      "Ловить",
-    ],
-  },
-  {
-    slug: "feelings",
-    title: "Чувства",
-    icon: "mood-smile",
-    order: 5,
-    color: "#633806",
-    words: [
-      "Радость", "Грусть", "Злость", "Страх", "Удивление", "Спокойствие",
-      "Усталость", "Боль", "Скука", "Любовь", "Стыд", "Гордость",
-    ],
-  },
-  {
-    slug: "people",
-    title: "Люди",
-    icon: "users",
-    order: 6,
-    color: "#72243E",
-    words: [
-      "Мама", "Папа", "Бабушка", "Дедушка", "Брат", "Сестра", "Друг",
-      "Воспитатель", "Врач", "Учитель", "Я", "Логопед", "Тётя", "Дядя",
-      "Соседка", "Няня", "Психолог", "Дефектолог", "Одноклассник", "Малыш",
-    ],
-  },
-  {
-    slug: "places",
-    title: "Места",
-    icon: "home",
-    order: 7,
-    color: "#6B4226",
-    words: [
-      "Дом", "Школа", "Детский сад", "Магазин", "Парк", "Больница",
-      "Кухня", "Спальня", "Ванная", "Улица", "Двор", "Площадка",
-      "Бассейн", "Библиотека", "Зоопарк", "Кинотеатр", "Кафе", "Аптека",
-      "Лес", "Пляж",
-    ],
-  },
-  {
-    slug: "clothes",
-    title: "Одежда",
-    icon: "shirt",
-    order: 8,
-    color: "#444441",
-    words: [
-      "Футболка", "Штаны", "Куртка", "Шапка", "Носки", "Обувь", "Платье",
-      "Шорты", "Перчатки", "Шарф", "Пижама", "Ботинки", "Свитер", "Ремень",
-      "Сандалии", "Резиновые сапоги", "Комбинезон", "Кофта", "Юбка",
-      "Купальник",
-    ],
-  },
-  {
-    slug: "animals",
-    title: "Животные",
-    icon: "paw",
-    order: 9,
-    color: "#27500A",
-    words: [
-      "Собака", "Кошка", "Птица", "Рыбка", "Лошадь", "Корова", "Свинья",
-      "Курица", "Заяц", "Лиса", "Медведь", "Слон", "Лев", "Тигр",
-      "Обезьяна", "Черепаха", "Жираф", "Волк", "Ёжик", "Белка", "Утка",
-      "Гусь", "Лягушка", "Бабочка", "Пчела", "Улитка", "Дельфин",
-      "Крокодил", "Зебра", "Панда",
-    ],
-  },
-  {
-    slug: "transport",
-    title: "Транспорт",
-    icon: "car",
-    order: 10,
-    color: "#0C447C",
-    words: [
-      "Машина", "Автобус", "Поезд", "Самолёт", "Велосипед", "Корабль",
-      "Метро", "Трамвай", "Вертолёт", "Скорая помощь", "Такси", "Грузовик",
-    ],
-  },
-  {
-    slug: "hygiene",
-    title: "Гигиена",
-    icon: "bath",
-    order: 11,
-    color: "#0E6B6B",
-    words: [
-      "Зубная щётка", "Мыло", "Полотенце", "Расчёска", "Шампунь",
-      "Туалет", "Салфетка", "Ванна", "Горшок",
-    ],
-  },
-  {
-    slug: "health",
-    title: "Здоровье",
-    icon: "stethoscope",
-    order: 12,
-    color: "#9B1C1C",
-    words: [
-      "Болит", "Температура", "Лекарство", "Пластырь", "Укол", "Врач",
-      "Больно", "Хорошо себя чувствую",
-    ],
-  },
-  {
-    slug: "time",
-    title: "Время",
-    icon: "clock",
-    order: 13,
-    color: "#2F4F8C",
-    words: [
-      "Утро", "День", "Вечер", "Ночь", "Сегодня", "Завтра", "Вчера",
-      "Сейчас", "Потом",
-    ],
-  },
-  {
-    slug: "weather",
-    title: "Погода",
-    icon: "sun",
-    order: 14,
-    color: "#8C6A0B",
-    words: [
-      "Солнце", "Дождь", "Снег", "Ветер", "Облако", "Радуга", "Гроза",
-      "Жарко", "Холодно",
-    ],
-  },
-  {
-    slug: "colors",
-    title: "Цвета",
-    icon: "palette",
-    order: 15,
-    color: "#8C3F8C",
-    words: [
-      "Красный", "Синий", "Жёлтый", "Зелёный", "Оранжевый", "Фиолетовый",
-      "Розовый", "Белый", "Чёрный", "Коричневый",
-    ],
-  },
-  {
-    slug: "numbers",
-    title: "Цифры",
-    icon: "number-123",
-    order: 16,
-    color: "#3A4750",
-    words: ["Один", "Два", "Три", "Четыре", "Пять", "Шесть", "Семь", "Восемь", "Девять", "Десять"],
-  },
-  {
-    slug: "school",
-    title: "Школа",
-    icon: "school",
-    order: 17,
-    color: "#5C4A1E",
-    words: [
-      "Ручка", "Карандаш", "Книга", "Тетрадь", "Портфель", "Парта",
-      "Доска", "Ножницы", "Клей", "Линейка",
-    ],
-  },
-  {
-    slug: "holidays",
-    title: "Праздники",
+    slug: "give",
+    title: "Дай",
     icon: "gift",
-    order: 18,
-    color: "#A6337A",
-    words: [
-      "День рождения", "Новый год", "Подарок", "Торт", "Шарики",
-      "Праздник", "Гости", "Свечи",
+    order: 1,
+    color: "#4F46E5",
+    isPrimary: true,
+    phraseForm: "Дай",
+    sentenceTemplate: DEFAULT_TEMPLATE,
+    nouns: [
+      { title: "Мяч", phraseForm: "мяч", gender: "MASCULINE" },
+      { title: "Сок", phraseForm: "сок", gender: "MASCULINE" },
+      { title: "Игрушка", phraseForm: "игрушку", gender: "FEMININE" },
+      { title: "Печенье", phraseForm: "печенье", gender: "NEUTER" },
+      { title: "Вода", phraseForm: "воду", gender: "FEMININE" },
+      { title: "Книга", phraseForm: "книгу", gender: "FEMININE" },
+      // Дополнительно — для демонстрации согласования прилагательных (см. README прилагательных ниже).
+      { title: "Шар", phraseForm: "шар", gender: "MASCULINE" },
+      { title: "Машина", phraseForm: "машину", gender: "FEMININE" },
+    ],
+  },
+  {
+    slug: "hurts",
+    title: "Болит",
+    icon: "stethoscope",
+    order: 2,
+    color: "#9B1C1C",
+    phraseForm: "Болит",
+    // ВНИМАНИЕ: "болит" грамматически требует именительный падеж ("болит живот"),
+    // а не винительный, как большинство остальных категорий. phraseForm у карточек
+    // ниже намеренно совпадает с title (именительный) — это осознанное расхождение
+    // с общим полем "словоформа для вставки", требует подтверждения у заказчика.
+    sentenceTemplate: DEFAULT_TEMPLATE,
+    nouns: [
+      { title: "Живот", phraseForm: "живот", gender: "MASCULINE" },
+      { title: "Голова", phraseForm: "голова", gender: "FEMININE" },
+      { title: "Зуб", phraseForm: "зуб", gender: "MASCULINE" },
+      { title: "Горло", phraseForm: "горло", gender: "NEUTER" },
+      { title: "Ухо", phraseForm: "ухо", gender: "NEUTER" },
+      { title: "Нога", phraseForm: "нога", gender: "FEMININE" },
+    ],
+  },
+  {
+    slug: "go",
+    title: "Идти",
+    icon: "run",
+    order: 3,
+    color: "#2F4F8C",
+    phraseForm: "Иду",
+    // ВНИМАНИЕ: русский требует предлог ("иду В парк") — движок шаблонов его не
+    // поддерживает. Результат "Иду парк" грамматически неточен; временно оставлено
+    // как есть до решения заказчика (добавлять ли предлоги в sentenceTemplate).
+    sentenceTemplate: DEFAULT_TEMPLATE,
+    nouns: [
+      { title: "Парк", phraseForm: "парк", gender: "MASCULINE" },
+      { title: "Магазин", phraseForm: "магазин", gender: "MASCULINE" },
+      { title: "Дом", phraseForm: "дом", gender: "MASCULINE" },
+      { title: "Улица", phraseForm: "улицу", gender: "FEMININE" },
+      { title: "Школа", phraseForm: "школу", gender: "FEMININE" },
+      { title: "Двор", phraseForm: "двор", gender: "MASCULINE" },
+    ],
+  },
+  {
+    slug: "eat",
+    title: "Есть",
+    icon: "apple",
+    order: 4,
+    color: "#712B13",
+    phraseForm: "Ем",
+    sentenceTemplate: DEFAULT_TEMPLATE,
+    nouns: [
+      { title: "Яблоко", phraseForm: "яблоко", gender: "NEUTER" },
+      { title: "Банан", phraseForm: "банан", gender: "MASCULINE" },
+      { title: "Каша", phraseForm: "кашу", gender: "FEMININE" },
+      { title: "Суп", phraseForm: "суп", gender: "MASCULINE" },
+      { title: "Йогурт", phraseForm: "йогурт", gender: "MASCULINE" },
+      { title: "Хлеб", phraseForm: "хлеб", gender: "MASCULINE" },
+    ],
+  },
+  {
+    slug: "wash",
+    title: "Мыться",
+    icon: "bath",
+    order: 5,
+    color: "#0E6B6B",
+    // ВНИМАНИЕ: заголовок категории "Мыться" — возвратный глагол (мыть себя), но для
+    // связки с существительными-объектами ("руки", "лицо") использована переходная
+    // форма "Мою" (мыть что-то), т.к. возвратная форма не сочетается с прямым
+    // дополнением. Расхождение между названием категории и фактической словоформой —
+    // тоже открытый вопрос к заказчику.
+    phraseForm: "Мою",
+    sentenceTemplate: DEFAULT_TEMPLATE,
+    nouns: [
+      { title: "Лицо", phraseForm: "лицо", gender: "NEUTER" },
+      { title: "Голова", phraseForm: "голову", gender: "FEMININE" },
+      { title: "Нога", phraseForm: "ногу", gender: "FEMININE" },
+      { title: "Спина", phraseForm: "спину", gender: "FEMININE" },
+      { title: "Рука", phraseForm: "руку", gender: "FEMININE" },
+      { title: "Живот", phraseForm: "живот", gender: "MASCULINE" },
     ],
   },
 ];
+
+export interface SeedAdjectiveCard {
+  title: string; // словарная форма (муж. род, им. падеж)
+  masculine: string;
+  feminine: string;
+  neuter: string;
+  color: string;
+}
+
+// Набор прилагательных НЕ курируется как закрытый список (решение заказчика, редакция 3) —
+// это лишь стартовый демонстрационный набор для уровня сложности 3.
+export const seedAdjectives: SeedAdjectiveCard[] = [
+  { title: "Зелёный", masculine: "зелёный", feminine: "зелёная", neuter: "зелёное", color: "#166534" },
+  { title: "Большой", masculine: "большой", feminine: "большая", neuter: "большое", color: "#7C3AED" },
+  { title: "Красный", masculine: "красный", feminine: "красная", neuter: "красное", color: "#B91C1C" },
+];
+
+export const YES_CARD = { title: "Да", ttsText: "Да", color: "#B91C1C" };
+export const NO_CARD = { title: "Нет", ttsText: "Нет", color: "#1D4ED8" };
 
 export function slugify(value: string): string {
   return value

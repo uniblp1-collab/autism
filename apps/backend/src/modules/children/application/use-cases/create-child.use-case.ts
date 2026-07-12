@@ -15,6 +15,8 @@ export class CreateChildUseCase {
       photoUrl: dto.photoUrl ?? null,
       speechLevel: dto.speechLevel,
       favoriteCategoryIds: dto.favoriteCategoryIds,
+      difficultyLevel: dto.difficultyLevel,
+      unlockedCategoryIds: dto.unlockedCategoryIds,
     });
   }
 }

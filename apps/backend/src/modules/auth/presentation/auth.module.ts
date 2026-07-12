@@ -19,6 +19,6 @@ import { BcryptPasswordHasher } from "../infrastructure/bcrypt-password-hasher";
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
   ],
-  exports: [USER_REPOSITORY],
+  exports: [USER_REPOSITORY, PASSWORD_HASHER],
 })
 export class AuthModule {}

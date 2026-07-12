@@ -6,6 +6,10 @@ export class Category {
     public readonly color: string,
     public readonly order: number,
     public readonly isSystem: boolean,
+    public readonly isPrimary: boolean,
+    public readonly isHiddenFromNav: boolean,
+    public readonly phraseForm: string,
+    public readonly sentenceTemplate: string,
     public readonly createdAt: Date,
   ) {}
 }

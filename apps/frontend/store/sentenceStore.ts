@@ -1,18 +1,26 @@
 "use client";
 
 import { create } from "zustand";
-import { Card } from "@autism-connect/shared";
+import { Card, Category } from "@autism-connect/shared";
 
+// Редакция 3 механики (ТЗ §A): фраза — это глагол (Category) + опционально прилагательное
+// (только уровень сложности 3) + существительное, а не произвольная цепочка карточек.
 interface SentenceState {
-  selectedCards: Card[];
-  addCard: (card: Card) => void;
-  removeAt: (index: number) => void;
-  clear: () => void;
+  category: Category | null;
+  adjective: Card | null;
+  noun: Card | null;
+  setCategory: (category: Category | null) => void;
+  setAdjective: (card: Card | null) => void;
+  setNoun: (card: Card | null) => void;
+  reset: () => void;
 }
 
 export const useSentenceStore = create<SentenceState>((set) => ({
-  selectedCards: [],
-  addCard: (card) => set((state) => ({ selectedCards: [...state.selectedCards, card] })),
-  removeAt: (index) => set((state) => ({ selectedCards: state.selectedCards.filter((_, i) => i !== index) })),
-  clear: () => set({ selectedCards: [] }),
+  category: null,
+  adjective: null,
+  noun: null,
+  setCategory: (category) => set({ category, adjective: null, noun: null }),
+  setAdjective: (adjective) => set({ adjective }),
+  setNoun: (noun) => set({ noun }),
+  reset: () => set({ adjective: null, noun: null }),
 }));

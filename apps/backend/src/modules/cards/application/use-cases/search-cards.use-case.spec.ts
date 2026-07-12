@@ -27,7 +27,19 @@ describe("SearchCardsUseCase", () => {
       childId: "child-1",
       query: "яб",
       includeCustom: true,
+      cardType: undefined,
+      isSystemCard: undefined,
     });
+  });
+
+  it("delegates cardType and isSystemCard to the repository (редакция 3 механики)", async () => {
+    const dto: SearchCardsDto = { cardType: "ADJECTIVE" as SearchCardsDto["cardType"], isSystemCard: true };
+
+    await useCase.execute(dto);
+
+    expect(repository.search).toHaveBeenCalledWith(
+      expect.objectContaining({ cardType: "ADJECTIVE", isSystemCard: true }),
+    );
   });
 
   it("returns an empty list when nothing matches", async () => {

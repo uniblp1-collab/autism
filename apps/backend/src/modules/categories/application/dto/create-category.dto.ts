@@ -1,4 +1,4 @@
-import { IsHexColor, IsInt, IsOptional, IsString, Min, MaxLength } from "class-validator";
+import { IsBoolean, IsHexColor, IsInt, IsOptional, IsString, Min, MaxLength } from "class-validator";
 
 export class CreateCategoryDto {
   @IsString()
@@ -17,4 +17,22 @@ export class CreateCategoryDto {
   @IsInt()
   @Min(0)
   order?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isHiddenFromNav?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  phraseForm?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  sentenceTemplate?: string;
 }

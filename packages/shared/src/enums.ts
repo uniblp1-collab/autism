@@ -16,3 +16,14 @@ export enum CardSource {
   CUSTOM = "CUSTOM",
   AI_GENERATED = "AI_GENERATED",
 }
+
+export enum CardType {
+  NOUN = "NOUN",
+  ADJECTIVE = "ADJECTIVE",
+}
+
+export enum Gender {
+  MASCULINE = "MASCULINE",
+  FEMININE = "FEMININE",
+  NEUTER = "NEUTER",
+}
