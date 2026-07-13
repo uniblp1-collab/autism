@@ -201,12 +201,19 @@ async function seedDemoUser(unlockedCategoryIds: string[]) {
   }
 }
 
+// Тестовые учётные данные по умолчанию — те же, что задокументированы в .env.example.
+// Не финальный продакшен-секрет: перед реальным деплоем задать свои ADMIN_EMAIL/ADMIN_PASSWORD
+// в .env (переопределяют значения ниже) и сгенерировать новый пароль.
+const DEFAULT_ADMIN_EMAIL = "admin@autismconnect.local";
+const DEFAULT_ADMIN_PASSWORD = "wTCfm8Afp5OXC8A7";
+
 async function seedAdminUser() {
-  const email = process.env.ADMIN_EMAIL;
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password) {
-    console.warn("ADMIN_EMAIL/ADMIN_PASSWORD не заданы — админ-аккаунт не создан (см. .env.example).");
-    return;
+  const email = process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD;
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+    console.warn(
+      `ADMIN_EMAIL/ADMIN_PASSWORD не заданы в .env — админ-аккаунт создан с тестовыми данными по умолчанию (${email}). Задайте свои значения в .env перед продакшен-деплоем.`,
+    );
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
