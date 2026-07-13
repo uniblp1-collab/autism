@@ -254,7 +254,10 @@ export default function ChildScreenPage() {
                 accentColor={card.color}
                 selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
                 onClick={() => (showAdjectiveStep ? sb.selectAdjective(card) : sb.selectNoun(card))}
-                onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
+                // Крестик — только для собственных кастомных карточек ребёнка (TASK_PATCH_1.md §4):
+                // библиотечные карточки общие для всех детей, удалять их отсюда нельзя даже в
+                // режиме редактирования (бэкенд тоже это проверяет — см. DeleteCardUseCase).
+                onDelete={isEditMode && card.isCustom ? () => deleteCard.mutate(card.id) : undefined}
                 favorite={favoriteCardIds.has(card.id)}
                 onToggleFavorite={() => handleToggleFavorite(card.id)}
               />

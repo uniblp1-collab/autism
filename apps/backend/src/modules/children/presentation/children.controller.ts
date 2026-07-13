@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from "@nestjs/common";
 import { ChildrenService } from "../application/children.service";
 import { CreateChildDto } from "../application/dto/create-child.dto";
 import { UpdateChildDto } from "../application/dto/update-child.dto";
@@ -28,6 +28,9 @@ export class ChildrenController {
     return this.childrenService.update(user.userId, id, dto);
   }
 
+  // См. комментарий в cards.controller.ts — без 204 фронтенд не может отличить
+  // «пустой успешный ответ» от «нужно распарсить JSON».
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(":id")
   remove(@CurrentUser() user: CurrentUserPayload, @Param("id") id: string) {
     return this.childrenService.remove(user.userId, id);

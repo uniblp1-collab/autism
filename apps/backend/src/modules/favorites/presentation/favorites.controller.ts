@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { FavoritesService } from "../application/favorites.service";
 import { AddFavoriteDto } from "../application/dto/add-favorite.dto";
 
@@ -16,6 +16,9 @@ export class FavoritesController {
     return this.favoritesService.add(dto);
   }
 
+  // См. комментарий в cards.controller.ts — без 204 фронтенд не может отличить
+  // «пустой успешный ответ» от «нужно распарсить JSON».
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(":childId/:cardId")
   remove(@Param("childId") childId: string, @Param("cardId") cardId: string) {
     return this.favoritesService.remove(childId, cardId);
