@@ -21,7 +21,7 @@ export function AddCardTile({ label = "Добавить", onClick }: AddCardTile
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-2 border-2 border-dashed focus:outline-none focus-visible:ring-4"
+      className="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed focus:outline-none focus-visible:ring-4"
       style={{
         minWidth: MIN_TOUCH_TARGET_PX,
         minHeight: MIN_TOUCH_TARGET_PX,

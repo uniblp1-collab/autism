@@ -9,6 +9,7 @@ import {
   CategoryPill,
   Icon,
   Input,
+  MIN_TOUCH_TARGET_PX,
   Modal,
   ScheduleTile,
   SentenceBuilderPanel,
@@ -46,6 +47,15 @@ const CARD_SIZE_TO_BUTTON_SIZE: Record<CardSize, "small" | "medium" | "large"> =
   [CardSize.SMALL]: "small",
   [CardSize.MEDIUM]: "medium",
   [CardSize.LARGE]: "large",
+};
+
+// Совпадает с расчётом dimension внутри CardButton — используется, чтобы ширина колонок
+// сетки подстраивалась под выбранный размер карточек (крупные карточки => меньше и шире
+// колонок, сетка заполняет экран), а не оставалась на фиксированных 3/5 колонках.
+const CARD_SIZE_TO_MIN_PX: Record<CardSize, number> = {
+  [CardSize.SMALL]: MIN_TOUCH_TARGET_PX,
+  [CardSize.MEDIUM]: MIN_TOUCH_TARGET_PX * 1.2,
+  [CardSize.LARGE]: MIN_TOUCH_TARGET_PX * 1.4,
 };
 
 interface QuickAddCardModalProps {
@@ -162,6 +172,13 @@ export default function ChildScreenPage() {
   const updateChild = useUpdateChild(childId);
   const isCardSizeDirty = Boolean(child) && draftCardSize !== child?.cardSize;
   const cardButtonSize = CARD_SIZE_TO_BUTTON_SIZE[draftCardSize];
+  // Число колонок подстраивается под выбранный размер карточек (auto-fill), а не остаётся
+  // фиксированным — иначе крупные карточки продолжали бы делить экран на то же число долек
+  // и не занимали бы дополнительное освободившееся место.
+  // auto-fit (не auto-fill) схлопывает пустые дорожки сетки — иначе при малом числе карточек
+  // они оставались бы на минимальном размере, а свободное 1fr-пространство уходило бы в
+  // невидимые пустые колонки вместо того, чтобы растянуть существующие карточки на весь экран.
+  const cardGridStyle = { gridTemplateColumns: `repeat(auto-fit, minmax(${CARD_SIZE_TO_MIN_PX[draftCardSize]}px, 1fr))` };
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
@@ -331,7 +348,7 @@ export default function ChildScreenPage() {
             ))}
           </div>
         ) : activeTab === FAVORITES_TAB ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+          <div className="grid gap-2" style={cardGridStyle}>
             {visibleFavoriteCards.map((card) => (
               <CardButton
                 key={card.id}
@@ -350,7 +367,7 @@ export default function ChildScreenPage() {
             ))}
           </div>
         ) : activeCategory ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+          <div className="grid gap-2" style={cardGridStyle}>
             {sortFavoritesFirst(showAdjectiveStep ? adjectiveCards : nounCards, favoriteCardIds).map((card) => (
               <CardButton
                 key={card.id}

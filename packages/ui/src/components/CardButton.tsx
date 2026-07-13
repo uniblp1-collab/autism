@@ -56,6 +56,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
           className,
         )}
         style={{
+          width: "100%",
           minWidth: dimension,
           minHeight: dimension,
           backgroundColor: bg,
@@ -92,8 +93,12 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     // Крестик/звёздочка — отдельные кнопки поверх карточки, а не вложенные внутрь нее
     // (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
     // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет.
+    // Wrapper — прямой grid-элемент родительской сетки и по умолчанию растягивается на всю
+    // ширину колонки (justify-items: stretch); сама кнопка теперь растягивается вместе с ним
+    // (width: 100% ниже) — иначе крестик/звёздочка, спозиционированные относительно wrapper'а,
+    // "уезжали" за пределы физически более узкой кнопки на соседние колонки.
     return (
-      <div className="relative inline-flex">
+      <div className="relative inline-flex w-full">
         {button}
         {onToggleFavorite ? (
           <button
