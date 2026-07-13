@@ -16,7 +16,7 @@ import {
   useTheme,
 } from "@autism-connect/ui";
 import { Card, CardType, Category } from "@autism-connect/shared";
-import { useCategories, useCards, useCreateCard, useDeleteCard } from "../../../features/cards/useCards";
+import { useCategories, useCards, useCreateCard, useDeleteCard, useUpdateCard } from "../../../features/cards/useCards";
 import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavorites";
 import { useChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
@@ -81,6 +81,47 @@ function QuickAddCardModal({ open, onClose, category, childId }: QuickAddCardMod
   );
 }
 
+interface EditCardModalProps {
+  card: Card;
+  onClose: () => void;
+}
+
+// Доступно на любой карточке (включая библиотечные, не только кастомные) в режиме
+// редактирования — тап по карточке при активном карандаше открывает эту модалку
+// вместо выбора карточки для фразы.
+function EditCardModal({ card, onClose }: EditCardModalProps) {
+  const updateCard = useUpdateCard();
+  const [title, setTitle] = useState(card.title);
+  const [phraseForm, setPhraseForm] = useState(card.phraseForm);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!title.trim() || !phraseForm.trim()) return;
+    await updateCard.mutateAsync({
+      cardId: card.id,
+      input: { title: title.trim(), phraseForm: phraseForm.trim(), ttsText: title.trim() },
+    });
+    onClose();
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`Редактировать «${card.title}»`}>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input
+          label="Словоформа во фразе (напр. «кашу» для «Ем кашу»)"
+          required
+          value={phraseForm}
+          onChange={(e) => setPhraseForm(e.target.value)}
+        />
+        <Button type="submit" disabled={updateCard.isPending}>
+          {updateCard.isPending ? "Сохраняем..." : "Сохранить"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
 export default function ChildScreenPage() {
   const params = useParams<{ childId: string }>();
   const childId = params.childId;
@@ -98,6 +139,7 @@ export default function ChildScreenPage() {
   const [activeTab, setActiveTab] = useState<string>(FAVORITES_TAB);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
@@ -253,11 +295,13 @@ export default function ChildScreenPage() {
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
                 selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
-                onClick={() => (showAdjectiveStep ? sb.selectAdjective(card) : sb.selectNoun(card))}
-                // Крестик — только для собственных кастомных карточек ребёнка (TASK_PATCH_1.md §4):
-                // библиотечные карточки общие для всех детей, удалять их отсюда нельзя даже в
-                // режиме редактирования (бэкенд тоже это проверяет — см. DeleteCardUseCase).
-                onDelete={isEditMode && card.isCustom ? () => deleteCard.mutate(card.id) : undefined}
+                // В режиме редактирования тап по карточке открывает редактирование, а не
+                // выбирает её для фразы — включая библиотечные карточки, не только кастомные
+                // (явное продуктовое решение; бэкенд по-прежнему защищает только Да/Нет).
+                onClick={() =>
+                  isEditMode ? setEditingCard(card) : showAdjectiveStep ? sb.selectAdjective(card) : sb.selectNoun(card)
+                }
+                onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
                 favorite={favoriteCardIds.has(card.id)}
                 onToggleFavorite={() => handleToggleFavorite(card.id)}
               />
@@ -302,6 +346,8 @@ export default function ChildScreenPage() {
           childId={childId}
         />
       ) : null}
+
+      {editingCard ? <EditCardModal card={editingCard} onClose={() => setEditingCard(null)} /> : null}
     </div>
   );
 }

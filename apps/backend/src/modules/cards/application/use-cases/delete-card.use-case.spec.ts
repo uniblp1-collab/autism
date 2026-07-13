@@ -59,11 +59,12 @@ describe("DeleteCardUseCase", () => {
     expect(cardRepository.softDelete).not.toHaveBeenCalled();
   });
 
-  it("refuses to delete a shared library card (TASK_PATCH_1.md §4)", async () => {
+  it("allows deleting a shared library card (product decision: edit mode can manage default cards)", async () => {
     cardRepository.findById.mockResolvedValue(buildCard({ isCustom: false, childId: null, source: "LIBRARY" }));
 
-    await expect(useCase.execute("card-1")).rejects.toThrow(CannotDeleteCardException);
-    expect(cardRepository.softDelete).not.toHaveBeenCalled();
+    await useCase.execute("card-1");
+
+    expect(cardRepository.softDelete).toHaveBeenCalledWith("card-1");
   });
 
   it("refuses to delete a system card (Да/Нет), even if somehow flagged custom", async () => {

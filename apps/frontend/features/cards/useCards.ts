@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, Category, CreateCardInput, SearchCardsInput } from "@autism-connect/shared";
+import { Card, Category, CreateCardInput, SearchCardsInput, UpdateCardInput } from "@autism-connect/shared";
 import { apiFetch } from "../../shared/api/client";
 
 export function useCategories() {
@@ -33,6 +33,15 @@ export function useCreateCard() {
   return useMutation({
     mutationFn: (input: CreateCardInput) =>
       apiFetch<Card>("/cards", { method: "POST", body: JSON.stringify(input) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
+  });
+}
+
+export function useUpdateCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cardId, input }: { cardId: string; input: UpdateCardInput }) =>
+      apiFetch<Card>(`/cards/${cardId}`, { method: "PATCH", body: JSON.stringify(input) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
   });
 }
