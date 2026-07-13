@@ -280,7 +280,11 @@ export default function ChildScreenPage() {
                 title={card.title}
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
-                onClick={() => handleFavoriteTap(card)}
+                // В режиме редактирования тап открывает редактирование, как и в обычной
+                // сетке категории — раньше вкладка «Избранное» (открытая по умолчанию) не
+                // поддерживала ни редактирование, ни удаление вовсе.
+                onClick={() => (isEditMode ? setEditingCard(card) : handleFavoriteTap(card))}
+                onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
                 favorite
                 onToggleFavorite={() => handleToggleFavorite(card.id)}
               />
