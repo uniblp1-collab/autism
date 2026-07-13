@@ -11,7 +11,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-nunito)", "var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["Nunito", "Inter", "system-ui", "sans-serif"],
       },
       fontWeight: {
         // DESIGN.md §1: только два начертания во всём приложении.

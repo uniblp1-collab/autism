@@ -12,6 +12,8 @@
   "dependencies": {
     "@autism-connect/shared": "workspace:*",
     "@autism-connect/ui": "workspace:*",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/nunito": "^5.2.7",
     "@tanstack/react-query": "^5.51.1",
     "next": "14.2.5",
     "react": "^18.3.1",

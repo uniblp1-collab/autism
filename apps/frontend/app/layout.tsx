@@ -1,25 +1,16 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
-import { Nunito, Inter } from "next/font/google";
+// Шрифты через @fontsource (self-hosted npm-пакет), а не next/font/google — последний
+// скачивает файлы с fonts.gstatic.com во время `next build`, что ломает сборку в Docker/CI
+// без доступа к интернету на этом шаге; @fontsource кладёт файлы в node_modules при
+// установке зависимостей, и сборка их не запрашивает по сети.
+import "@fontsource/nunito/400.css";
+import "@fontsource/nunito/500.css";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
 import { HighContrastThemeProvider } from "@autism-connect/ui";
 import { QueryProvider } from "../shared/api/QueryProvider";
 import "./globals.css";
-
-// DESIGN.md §2: --font-sans: 'Nunito', 'Inter', system-ui, sans-serif.
-// Только 400/500 — Anthropic Sans из рендеров проприетарный и не переносится (см. DESIGN.md §8).
-const nunito = Nunito({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500"],
-  variable: "--font-nunito",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Autism Connect",
@@ -28,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ru" className={`${nunito.variable} ${inter.variable}`}>
+    <html lang="ru">
       <body className="font-sans">
         <QueryProvider>
           <HighContrastThemeProvider>{children}</HighContrastThemeProvider>
