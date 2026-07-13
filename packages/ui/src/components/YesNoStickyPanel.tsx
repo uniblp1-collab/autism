@@ -20,6 +20,10 @@ export interface YesNoStickyPanelProps {
  * Отдельная липкая панель Да/Нет (ТЗ, часть A.6): эти две карточки — isSystemCard,
  * не входят в сетку категории и не участвуют в конструкторе предложения — озвучиваются
  * мгновенно по тапу. Подпись и цвет приходят из карточек через API, а не хардкодятся здесь.
+ *
+ * Порядок слева направо и цвета зафиксированы редакцией 2 патча (TASK_PATCH_1.md §3):
+ * Нет (красная, слева) → Да (синяя, справа) — обычная для AAC конвенция, порядок задаётся
+ * здесь, а не позицией карточек в ответе API.
  */
 export function YesNoStickyPanel({ yesCard, noCard, onSelect }: YesNoStickyPanelProps) {
   const { tokens } = useTheme();
@@ -31,23 +35,6 @@ export function YesNoStickyPanel({ yesCard, noCard, onSelect }: YesNoStickyPanel
       className="sticky bottom-0 z-10 flex items-center justify-center gap-4 py-3"
       style={{ backgroundColor: tokens.surface, borderTop: `1px solid ${tokens.border}` }}
     >
-      <button
-        type="button"
-        onClick={() => onSelect(yesCard)}
-        className="flex items-center gap-2 px-8 py-3 focus:outline-none focus-visible:ring-4"
-        style={{
-          backgroundColor: yesTone.bg,
-          color: yesTone.fg,
-          borderRadius: radiusTokens.full,
-          fontSize: 18,
-          fontWeight: 500,
-          // @ts-expect-error CSS custom property for focus ring color
-          "--tw-ring-color": tokens.focusRing,
-        }}
-      >
-        <Icon name="check" size={22} />
-        {yesCard.title}
-      </button>
       <button
         type="button"
         onClick={() => onSelect(noCard)}
@@ -64,6 +51,23 @@ export function YesNoStickyPanel({ yesCard, noCard, onSelect }: YesNoStickyPanel
       >
         <Icon name="x" size={22} />
         {noCard.title}
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelect(yesCard)}
+        className="flex items-center gap-2 px-8 py-3 focus:outline-none focus-visible:ring-4"
+        style={{
+          backgroundColor: yesTone.bg,
+          color: yesTone.fg,
+          borderRadius: radiusTokens.full,
+          fontSize: 18,
+          fontWeight: 500,
+          // @ts-expect-error CSS custom property for focus ring color
+          "--tw-ring-color": tokens.focusRing,
+        }}
+      >
+        <Icon name="check" size={22} />
+        {yesCard.title}
       </button>
     </div>
   );

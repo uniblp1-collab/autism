@@ -102,6 +102,11 @@ export default function ChildScreenPage() {
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
   const { data: yesNoCards = [] } = useCards({ isSystemCard: true });
+  // Не полагаемся на порядок карточек в ответе API (он зависит от priority/сортировки
+  // в БД, а не от смысла) — визуальный порядок и цвета Да/Нет задаёт YesNoStickyPanel
+  // (TASK_PATCH_1.md §3), сюда просто нужно передать правильную карточку в правильный слот.
+  const yesCard = yesNoCards.find((c) => c.title === "Да");
+  const noCard = yesNoCards.find((c) => c.title === "Нет");
   const { data: favoriteCards = [] } = useCards({ childId, includeCustom: true, cardType: CardType.NOUN });
 
   const sb = useSentenceBuilder({ childId, difficultyLevel });
@@ -274,10 +279,10 @@ export default function ChildScreenPage() {
             />
           </div>
         ) : null}
-        {showYesNo && yesNoCards.length === 2 ? (
+        {showYesNo && yesCard && noCard ? (
           <YesNoStickyPanel
-            yesCard={yesNoCards[0]}
-            noCard={yesNoCards[1]}
+            yesCard={yesCard}
+            noCard={noCard}
             onSelect={(systemCard) => {
               const card = yesNoCards.find((c) => c.id === systemCard.id);
               if (card) sb.speakSystemCard(card);

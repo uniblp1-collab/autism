@@ -152,8 +152,10 @@ export const seedAdjectives: SeedAdjectiveCard[] = [
   { title: "Красный", masculine: "красный", feminine: "красная", neuter: "красное", color: "#B91C1C" },
 ];
 
-export const YES_CARD = { title: "Да", ttsText: "Да", color: "#B91C1C" };
-export const NO_CARD = { title: "Нет", ttsText: "Нет", color: "#1D4ED8" };
+// Редакция 2 патча (TASK_PATCH_1.md §3): заказчик поменял решение на противоположное —
+// Да теперь синяя, Нет — красная (ближе к общепринятой AAC-конвенции, где красный = "нет").
+export const YES_CARD = { title: "Да", ttsText: "Да", color: "#1D4ED8" };
+export const NO_CARD = { title: "Нет", ttsText: "Нет", color: "#B91C1C" };
 
 export function slugify(value: string): string {
   return value
