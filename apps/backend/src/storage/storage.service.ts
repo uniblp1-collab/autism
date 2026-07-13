@@ -39,39 +39,53 @@ export class StorageService implements OnModuleInit {
   // если MinIO/S3 временно недоступен, весь бэкенд (включая auth/cards/...) не должен падать
   // из-за одного лишь StorageModule. Ошибка логируется, реальная загрузка файла всё равно
   // провалится своей собственной понятной ошибкой при первом обращении к uploadCardImage.
+  //
+  // ВАЖНО: политику публичного чтения применяем на КАЖДОМ старте, а не только при создании
+  // нового бакета — иначе если бакет уже существовал (например, создан раньше, до появления
+  // этого кода, или PutBucketPolicy в прошлый раз не применился из-за сетевого сбоя),
+  // картинки карточек молча оставались бы недоступны браузеру навсегда (реальная причина
+  // симптома "картинка не отображается, показывает вопросик").
   async onModuleInit(): Promise<void> {
+    try {
+      await this.ensureBucketExists();
+      await this.ensurePublicReadPolicy();
+    } catch (error) {
+      this.logger.warn(
+        `Не удалось проверить/настроить S3-бакет "${this.bucket}" при старте — загрузка картинок карточек ` +
+          `будет недоступна, пока MinIO/S3 не станет доступен. ${(error as Error).message}`,
+      );
+    }
+  }
+
+  private async ensureBucketExists(): Promise<void> {
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
     } catch {
-      try {
-        await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
-        // TODO(безопасность, MVP-упрощение): бакет создаётся с публичным доступом на чтение,
-        // чтобы фронтенд мог загружать картинки карточек напрямую из MinIO без прокси через
-        // бэкенд. Для продакшена — приватный бакет + presigned GET URL или CDN перед ним.
-        await this.client.send(
-          new PutBucketPolicyCommand({
-            Bucket: this.bucket,
-            Policy: JSON.stringify({
-              Version: "2012-10-17",
-              Statement: [
-                {
-                  Effect: "Allow",
-                  Principal: "*",
-                  Action: ["s3:GetObject"],
-                  Resource: [`arn:aws:s3:::${this.bucket}/*`],
-                },
-              ],
-            }),
-          }),
-        );
-        this.logger.log(`Создан S3-бакет "${this.bucket}" с публичным доступом на чтение`);
-      } catch (createError) {
-        this.logger.warn(
-          `Не удалось проверить/создать S3-бакет "${this.bucket}" при старте — загрузка картинок карточек ` +
-            `будет недоступна, пока MinIO/S3 не станет доступен. ${(createError as Error).message}`,
-        );
-      }
+      await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
+      this.logger.log(`Создан S3-бакет "${this.bucket}"`);
     }
+  }
+
+  // TODO(безопасность, MVP-упрощение): бакет держится с публичным доступом на чтение, чтобы
+  // фронтенд мог загружать картинки карточек напрямую из MinIO без прокси через бэкенд.
+  // Для продакшена — приватный бакет + presigned GET URL или CDN перед ним.
+  private async ensurePublicReadPolicy(): Promise<void> {
+    await this.client.send(
+      new PutBucketPolicyCommand({
+        Bucket: this.bucket,
+        Policy: JSON.stringify({
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: "*",
+              Action: ["s3:GetObject"],
+              Resource: [`arn:aws:s3:::${this.bucket}/*`],
+            },
+          ],
+        }),
+      }),
+    );
   }
 
   async uploadCardImage(file: Express.Multer.File | undefined): Promise<string> {

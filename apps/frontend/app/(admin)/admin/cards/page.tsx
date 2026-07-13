@@ -12,6 +12,7 @@ export default function AdminCardsPage() {
   const { data: cards = [], isLoading } = useCards({ categoryId });
   const uploadImage = useUploadCardImage();
   const [uploadingCardId, setUploadingCardId] = useState<string | null>(null);
+  const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
   async function handleFileChange(cardId: string, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -19,6 +20,11 @@ export default function AdminCardsPage() {
     if (!file) return;
 
     setUploadingCardId(cardId);
+    setFailedImageIds((prev) => {
+      const next = new Set(prev);
+      next.delete(cardId);
+      return next;
+    });
     try {
       await uploadImage.mutateAsync({ cardId, file });
     } finally {
@@ -54,14 +60,19 @@ export default function AdminCardsPage() {
               className="flex flex-col items-center gap-2 text-center"
               style={{ backgroundColor: tokens.surface, borderRadius: 14, padding: 16 }}
             >
-              {card.imageUrl ? (
-                <img src={card.imageUrl} alt="" className="h-16 w-16 object-contain" />
+              {card.imageUrl && !failedImageIds.has(card.id) ? (
+                <img
+                  src={card.imageUrl}
+                  alt=""
+                  className="h-16 w-16 object-contain"
+                  onError={() => setFailedImageIds((prev) => new Set(prev).add(card.id))}
+                />
               ) : (
                 <div
                   className="flex h-16 w-16 items-center justify-center text-center"
                   style={{ backgroundColor: tone.bg, color: tone.fg, borderRadius: 10, fontSize: 11 }}
                 >
-                  нет фото
+                  {card.imageUrl ? "ошибка загрузки" : "нет фото"}
                 </div>
               )}
               <p style={{ fontSize: 14, fontWeight: 500, color: tokens.textPrimary }}>{card.title}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { ButtonHTMLAttributes, forwardRef, useState } from "react";
 import clsx from "clsx";
 import { MIN_TOUCH_TARGET_PX, paddingTokens, radiusTokens, resolveCategoryColorToken } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
@@ -38,6 +38,9 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     const { tokens } = useTheme();
     const dimension = size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
+    // Если картинка недоступна (например, хранилище временно не отвечает), откатываемся на
+    // иконку вместо "битой" картинки браузера — для ребёнка это выглядело бы как ошибка.
+    const [imageFailed, setImageFailed] = useState(false);
 
     const button = (
       <button
@@ -63,10 +66,16 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         }}
         {...rest}
       >
-        {imageUrl ? (
+        {imageUrl && !imageFailed ? (
           // Ленивая загрузка вне видимой области — бюджет производительности (ARCHITECTURE.md §7).
           // eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image
-          <img src={imageUrl} alt="" loading="lazy" className="h-10 w-10 object-contain sm:h-12 sm:w-12" />
+          <img
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+            onError={() => setImageFailed(true)}
+          />
         ) : icon ? (
           <Icon name={icon} size={32} />
         ) : null}
