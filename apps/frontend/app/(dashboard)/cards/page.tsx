@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button, Input, resolveCategoryColorToken, useTheme } from "@autism-connect/ui";
 import { CardType } from "@autism-connect/shared";
@@ -55,14 +54,7 @@ function CardsPageContent() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-medium">Библиотека карточек</h1>
-          {selectedChildId ? (
-            <Link href={`/${selectedChildId}`} className="text-sm underline">
-              Открыть экран ребёнка →
-            </Link>
-          ) : null}
-        </div>
+        <h1 className="mb-4 text-xl font-medium">Библиотека карточек</h1>
         <div className="mb-4 flex flex-wrap gap-4">
           <select
             className="px-3 py-2"

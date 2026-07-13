@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, useTheme } from "@autism-connect/ui";
 import { useAuthStore } from "../../store/authStore";
+import { useUiStore } from "../../store/uiStore";
 import { ChildSelector } from "../../shared/ui/ChildSelector";
 
 const NAV_ITEMS = [
@@ -19,6 +20,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { tokens } = useTheme();
   const user = useAuthStore((state) => state.user);
   const clear = useAuthStore((state) => state.clear);
+  const selectedChildId = useUiStore((state) => state.selectedChildId);
 
   function handleLogout() {
     clear();
@@ -54,6 +56,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
         <div className="flex items-center gap-4">
           <ChildSelector />
+          {selectedChildId ? (
+            <Link
+              href={`/${selectedChildId}`}
+              style={{ fontSize: 14, fontWeight: 500, color: tokens.accentText }}
+              className="underline-offset-4 hover:underline"
+            >
+              Экран ребёнка →
+            </Link>
+          ) : null}
           <Button variant="secondary" onClick={handleLogout}>
             Выйти
           </Button>
