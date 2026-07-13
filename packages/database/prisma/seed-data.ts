@@ -81,18 +81,23 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     icon: "run",
     order: 3,
     color: "#2F4F8C",
-    phraseForm: "Иду",
-    // ВНИМАНИЕ: русский требует предлог ("иду В парк") — движок шаблонов его не
-    // поддерживает. Результат "Иду парк" грамматически неточен; временно оставлено
-    // как есть до решения заказчика (добавлять ли предлоги в sentenceTemplate).
+    // Патч (TASK_PATCH_1.md §6): "Иду двор" -> "Пойдём во двор" — это не опечатка в одном
+    // слове, а три отдельные правки: (1) форма глагола — совместное побуждение "Пойдём",
+    // а не "Иду"; (2) нужен предлог; (3) предлог и падеж зависят от конкретного
+    // существительного ("во двор", но "в школу", "на кухню") — не выводится по правилу
+    // для всей категории, поэтому предлог+падеж зашиты целиком в phraseForm каждой карточки,
+    // а sentenceTemplate остаётся тем же "{verb} {noun}" (см. §5 REVISION_ANALYSIS.md —
+    // сам движок шаблонов не менялся, вся коррекция — в данных).
+    phraseForm: "Пойдём",
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
-      { title: "Парк", phraseForm: "парк", gender: "MASCULINE" },
-      { title: "Магазин", phraseForm: "магазин", gender: "MASCULINE" },
-      { title: "Дом", phraseForm: "дом", gender: "MASCULINE" },
-      { title: "Улица", phraseForm: "улицу", gender: "FEMININE" },
-      { title: "Школа", phraseForm: "школу", gender: "FEMININE" },
-      { title: "Двор", phraseForm: "двор", gender: "MASCULINE" },
+      { title: "Парк", phraseForm: "в парк", gender: "MASCULINE" },
+      { title: "Магазин", phraseForm: "в магазин", gender: "MASCULINE" },
+      // "Домой", не "в дом" — стандартная идиома для "идти домой" в русском.
+      { title: "Дом", phraseForm: "домой", gender: "MASCULINE" },
+      { title: "Улица", phraseForm: "на улицу", gender: "FEMININE" },
+      { title: "Школа", phraseForm: "в школу", gender: "FEMININE" },
+      { title: "Двор", phraseForm: "во двор", gender: "MASCULINE" },
     ],
   },
   {
@@ -123,6 +128,11 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     // форма "Мою" (мыть что-то), т.к. возвратная форма не сочетается с прямым
     // дополнением. Расхождение между названием категории и фактической словоформой —
     // тоже открытый вопрос к заказчику.
+    //
+    // Проверено при патче (TASK_PATCH_1.md §6, п.3): в отличие от "Идти", здесь предлог
+    // НЕ нужен — "мыть" управляет прямым дополнением без предлога ("мою руку", "мою лицо"),
+    // это не глагол движения. Существительные ниже намеренно не тронуты. Открытый вопрос
+    // выше (возвратная форма в названии категории) остаётся отдельным, не связанным с этим.
     phraseForm: "Мою",
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
