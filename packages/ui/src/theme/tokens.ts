@@ -55,6 +55,10 @@ export const themeTokens = {
     success: "#EAF3DE",
     successText: "#27500A",
     danger: "#B91C1C",
+    // Значок «избранное» на карточке (TASK_PATCH_1.md §2) — отдельный токен, не переиспользует
+    // цвет какой-либо предметной категории (совпадение с "Эмоции" было бы случайным).
+    favoriteFill: "#FAC775",
+    favoriteText: "#7A4A06",
   },
   // Усиленный вариант той же палитры (толще границы, темнее текст) — DESIGN.md
   // не описывает отдельную высококонтрастную тему, поэтому она не переизобретает
@@ -75,6 +79,8 @@ export const themeTokens = {
     success: "#EAF3DE",
     successText: "#1B3A07",
     danger: "#8C1414",
+    favoriteFill: "#F5B942",
+    favoriteText: "#4A2E03",
   },
 } as const;
 

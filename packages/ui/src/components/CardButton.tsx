@@ -19,6 +19,11 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   size?: "default" | "large";
   /** Показывает кнопку-крестик поверх карточки — только в режиме редактирования (ТЗ, часть A.7). */
   onDelete?: () => void;
+  /** В избранном у текущего ребёнка (TASK_PATCH_1.md §2) — определяет заливку звёздочки. */
+  favorite?: boolean;
+  /** Показывает кнопку-звёздочку добавления/удаления из избранного — доступна и в обычном
+   * режиме просмотра, не только в режиме редактирования (TASK_PATCH_1.md §2). */
+  onToggleFavorite?: () => void;
 }
 
 /**
@@ -26,7 +31,10 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  * Плоский дизайн: заливка category-100, подпись/иконка — category-800, без теней и градиентов.
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
-  ({ title, imageUrl, accentColor, icon, selected, size = "default", onDelete, className, ...rest }, ref) => {
+  (
+    { title, imageUrl, accentColor, icon, selected, size = "default", onDelete, favorite, onToggleFavorite, className, ...rest },
+    ref,
+  ) => {
     const { tokens } = useTheme();
     const dimension = size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
@@ -68,31 +76,53 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       </button>
     );
 
-    if (!onDelete) return button;
+    if (!onDelete && !onToggleFavorite) return button;
 
-    // Крестик — отдельная кнопка поверх карточки, а не вложенная внутрь неё
+    // Крестик/звёздочка — отдельные кнопки поверх карточки, а не вложенные внутрь нее
     // (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
-    // в режиме редактирования — обычный (не редактируемый) рендер разметку не меняет.
+    // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет.
     return (
       <div className="relative inline-flex">
         {button}
-        <button
-          type="button"
-          aria-label={`Удалить карточку «${title}»`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete();
-          }}
-          className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
-          style={{
-            backgroundColor: tokens.danger,
-            color: "#FFFFFF",
-            // @ts-expect-error CSS custom property for focus ring color
-            "--tw-ring-color": tokens.focusRing,
-          }}
-        >
-          <Icon name="x" size={16} strokeWidth={2.5} />
-        </button>
+        {onToggleFavorite ? (
+          <button
+            type="button"
+            aria-label={favorite ? `Убрать карточку «${title}» из избранного` : `Добавить карточку «${title}» в избранное`}
+            aria-pressed={favorite}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleFavorite();
+            }}
+            className="absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
+            style={{
+              backgroundColor: favorite ? tokens.favoriteFill : tokens.surfaceMuted,
+              color: favorite ? tokens.favoriteText : tokens.textMuted,
+              // @ts-expect-error CSS custom property for focus ring color
+              "--tw-ring-color": tokens.focusRing,
+            }}
+          >
+            <Icon name="star" size={16} strokeWidth={2.5} />
+          </button>
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            aria-label={`Удалить карточку «${title}»`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+            className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
+            style={{
+              backgroundColor: tokens.danger,
+              color: "#FFFFFF",
+              // @ts-expect-error CSS custom property for focus ring color
+              "--tw-ring-color": tokens.focusRing,
+            }}
+          >
+            <Icon name="x" size={16} strokeWidth={2.5} />
+          </button>
+        ) : null}
       </div>
     );
   },

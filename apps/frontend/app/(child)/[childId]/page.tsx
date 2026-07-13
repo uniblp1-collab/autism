@@ -17,10 +17,16 @@ import {
 } from "@autism-connect/ui";
 import { Card, CardType, Category } from "@autism-connect/shared";
 import { useCategories, useCards, useCreateCard, useDeleteCard } from "../../../features/cards/useCards";
-import { useFavorites } from "../../../features/cards/useFavorites";
+import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavorites";
 import { useChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
 import { useCompleteScheduleItem, useSchedules } from "../../../features/schedule/useSchedules";
+
+// Избранные карточки показываются первыми в сетке категории (исходное ТЗ §6.7) —
+// стабильная сортировка, чтобы порядок внутри "избранных"/"остальных" не менялся сам по себе.
+function sortFavoritesFirst(cards: Card[], favoriteCardIds: Set<string>): Card[] {
+  return [...cards].sort((a, b) => Number(favoriteCardIds.has(b.id)) - Number(favoriteCardIds.has(a.id)));
+}
 
 const FAVORITES_TAB = "__favorites__";
 const SCHEDULE_TAB = "__schedule__";
@@ -123,6 +129,15 @@ export default function ChildScreenPage() {
   const { data: schedules = [] } = useSchedules(childId);
   const completeItem = useCompleteScheduleItem(childId);
   const deleteCard = useDeleteCard();
+  const toggleFavorite = useToggleFavorite(childId);
+
+  function handleToggleFavorite(cardId: string) {
+    if (favoriteCardIds.has(cardId)) {
+      toggleFavorite.remove.mutate(cardId);
+    } else {
+      toggleFavorite.add.mutate(cardId);
+    }
+  }
 
   const showBuilderPanel = activeCategory !== null && difficultyLevel !== 1 && (sb.builderWords.length > 0 || !showAdjectiveStep);
   const showYesNo = activeTab !== SCHEDULE_TAB;
@@ -219,12 +234,14 @@ export default function ChildScreenPage() {
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
                 onClick={() => handleFavoriteTap(card)}
+                favorite
+                onToggleFavorite={() => handleToggleFavorite(card.id)}
               />
             ))}
           </div>
         ) : activeCategory ? (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-            {(showAdjectiveStep ? adjectiveCards : nounCards).map((card) => (
+            {sortFavoritesFirst(showAdjectiveStep ? adjectiveCards : nounCards, favoriteCardIds).map((card) => (
               <CardButton
                 key={card.id}
                 title={card.title}
@@ -233,6 +250,8 @@ export default function ChildScreenPage() {
                 selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
                 onClick={() => (showAdjectiveStep ? sb.selectAdjective(card) : sb.selectNoun(card))}
                 onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
+                favorite={favoriteCardIds.has(card.id)}
+                onToggleFavorite={() => handleToggleFavorite(card.id)}
               />
             ))}
             {isEditMode && !showAdjectiveStep ? (
