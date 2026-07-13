@@ -1,4 +1,4 @@
-import { CardSource, CardType, Gender, SpeechLevel, UserRole } from "./enums";
+import { CardSize, CardSource, CardType, Gender, SpeechLevel, UserRole } from "./enums";
 
 export interface User {
   id: string;
@@ -20,6 +20,8 @@ export interface Child {
   // Редакция 3 механики (TASK_REVISE_MECHANICS_AND_ADMIN.md §A.4/A.7).
   difficultyLevel: 1 | 2 | 3;
   unlockedCategoryIds: string[];
+  /** Общий размер карточек в сетке категории — переключается в режиме редактирования. */
+  cardSize: CardSize;
   createdAt: string;
   updatedAt: string;
 }

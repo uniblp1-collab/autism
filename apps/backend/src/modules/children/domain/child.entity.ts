@@ -1,5 +1,6 @@
 export type SpeechLevel = "NONE" | "SINGLE_WORDS" | "PHRASES" | "SENTENCES";
 export type DifficultyLevel = 1 | 2 | 3;
+export type CardSize = "SMALL" | "MEDIUM" | "LARGE";
 
 export class Child {
   constructor(
@@ -12,6 +13,7 @@ export class Child {
     public readonly favoriteCategoryIds: string[],
     public readonly difficultyLevel: DifficultyLevel,
     public readonly unlockedCategoryIds: string[],
+    public readonly cardSize: CardSize,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

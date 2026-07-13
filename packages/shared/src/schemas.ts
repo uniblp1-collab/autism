@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CardType, Gender, SpeechLevel } from "./enums";
+import { CardSize, CardType, Gender, SpeechLevel } from "./enums";
 
 export const registerSchema = z.object({
   email: z.string().email(),
@@ -28,6 +28,7 @@ export const createChildSchema = z.object({
   favoriteCategoryIds: z.array(z.string().uuid()).optional(),
   difficultyLevel: difficultyLevelSchema.optional(),
   unlockedCategoryIds: z.array(z.string().uuid()).optional(),
+  cardSize: z.nativeEnum(CardSize).optional(),
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;
 

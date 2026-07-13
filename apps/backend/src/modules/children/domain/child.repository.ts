@@ -1,4 +1,4 @@
-import { Child, DifficultyLevel, SpeechLevel } from "./child.entity";
+import { CardSize, Child, DifficultyLevel, SpeechLevel } from "./child.entity";
 
 export const CHILD_REPOSITORY = Symbol("CHILD_REPOSITORY");
 
@@ -11,6 +11,7 @@ export interface CreateChildData {
   favoriteCategoryIds?: string[];
   difficultyLevel?: DifficultyLevel;
   unlockedCategoryIds?: string[];
+  cardSize?: CardSize;
 }
 
 export interface UpdateChildData {
@@ -21,6 +22,7 @@ export interface UpdateChildData {
   favoriteCategoryIds?: string[];
   difficultyLevel?: DifficultyLevel;
   unlockedCategoryIds?: string[];
+  cardSize?: CardSize;
 }
 
 export interface ChildRepository {

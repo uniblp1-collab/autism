@@ -16,7 +16,7 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   /** Ключ иконки из реестра Tabler Icons — резервный визуал, пока нет imageUrl. */
   icon?: string;
   selected?: boolean;
-  size?: "default" | "large";
+  size?: "small" | "medium" | "large";
   /** Показывает кнопку-крестик поверх карточки — только в режиме редактирования (ТЗ, часть A.7). */
   onDelete?: () => void;
   /** В избранном у текущего ребёнка (TASK_PATCH_1.md §2) — определяет заливку звёздочки. */
@@ -32,11 +32,13 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
   (
-    { title, imageUrl, accentColor, icon, selected, size = "default", onDelete, favorite, onToggleFavorite, className, ...rest },
+    { title, imageUrl, accentColor, icon, selected, size = "small", onDelete, favorite, onToggleFavorite, className, ...rest },
     ref,
   ) => {
     const { tokens } = useTheme();
-    const dimension = size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : MIN_TOUCH_TARGET_PX;
+    // "small" — минимально допустимый тач-таргет (DESIGN.md §6.3), не уменьшаем ниже него.
+    const dimension =
+      size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : size === "medium" ? MIN_TOUCH_TARGET_PX * 1.2 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
     // Если картинка недоступна (например, хранилище временно не отвечает), откатываемся на
     // иконку вместо "битой" картинки браузера — для ребёнка это выглядело бы как ошибка.

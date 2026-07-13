@@ -15,6 +15,7 @@ export class ChildMapper {
       (record.favoriteCategories ?? []).map((fc) => fc.categoryId),
       record.difficultyLevel as 1 | 2 | 3,
       record.unlockedCategoryIds,
+      record.cardSize,
       record.createdAt,
       record.updatedAt,
     );

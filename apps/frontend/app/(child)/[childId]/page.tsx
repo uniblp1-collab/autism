@@ -15,10 +15,10 @@ import {
   YesNoStickyPanel,
   useTheme,
 } from "@autism-connect/ui";
-import { Card, CardType, Category } from "@autism-connect/shared";
+import { Card, CardSize, CardType, Category } from "@autism-connect/shared";
 import { useCategories, useCards, useCreateCard, useDeleteCard, useUpdateCard } from "../../../features/cards/useCards";
 import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavorites";
-import { useChild } from "../../../features/children/useChildren";
+import { useChild, useUpdateChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
 import { useCompleteScheduleItem, useSchedules } from "../../../features/schedule/useSchedules";
 
@@ -35,6 +35,18 @@ const SCHEDULE_COLOR = "#0C447C"; // тон "Транспорт" — переи�
 
 // Режим редактирования (ТЗ §A.7) пока не защищён PIN-кодом — см. .env.example.
 const EDIT_MODE_ENABLED = process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
+
+const CARD_SIZE_OPTIONS: { value: CardSize; label: string }[] = [
+  { value: CardSize.SMALL, label: "Мелкие" },
+  { value: CardSize.MEDIUM, label: "Средние" },
+  { value: CardSize.LARGE, label: "Крупные" },
+];
+
+const CARD_SIZE_TO_BUTTON_SIZE: Record<CardSize, "small" | "medium" | "large"> = {
+  [CardSize.SMALL]: "small",
+  [CardSize.MEDIUM]: "medium",
+  [CardSize.LARGE]: "large",
+};
 
 interface QuickAddCardModalProps {
   open: boolean;
@@ -140,6 +152,16 @@ export default function ChildScreenPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
+
+  // Черновик размера сетки — применяется к карточкам сразу (предпросмотр), но
+  // сохраняется на бэкенде только по нажатию «Сохранить».
+  const [draftCardSize, setDraftCardSize] = useState<CardSize>(child?.cardSize ?? CardSize.SMALL);
+  useEffect(() => {
+    if (child?.cardSize) setDraftCardSize(child.cardSize);
+  }, [child?.cardSize]);
+  const updateChild = useUpdateChild(childId);
+  const isCardSizeDirty = Boolean(child) && draftCardSize !== child?.cardSize;
+  const cardButtonSize = CARD_SIZE_TO_BUTTON_SIZE[draftCardSize];
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
@@ -247,6 +269,42 @@ export default function ChildScreenPage() {
         ) : null}
       </nav>
 
+      {isEditMode ? (
+        <div
+          className="flex flex-wrap items-center gap-2 p-3"
+          style={{ borderBottom: `1px solid ${tokens.border}` }}
+        >
+          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Размер карточек:</span>
+          {CARD_SIZE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={draftCardSize === option.value}
+              onClick={() => setDraftCardSize(option.value)}
+              className="px-3 py-1 focus:outline-none focus-visible:ring-4"
+              style={{
+                borderRadius: 999,
+                fontSize: 14,
+                backgroundColor: draftCardSize === option.value ? tokens.accentSoft : tokens.surfaceMuted,
+                color: draftCardSize === option.value ? tokens.accentText : tokens.textSecondary,
+                // @ts-expect-error CSS custom property for focus ring color
+                "--tw-ring-color": tokens.focusRing,
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+          <Button
+            type="button"
+            className="ml-auto"
+            disabled={!isCardSizeDirty || updateChild.isPending}
+            onClick={() => updateChild.mutate({ cardSize: draftCardSize })}
+          >
+            {updateChild.isPending ? "Сохраняем..." : "Сохранить"}
+          </Button>
+        </div>
+      ) : null}
+
       <main className="flex-1 overflow-y-auto p-4 pb-40">
         {activeTab === SCHEDULE_TAB ? (
           <div className="flex flex-col gap-6">
@@ -280,6 +338,7 @@ export default function ChildScreenPage() {
                 title={card.title}
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
+                size={cardButtonSize}
                 // В режиме редактирования тап открывает редактирование, как и в обычной
                 // сетке категории — раньше вкладка «Избранное» (открытая по умолчанию) не
                 // поддерживала ни редактирование, ни удаление вовсе.
@@ -298,6 +357,7 @@ export default function ChildScreenPage() {
                 title={card.title}
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
+                size={cardButtonSize}
                 selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
                 // В режиме редактирования тап по карточке открывает редактирование, а не
                 // выбирает её для фразы — включая библиотечные карточки, не только кастомные

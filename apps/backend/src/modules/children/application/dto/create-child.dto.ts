@@ -1,5 +1,7 @@
 import { IsArray, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUrl, IsUUID, Max, MaxLength, Min } from "class-validator";
-import { DifficultyLevel, SpeechLevel } from "../../domain/child.entity";
+import { CardSize, DifficultyLevel, SpeechLevel } from "../../domain/child.entity";
+
+const CARD_SIZES: CardSize[] = ["SMALL", "MEDIUM", "LARGE"];
 
 export class CreateChildDto {
   @IsString()
@@ -31,4 +33,8 @@ export class CreateChildDto {
   @IsArray()
   @IsUUID("4", { each: true })
   unlockedCategoryIds?: string[];
+
+  @IsOptional()
+  @IsEnum(CARD_SIZES)
+  cardSize?: CardSize;
 }

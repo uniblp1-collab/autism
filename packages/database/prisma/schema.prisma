@@ -41,6 +41,14 @@ enum Gender {
   NEUTER
 }
 
+// Общий размер карточек в сетке категории на экране ребёнка — переключается в режиме
+// редактирования (карандаш), применяется ко всей сетке сразу, не к отдельным карточкам.
+enum CardSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -68,6 +76,8 @@ model Child {
   // Категории-глаголы, доступные ребёнку; "Дай" всегда подразумевается доступной
   // (проверяется в коде, не через отсутствие в этом списке — см. A.7).
   unlockedCategoryIds String[]    @default([])
+  // Размер карточек в сетке — переключается в режиме редактирования экрана ребёнка.
+  cardSize            CardSize    @default(SMALL)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 

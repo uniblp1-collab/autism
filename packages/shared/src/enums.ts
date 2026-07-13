@@ -27,3 +27,11 @@ export enum Gender {
   FEMININE = "FEMININE",
   NEUTER = "NEUTER",
 }
+
+// Общий размер карточек в сетке категории на экране ребёнка (не хранится на Card —
+// это настройка отображения на уровне ребёнка, не свойство самой карточки).
+export enum CardSize {
+  SMALL = "SMALL",
+  MEDIUM = "MEDIUM",
+  LARGE = "LARGE",
+}

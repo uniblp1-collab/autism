@@ -17,6 +17,7 @@ export class CreateChildUseCase {
       favoriteCategoryIds: dto.favoriteCategoryIds,
       difficultyLevel: dto.difficultyLevel,
       unlockedCategoryIds: dto.unlockedCategoryIds,
+      cardSize: dto.cardSize,
     });
   }
 }
