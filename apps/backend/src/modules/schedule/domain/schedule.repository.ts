@@ -22,4 +22,6 @@ export interface ScheduleRepository {
   addItem(scheduleId: string, data: CreateScheduleItemData): Promise<Schedule>;
   findItemById(itemId: string): Promise<ScheduleItem | null>;
   setItemCompletion(itemId: string, isCompleted: boolean): Promise<ScheduleItem>;
+  /** Сброс отметок "выполнено" по всем шагам расписания всех детей (ТЗ §6.11, ежедневный cron). */
+  resetAllCompletions(): Promise<void>;
 }

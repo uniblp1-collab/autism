@@ -57,4 +57,13 @@ export class PrismaScheduleRepository implements ScheduleRepository {
     });
     return ScheduleMapper.itemToDomain(record);
   }
+
+  async resetAllCompletions(): Promise<void> {
+    // Только отметки о выполнении — сама история (Statistics/StatisticEntry) в отдельных
+    // таблицах, без FK на ScheduleItem, и этим сбросом не затрагивается (см. TASK_PATCH_1.md §5).
+    await this.prisma.scheduleItem.updateMany({
+      where: { isCompleted: true },
+      data: { isCompleted: false, completedAt: null },
+    });
+  }
 }

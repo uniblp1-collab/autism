@@ -15,6 +15,7 @@ describe("CompleteScheduleItemUseCase", () => {
       addItem: jest.fn(),
       findItemById: jest.fn(),
       setItemCompletion: jest.fn(),
+      resetAllCompletions: jest.fn(),
     };
     useCase = new CompleteScheduleItemUseCase(repository);
   });

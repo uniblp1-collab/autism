@@ -2,6 +2,8 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { APP_GUARD } from "@nestjs/core";
+// Алиас, т.к. имя ScheduleModule уже занято собственным bounded-context модулем приложения.
+import { ScheduleModule as CronScheduleModule } from "@nestjs/schedule";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RequestIdMiddleware } from "./common/logger/request-id.middleware";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
@@ -20,6 +22,8 @@ import { AdminModule } from "./modules/admin/presentation/admin.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Регистрирует планировщик @Cron — без forRoot() декоратор в ScheduleResetService не сработает.
+    CronScheduleModule.forRoot(),
     JwtModule.registerAsync({
       global: true,
       inject: [ConfigService],

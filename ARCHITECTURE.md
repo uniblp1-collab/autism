@@ -180,6 +180,7 @@ interface CardGeneratorPort {
 - **Docker Compose**: сервисы `frontend`, `backend`, `postgres`, `minio` (или интеграция с внешним S3), `nginx` (опционально, для reverse proxy в проде).
 - **Миграции:** через Prisma Migrate, запускаются автоматически в CI/CD перед деплоем backend.
 - **Тестовые окружения:** отдельная БД для e2e-тестов backend, поднимается через `docker-compose.test.yml`.
+- **Фоновые задачи (`@nestjs/schedule`):** `ScheduleResetService` (`modules/schedule/application`) ежедневно в 00:00 обнуляет `ScheduleItem.isCompleted` (ТЗ §6.11) через `ScheduleRepository.resetAllCompletions()` — не действием пользователя, а cron'ом, регистрируется через `ScheduleModule.forRoot()` из `@nestjs/schedule` в `AppModule` (алиас `CronScheduleModule` во избежание конфликта имён с собственным модулем `schedule`). Часовой пояс — переменная окружения `TZ` (по умолчанию UTC, **открытый вопрос к заказчику** — см. `.env.example`).
 
 ---
 
