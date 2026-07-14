@@ -4,7 +4,7 @@ import { Card } from "../../cards/domain/card.entity";
 import { ListUsersUseCase, PaginatedUsers } from "./use-cases/list-users.use-case";
 import { SetUserActiveUseCase } from "./use-cases/set-user-active.use-case";
 import { ResetUserPasswordUseCase, ResetPasswordResult } from "./use-cases/reset-user-password.use-case";
-import { UploadCardImageUseCase } from "./use-cases/upload-card-image.use-case";
+import { UploadCardImageUseCase } from "../../cards/application/use-cases/upload-card-image.use-case";
 import { ListUsersQueryDto } from "./dto/list-users-query.dto";
 
 @Injectable()

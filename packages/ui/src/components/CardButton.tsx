@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef, useState } from "react";
+import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useState } from "react";
 import clsx from "clsx";
 import { MIN_TOUCH_TARGET_PX, paddingTokens, radiusTokens, resolveCategoryColorToken } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
@@ -43,6 +43,41 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     // Если картинка недоступна (например, хранилище временно не отвечает), откатываемся на
     // иконку вместо "битой" картинки браузера — для ребёнка это выглядело бы как ошибка.
     const [imageFailed, setImageFailed] = useState(false);
+    // null = ещё не измерено (или измерить не удалось, напр. без CORS с картинки другого
+    // источника) — по умолчанию считаем картинку тёмной: белый текст на тёмном скриме читается
+    // лучше как безопасный вариант, чем чёрный текст без скрима на непредсказуемо тёмном фото.
+    const [isLightImage, setIsLightImage] = useState<boolean | null>(null);
+    const hasImage = Boolean(imageUrl) && !imageFailed;
+
+    // Определяем светлая/тёмная картинка по среднему значению яркости небольшой выборки
+    // пикселей — нужно, чтобы подпись поверх фото (белая или тёмная) не терялась на фоне
+    // (ТЗ: учитывать инверсию цвета текста для тёмных/светлых картинок).
+    function handleImageLoad(event: SyntheticEvent<HTMLImageElement>) {
+      const img = event.currentTarget;
+      try {
+        const sampleSize = 12;
+        const canvas = document.createElement("canvas");
+        canvas.width = sampleSize;
+        canvas.height = sampleSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+        const { data } = ctx.getImageData(0, 0, sampleSize, sampleSize);
+        let total = 0;
+        let count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          count += 1;
+        }
+        setIsLightImage(total / count > 150);
+      } catch {
+        // Картинка с другого источника без CORS-заголовков "заражает" canvas — читать пиксели
+        // нельзя (SecurityError). Оставляем isLightImage=null (безопасный тёмный вариант).
+      }
+    }
+
+    const overlayTextColor = isLightImage ? "#1A1A1A" : "#FFFFFF";
+    const scrimRgb = isLightImage ? "255,255,255" : "0,0,0";
 
     const button = (
       <button
@@ -50,41 +85,64 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         type="button"
         aria-pressed={selected}
         className={clsx(
-          "flex flex-col items-center justify-center gap-2",
+          hasImage ? "relative overflow-hidden" : "flex flex-col items-center justify-center gap-2",
           "transition-transform duration-150 ease-out active:scale-95",
           "focus:outline-none focus-visible:ring-4",
           className,
         )}
         style={{
           width: "100%",
+          // Явная высота 100% нужна только для варианта с картинкой — там всё содержимое
+          // расположено абсолютно (нет обычного потока, который задавал бы высоту сам).
+          // Без изображения высота по-прежнему считается от контента (иконка/подпись/паддинги).
+          height: hasImage ? "100%" : undefined,
           minWidth: dimension,
           minHeight: dimension,
           backgroundColor: bg,
           color: fg,
           borderRadius: radiusTokens.md,
-          padding: paddingTokens.tile,
+          padding: hasImage ? 0 : paddingTokens.tile,
           border: selected ? `2px solid ${fg}` : "none",
           // @ts-expect-error CSS custom property for focus ring color
           "--tw-ring-color": tokens.focusRing,
         }}
         {...rest}
       >
-        {imageUrl && !imageFailed ? (
-          // Ленивая загрузка вне видимой области — бюджет производительности (ARCHITECTURE.md §7).
-          // eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image
-          <img
-            src={imageUrl}
-            alt=""
-            loading="lazy"
-            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
-            onError={() => setImageFailed(true)}
-          />
-        ) : icon ? (
-          <Icon name={icon} size={32} />
-        ) : null}
-        <span className="text-center" style={{ fontSize: 21, fontWeight: 500 }}>
-          {title}
-        </span>
+        {hasImage ? (
+          <>
+            {/* Картинка растянута на всю карточку (object-fit: cover) — ленивая загрузка вне
+                видимой области, бюджет производительности (ARCHITECTURE.md §7). */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image */}
+            <img
+              src={imageUrl ?? undefined}
+              alt=""
+              loading="lazy"
+              crossOrigin="anonymous"
+              onLoad={handleImageLoad}
+              onError={() => setImageFailed(true)}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* Скрим-градиент внизу карточки — гарантирует контраст подписи независимо от того,
+                насколько точно определилась яркость картинки. */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{ background: `linear-gradient(to top, rgba(${scrimRgb}, 0.78) 0%, rgba(${scrimRgb}, 0) 60%)` }}
+            />
+            <span
+              className="absolute inset-x-0 bottom-0 text-center"
+              style={{ fontSize: 21, fontWeight: 500, color: overlayTextColor, padding: paddingTokens.tile }}
+            >
+              {title}
+            </span>
+          </>
+        ) : (
+          <>
+            {icon ? <Icon name={icon} size={32} /> : null}
+            <span className="text-center" style={{ fontSize: 21, fontWeight: 500 }}>
+              {title}
+            </span>
+          </>
+        )}
       </button>
     );
 

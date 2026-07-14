@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   AddCardTile,
@@ -17,7 +17,14 @@ import {
   useTheme,
 } from "@autism-connect/ui";
 import { Card, CardSize, CardType, Category } from "@autism-connect/shared";
-import { useCategories, useCards, useCreateCard, useDeleteCard, useUpdateCard } from "../../../features/cards/useCards";
+import {
+  useCategories,
+  useCards,
+  useCreateCard,
+  useDeleteCard,
+  useUpdateCard,
+  useUploadCardImage,
+} from "../../../features/cards/useCards";
 import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavorites";
 import { useChild, useUpdateChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
@@ -110,11 +117,16 @@ interface EditCardModalProps {
 
 // Доступно на любой карточке (включая библиотечные, не только кастомные) в режиме
 // редактирования — тап по карточке при активном карандаше открывает эту модалку
-// вместо выбора карточки для фразы.
+// вместо выбора карточки для фразы. Загрузка картинки — тоже отсюда (раньше была
+// доступна только из админ-панели), поэтому родителю не нужен доступ в /admin, чтобы
+// добавить фото к карточке своего ребёнка.
 function EditCardModal({ card, onClose }: EditCardModalProps) {
   const updateCard = useUpdateCard();
+  const uploadImage = useUploadCardImage();
   const [title, setTitle] = useState(card.title);
   const [phraseForm, setPhraseForm] = useState(card.phraseForm);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -126,20 +138,77 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
     onClose();
   }
 
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setImageError(null);
+    try {
+      await uploadImage.mutateAsync({ cardId: card.id, file });
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : "Не удалось загрузить картинку");
+    }
+  }
+
   return (
     <Modal open onClose={onClose} title={`Редактировать «${card.title}»`}>
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input
-          label="Словоформа во фразе (напр. «кашу» для «Ем кашу»)"
-          required
-          value={phraseForm}
-          onChange={(e) => setPhraseForm(e.target.value)}
-        />
-        <Button type="submit" disabled={updateCard.isPending}>
-          {updateCard.isPending ? "Сохраняем..." : "Сохранить"}
-        </Button>
-      </form>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <div
+            className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden"
+            style={{ borderRadius: 14, backgroundColor: card.color, backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
+          >
+            {!card.imageUrl ? <span style={{ fontSize: 11, color: "#FFFFFF", textAlign: "center" }}>нет фото</span> : null}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label style={{ fontSize: 14, fontWeight: 500, color: "inherit", cursor: "pointer" }}>
+              <span className="underline">{uploadImage.isPending ? "Загрузка..." : card.imageUrl ? "Заменить фото" : "Добавить фото"}</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={uploadImage.isPending}
+                onChange={handleImageChange}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowInstructions((prev) => !prev)}
+              className="text-left underline"
+              style={{ fontSize: 12, color: "inherit", opacity: 0.7 }}
+            >
+              {showInstructions ? "Скрыть инструкцию" : "Как это работает?"}
+            </button>
+          </div>
+        </div>
+
+        {imageError ? <p style={{ fontSize: 13, color: "#B91C1C" }}>{imageError}</p> : null}
+
+        {showInstructions ? (
+          <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.85 }}>
+            <p>1. Нажмите «Добавить фото»/«Заменить фото» и выберите файл на своём устройстве.</p>
+            <p>2. Допустимые форматы — JPEG, PNG или WebP, размер файла до 5 МБ.</p>
+            <p>
+              3. Картинка загружается в файловое хранилище приложения (S3-совместимое, MinIO) и после
+              загрузки сразу растягивается на всю карточку — название будет отображаться поверх неё.
+            </p>
+            <p>4. Изменение фото видно сразу всем экранам, где используется эта карточка.</p>
+          </div>
+        ) : null}
+
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            label="Словоформа во фразе (напр. «кашу» для «Ем кашу»)"
+            required
+            value={phraseForm}
+            onChange={(e) => setPhraseForm(e.target.value)}
+          />
+          <Button type="submit" disabled={updateCard.isPending}>
+            {updateCard.isPending ? "Сохраняем..." : "Сохранить"}
+          </Button>
+        </form>
+      </div>
     </Modal>
   );
 }

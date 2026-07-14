@@ -1,6 +1,6 @@
 import { UploadCardImageUseCase } from "./upload-card-image.use-case";
-import { CardRepository } from "../../../cards/domain/card.repository";
-import { Card } from "../../../cards/domain/card.entity";
+import { CardRepository } from "../../domain/card.repository";
+import { Card } from "../../domain/card.entity";
 import { StorageService } from "../../../../storage/storage.service";
 import { EntityNotFoundException } from "../../../../common/exceptions/domain.exception";
 

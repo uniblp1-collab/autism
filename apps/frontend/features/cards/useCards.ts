@@ -53,3 +53,17 @@ export function useDeleteCard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
   });
 }
+
+// Доступно из режима редактирования на экране ребёнка — отдельная (не-админская) ручка,
+// см. CardsController.uploadImage на бэкенде.
+export function useUploadCardImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cardId, file }: { cardId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiFetch<Card>(`/cards/${cardId}/image`, { method: "POST", body: formData });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
+  });
+}

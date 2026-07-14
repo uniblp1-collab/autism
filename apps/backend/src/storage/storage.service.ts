@@ -1,7 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "crypto";
-import { CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutBucketCorsCommand,
+  PutBucketPolicyCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { assertValidCardImage } from "./card-image-validator";
 
 const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
@@ -49,6 +56,7 @@ export class StorageService implements OnModuleInit {
     try {
       await this.ensureBucketExists();
       await this.ensurePublicReadPolicy();
+      await this.ensureCorsConfigured();
     } catch (error) {
       this.logger.warn(
         `Не удалось проверить/настроить S3-бакет "${this.bucket}" при старте — загрузка картинок карточек ` +
@@ -84,6 +92,21 @@ export class StorageService implements OnModuleInit {
             },
           ],
         }),
+      }),
+    );
+  }
+
+  // Без CORS-заголовков браузер отображает картинку нормально, но <canvas> с ней считается
+  // "заражённым" (tainted) — CardButton не смог бы прочитать пиксели для определения
+  // светлая/тёмная картинка (инверсия цвета текста поверх фото), getImageData бросал бы
+  // SecurityError. Разрешаем анонимное чтение с любого источника — бакет и так публичный.
+  private async ensureCorsConfigured(): Promise<void> {
+    await this.client.send(
+      new PutBucketCorsCommand({
+        Bucket: this.bucket,
+        CORSConfiguration: {
+          CORSRules: [{ AllowedOrigins: ["*"], AllowedMethods: ["GET"], AllowedHeaders: ["*"], MaxAgeSeconds: 3600 }],
+        },
       }),
     );
   }

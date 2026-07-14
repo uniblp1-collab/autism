@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { CARD_REPOSITORY, CardRepository } from "../../../cards/domain/card.repository";
-import { Card } from "../../../cards/domain/card.entity";
+import { CARD_REPOSITORY, CardRepository } from "../../domain/card.repository";
+import { Card } from "../../domain/card.entity";
 import { EntityNotFoundException } from "../../../../common/exceptions/domain.exception";
 import { StorageService } from "../../../../storage/storage.service";
 
