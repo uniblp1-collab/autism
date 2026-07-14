@@ -47,13 +47,17 @@ services:
     image: minio/mc
     container_name: autism-connect-minio-init
     depends_on:
+      # Не condition: service_healthy — здоровье minio у некоторых образов проверяется через
+      # curl, которого в свежих образах minio/minio может не быть, и тогда healthcheck никогда
+      # не станет "healthy", хотя сам сервис уже отвечает на запросы (см. ретрай ниже, который
+      # проверяет готовность напрямую через mc, а не полагается на Docker-healthcheck).
       minio:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - ./minio-cors.xml:/cors.xml:ro
     entrypoint: >
       sh -c "
-      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done &&
       mc mb --ignore-existing local/autism-connect-cards &&
       mc anonymous set download local/autism-connect-cards &&
       mc cors set local/autism-connect-cards /cors.xml
@@ -70,8 +74,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # Не condition: service_healthy для minio — то же самое ограничение, что и у
+      # createbuckets выше (healthcheck через curl может никогда не стать "healthy" на новых
+      # образах minio/minio). StorageService на бэкенде и так переживает временную
+      # недоступность MinIO без падения (см. storage.service.ts), а фактической готовности
+      # бакета дожидается createbuckets — этого достаточно для порядка запуска.
       minio:
-        condition: service_healthy
+        condition: service_started
       createbuckets:
         condition: service_completed_successfully
     ports:
