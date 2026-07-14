@@ -36,6 +36,29 @@ services:
       timeout: 5s
       retries: 10
 
+  # Одноразовый контейнер: создаёт бакет, включает публичное чтение и CORS через сам `mc`
+  # (официальный CLI MinIO), а не через @aws-sdk/client-s3 из бэкенда — SDK начиная с версий с
+  # "flexible checksums" безусловно добавляет заголовок x-amz-sdk-checksum-algorithm на
+  # PutBucketPolicy/PutBucketCors (эти два вызова помечены в модели S3 как
+  # requestChecksumRequired), а MinIO отвечает на него "NotImplemented". `mc` этой проблеме не
+  # подвержен, поэтому настройка бакета вынесена сюда — StorageService на бэкенде оставляет свои
+  # попытки лишь как best-effort fallback (см. комментарий в storage.service.ts).
+  createbuckets:
+    image: minio/mc
+    container_name: autism-connect-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./minio-cors.xml:/cors.xml:ro
+    entrypoint: >
+      sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/autism-connect-cards &&
+      mc anonymous set download local/autism-connect-cards &&
+      mc cors set local/autism-connect-cards /cors.xml
+      "
+
   backend:
     build:
       context: ../..
@@ -49,6 +72,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
     ports:
       - "3001:3000"
 
