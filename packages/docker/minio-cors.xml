@@ -1,8 +1,0 @@
-<CORSConfiguration>
-  <CORSRule>
-    <AllowedOrigin>*</AllowedOrigin>
-    <AllowedMethod>GET</AllowedMethod>
-    <AllowedHeader>*</AllowedHeader>
-    <MaxAgeSeconds>3600</MaxAgeSeconds>
-  </CORSRule>
-</CORSConfiguration>

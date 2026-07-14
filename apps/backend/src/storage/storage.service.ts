@@ -1,14 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "crypto";
-import {
-  CreateBucketCommand,
-  HeadBucketCommand,
-  PutBucketCorsCommand,
-  PutBucketPolicyCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { CreateBucketCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { assertValidCardImage } from "./card-image-validator";
 
 const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
@@ -50,44 +43,27 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  // Проверка/создание бакета — best-effort при старте, а не обязательное условие запуска:
-  // если MinIO/S3 временно недоступен, весь бэкенд (включая auth/cards/...) не должен падать
-  // из-за одного лишь StorageModule. Каждый шаг ловит свою ошибку отдельно (а не один общий
-  // try/catch на все три) — иначе сбой первого шага молча отменял бы остальные, а PutBucketPolicy
-  // у MinIO ломается систематически (см. комментарий у ensurePublicReadPolicy), из-за чего
-  // CORS-настройка вообще никогда бы не пробовалась.
+  // Проверка/создание бакета — best-effort при старте, а не обязательное условие запуска: если
+  // MinIO/S3 временно недоступен, весь бэкенд (включая auth/cards/...) не должен падать из-за
+  // одного лишь StorageModule.
   //
-  // ВАЖНО: PutBucketPolicy/PutBucketCors из @aws-sdk/client-s3 не работают против MinIO начиная с
-  // версий SDK, где появились "flexible checksums" — S3-модель помечает эти два вызова как
-  // requestChecksumRequired: true, поэтому SDK безусловно добавляет заголовок
-  // x-amz-sdk-checksum-algorithm, а MinIO отвечает "A header you provided implies functionality
-  // that is not implemented" (в отличие от PutObject, где чек-сумма не обязательна и WHEN_REQUIRED
-  // её действительно убирает — поэтому сама загрузка картинок и работает). Обойти это на уровне
-  // SDK-миддлвари надёжно нельзя (чек-сумма добавляется в момент send(), а не в момент создания
-  // команды — .middlewareStack.remove() на самой команде ничего не снимает). Поэтому публичный
-  // доступ на чтение и CORS настраиваются НЕ отсюда, а init-контейнером на базе `minio/mc` в
-  // packages/docker/docker-compose.yml (createbuckets), который не подвержен этому багу SDK.
-  // Вызовы ниже оставлены как best-effort fallback для локального pnpm dev без docker-compose —
-  // если они не сработают (см. предупреждение в логе), сами картинки всё равно загружаются
-  // (uploadCardImage), просто останутся недоступны браузеру, пока бакет не станет публичным.
+  // ВАЖНО: публичный доступ на чтение и CORS для бакета сюда намеренно не входят — ни
+  // PutBucketPolicy/PutBucketCors из @aws-sdk/client-s3, ни `mc policy`/`mc cors` не работают
+  // против MinIO здесь: PutBucketPolicy/PutBucketCors в модели S3 помечены как
+  // requestChecksumRequired, SDK безусловно добавляет заголовок x-amz-sdk-checksum-algorithm, и
+  // MinIO отвечает "A header you provided implies functionality that is not implemented"; а
+  // `mc cors set` падает с ТОЙ ЖЕ ошибкой, потому что современный MinIO вообще не реализует
+  // per-bucket CORS API — CORS настраивается только на уровне всего сервера через переменную
+  // окружения MINIO_API_CORS_ALLOW_ORIGIN (см. packages/docker/docker-compose.yml). Публичное
+  // чтение бакета настраивается один раз через `mc anonymous set download` в init-контейнере
+  // createbuckets (тоже в docker-compose.yml) — это единственный путь, который реально работает.
   async onModuleInit(): Promise<void> {
-    await this.ensureBucketExists();
-
     try {
-      await this.ensurePublicReadPolicy();
+      await this.ensureBucketExists();
     } catch (error) {
       this.logger.warn(
-        `Не удалось настроить публичный доступ на чтение для бакета "${this.bucket}" — картинки карточек ` +
-          `будут недоступны браузеру, пока политика не применится (см. createbuckets в docker-compose.yml). ${(error as Error).message}`,
-      );
-    }
-
-    try {
-      await this.ensureCorsConfigured();
-    } catch (error) {
-      this.logger.warn(
-        `Не удалось настроить CORS для бакета "${this.bucket}" — определение яркости картинки на ` +
-          `карточке (инверсия цвета подписи) будет недоступно, сама картинка при этом отобразится нормально. ${(error as Error).message}`,
+        `Не удалось проверить/создать S3-бакет "${this.bucket}" при старте — загрузка картинок карточек ` +
+          `будет недоступна, пока MinIO/S3 не станет доступен. ${(error as Error).message}`,
       );
     }
   }
@@ -99,43 +75,6 @@ export class StorageService implements OnModuleInit {
       await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
       this.logger.log(`Создан S3-бакет "${this.bucket}"`);
     }
-  }
-
-  // TODO(безопасность, MVP-упрощение): бакет держится с публичным доступом на чтение, чтобы
-  // фронтенд мог загружать картинки карточек напрямую из MinIO без прокси через бэкенд.
-  // Для продакшена — приватный бакет + presigned GET URL или CDN перед ним.
-  private async ensurePublicReadPolicy(): Promise<void> {
-    await this.client.send(
-      new PutBucketPolicyCommand({
-        Bucket: this.bucket,
-        Policy: JSON.stringify({
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Effect: "Allow",
-              Principal: "*",
-              Action: ["s3:GetObject"],
-              Resource: [`arn:aws:s3:::${this.bucket}/*`],
-            },
-          ],
-        }),
-      }),
-    );
-  }
-
-  // Без CORS-заголовков браузер отображает картинку нормально, но <canvas> с ней считается
-  // "заражённым" (tainted) — CardButton не смог бы прочитать пиксели для определения
-  // светлая/тёмная картинка (инверсия цвета текста поверх фото), getImageData бросал бы
-  // SecurityError. Разрешаем анонимное чтение с любого источника — бакет и так публичный.
-  private async ensureCorsConfigured(): Promise<void> {
-    await this.client.send(
-      new PutBucketCorsCommand({
-        Bucket: this.bucket,
-        CORSConfiguration: {
-          CORSRules: [{ AllowedOrigins: ["*"], AllowedMethods: ["GET"], AllowedHeaders: ["*"], MaxAgeSeconds: 3600 }],
-        },
-      }),
-    );
   }
 
   async uploadCardImage(file: Express.Multer.File | undefined): Promise<string> {

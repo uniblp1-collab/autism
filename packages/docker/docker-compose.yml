@@ -25,6 +25,12 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      # Современный MinIO не реализует per-bucket CORS API (PutBucketCors/`mc cors set` оба
+      # падают с "NotImplemented") — CORS настраивается только так, на уровне всего сервера.
+      # Нужно, чтобы CardButton мог прочитать пиксели картинки через <canvas> (определение
+      # светлая/тёмная картинка для инверсии цвета подписи) — без CORS-заголовков сама картинка
+      # всё равно отображается, просто без этого эффекта.
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -36,13 +42,11 @@ services:
       timeout: 5s
       retries: 10
 
-  # Одноразовый контейнер: создаёт бакет, включает публичное чтение и CORS через сам `mc`
-  # (официальный CLI MinIO), а не через @aws-sdk/client-s3 из бэкенда — SDK начиная с версий с
-  # "flexible checksums" безусловно добавляет заголовок x-amz-sdk-checksum-algorithm на
-  # PutBucketPolicy/PutBucketCors (эти два вызова помечены в модели S3 как
-  # requestChecksumRequired), а MinIO отвечает на него "NotImplemented". `mc` этой проблеме не
-  # подвержен, поэтому настройка бакета вынесена сюда — StorageService на бэкенде оставляет свои
-  # попытки лишь как best-effort fallback (см. комментарий в storage.service.ts).
+  # Одноразовый контейнер: включает публичное чтение бакета через сам `mc` (официальный CLI
+  # MinIO), а не через @aws-sdk/client-s3 из бэкенда — SDK начиная с версий с "flexible
+  # checksums" безусловно добавляет заголовок x-amz-sdk-checksum-algorithm на PutBucketPolicy
+  # (этот вызов помечен в модели S3 как requestChecksumRequired), а MinIO отвечает на него
+  # "NotImplemented". `mc` этой проблеме не подвержен, поэтому настройка бакета вынесена сюда.
   createbuckets:
     image: minio/mc
     container_name: autism-connect-minio-init
@@ -53,14 +57,11 @@ services:
       # проверяет готовность напрямую через mc, а не полагается на Docker-healthcheck).
       minio:
         condition: service_started
-    volumes:
-      - ./minio-cors.xml:/cors.xml:ro
     entrypoint: >
       sh -c "
       until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done &&
       mc mb --ignore-existing local/autism-connect-cards &&
-      mc anonymous set download local/autism-connect-cards &&
-      mc cors set local/autism-connect-cards /cors.xml
+      mc anonymous set download local/autism-connect-cards
       "
 
   backend:
