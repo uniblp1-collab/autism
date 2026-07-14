@@ -5,8 +5,10 @@ import { RecordCardUsageUseCase } from "../application/use-cases/record-card-usa
 import { GetDailyStatisticsUseCase } from "../application/use-cases/get-daily-statistics.use-case";
 import { STATISTICS_REPOSITORY } from "../domain/statistics.repository";
 import { PrismaStatisticsRepository } from "../infrastructure/prisma-statistics.repository";
+import { ChildrenModule } from "../../children/presentation/children.module";
 
 @Module({
+  imports: [ChildrenModule],
   controllers: [StatisticsController],
   providers: [
     StatisticsService,

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ChildrenController } from "./children.controller";
 import { ChildrenService } from "../application/children.service";
+import { ChildAccessService } from "../application/child-access.service";
 import { CreateChildUseCase } from "../application/use-cases/create-child.use-case";
 import { ListChildrenUseCase } from "../application/use-cases/list-children.use-case";
 import { GetChildUseCase } from "../application/use-cases/get-child.use-case";
@@ -13,6 +14,7 @@ import { PrismaChildRepository } from "../infrastructure/prisma-child.repository
   controllers: [ChildrenController],
   providers: [
     ChildrenService,
+    ChildAccessService,
     CreateChildUseCase,
     ListChildrenUseCase,
     GetChildUseCase,
@@ -20,6 +22,8 @@ import { PrismaChildRepository } from "../infrastructure/prisma-child.repository
     DeleteChildUseCase,
     { provide: CHILD_REPOSITORY, useClass: PrismaChildRepository },
   ],
-  exports: [CHILD_REPOSITORY],
+  // ChildAccessService переиспользуется favorites/schedule/statistics/history/cards —
+  // проверка владения ребёнком нужна везде, где childId приходит от клиента.
+  exports: [CHILD_REPOSITORY, ChildAccessService],
 })
 export class ChildrenModule {}

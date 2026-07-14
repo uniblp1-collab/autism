@@ -3,28 +3,37 @@ import { ScheduleService } from "../application/schedule.service";
 import { CreateScheduleDto } from "../application/dto/create-schedule.dto";
 import { AddScheduleItemDto } from "../application/dto/add-schedule-item.dto";
 import { CompleteScheduleItemDto } from "../application/dto/complete-schedule-item.dto";
+import { CurrentUser, CurrentUserPayload } from "../../../common/decorators/current-user.decorator";
 
 @Controller("schedules")
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Get()
-  list(@Query("childId") childId: string) {
-    return this.scheduleService.list(childId);
+  list(@CurrentUser() user: CurrentUserPayload, @Query("childId") childId: string) {
+    return this.scheduleService.list(user.userId, childId);
   }
 
   @Post()
-  create(@Body() dto: CreateScheduleDto) {
-    return this.scheduleService.create(dto);
+  create(@CurrentUser() user: CurrentUserPayload, @Body() dto: CreateScheduleDto) {
+    return this.scheduleService.create(user.userId, dto);
   }
 
   @Post(":scheduleId/items")
-  addItem(@Param("scheduleId") scheduleId: string, @Body() dto: AddScheduleItemDto) {
-    return this.scheduleService.addItem(scheduleId, dto);
+  addItem(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param("scheduleId") scheduleId: string,
+    @Body() dto: AddScheduleItemDto,
+  ) {
+    return this.scheduleService.addItem(user.userId, scheduleId, dto);
   }
 
   @Patch("items/:itemId")
-  completeItem(@Param("itemId") itemId: string, @Body() dto: CompleteScheduleItemDto) {
-    return this.scheduleService.completeItem(itemId, dto.isCompleted);
+  completeItem(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param("itemId") itemId: string,
+    @Body() dto: CompleteScheduleItemDto,
+  ) {
+    return this.scheduleService.completeItem(user.userId, itemId, dto.isCompleted);
   }
 }

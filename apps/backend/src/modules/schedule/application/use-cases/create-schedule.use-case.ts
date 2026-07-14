@@ -2,12 +2,17 @@ import { Inject, Injectable } from "@nestjs/common";
 import { SCHEDULE_REPOSITORY, ScheduleRepository } from "../../domain/schedule.repository";
 import { Schedule } from "../../domain/schedule.entity";
 import { CreateScheduleDto } from "../dto/create-schedule.dto";
+import { ChildAccessService } from "../../../children/application/child-access.service";
 
 @Injectable()
 export class CreateScheduleUseCase {
-  constructor(@Inject(SCHEDULE_REPOSITORY) private readonly scheduleRepository: ScheduleRepository) {}
+  constructor(
+    @Inject(SCHEDULE_REPOSITORY) private readonly scheduleRepository: ScheduleRepository,
+    private readonly childAccessService: ChildAccessService,
+  ) {}
 
-  execute(dto: CreateScheduleDto): Promise<Schedule> {
+  async execute(userId: string, dto: CreateScheduleDto): Promise<Schedule> {
+    await this.childAccessService.assertOwnedByUser(dto.childId, userId);
     return this.scheduleRepository.create({
       childId: dto.childId,
       title: dto.title,

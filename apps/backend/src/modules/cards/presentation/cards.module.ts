@@ -12,9 +12,10 @@ import { PrismaCardRepository } from "../infrastructure/prisma-card.repository";
 import { CARD_GENERATOR_PORT } from "../domain/card-generator.port";
 import { NoopCardGeneratorAdapter } from "../infrastructure/noop-card-generator.adapter";
 import { StorageModule } from "../../../storage/storage.module";
+import { ChildrenModule } from "../../children/presentation/children.module";
 
 @Module({
-  imports: [StorageModule],
+  imports: [StorageModule, ChildrenModule],
   controllers: [CardsController],
   providers: [
     CardsService,

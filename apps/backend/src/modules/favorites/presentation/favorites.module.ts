@@ -6,8 +6,10 @@ import { RemoveFavoriteUseCase } from "../application/use-cases/remove-favorite.
 import { ListFavoritesUseCase } from "../application/use-cases/list-favorites.use-case";
 import { FAVORITE_REPOSITORY } from "../domain/favorite.repository";
 import { PrismaFavoriteRepository } from "../infrastructure/prisma-favorite.repository";
+import { ChildrenModule } from "../../children/presentation/children.module";
 
 @Module({
+  imports: [ChildrenModule],
   controllers: [FavoritesController],
   providers: [
     FavoritesService,

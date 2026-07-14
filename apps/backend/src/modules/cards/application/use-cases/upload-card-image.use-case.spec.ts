@@ -3,6 +3,7 @@ import { CardRepository } from "../../domain/card.repository";
 import { Card } from "../../domain/card.entity";
 import { StorageService } from "../../../../storage/storage.service";
 import { EntityNotFoundException } from "../../../../common/exceptions/domain.exception";
+import { ChildAccessService } from "../../../children/application/child-access.service";
 
 function buildCard(overrides: Partial<Card> = {}): Card {
   return new Card(
@@ -35,6 +36,7 @@ function buildFile(): Express.Multer.File {
 describe("UploadCardImageUseCase", () => {
   let cardRepository: jest.Mocked<CardRepository>;
   let storageService: jest.Mocked<Pick<StorageService, "uploadCardImage">>;
+  let childAccessService: jest.Mocked<Pick<ChildAccessService, "assertOwnedByUser">>;
   let useCase: UploadCardImageUseCase;
 
   beforeEach(() => {
@@ -46,7 +48,12 @@ describe("UploadCardImageUseCase", () => {
       softDelete: jest.fn(),
     };
     storageService = { uploadCardImage: jest.fn() };
-    useCase = new UploadCardImageUseCase(cardRepository, storageService as unknown as StorageService);
+    childAccessService = { assertOwnedByUser: jest.fn() };
+    useCase = new UploadCardImageUseCase(
+      cardRepository,
+      storageService as unknown as StorageService,
+      childAccessService as unknown as ChildAccessService,
+    );
   });
 
   it("uploads the image and updates the card's imageUrl", async () => {
@@ -68,6 +75,26 @@ describe("UploadCardImageUseCase", () => {
     cardRepository.findById.mockResolvedValue(null);
 
     await expect(useCase.execute("missing", buildFile())).rejects.toThrow(EntityNotFoundException);
+    expect(storageService.uploadCardImage).not.toHaveBeenCalled();
+  });
+
+  it("skips the ownership check when called without a userId (admin panel)", async () => {
+    cardRepository.findById.mockResolvedValue(buildCard({ childId: "child-1" }));
+    storageService.uploadCardImage.mockResolvedValue("http://localhost:9000/bucket/cards/new.png");
+    cardRepository.update.mockResolvedValue(buildCard({ childId: "child-1" }));
+
+    await useCase.execute("card-1", buildFile());
+
+    expect(childAccessService.assertOwnedByUser).not.toHaveBeenCalled();
+  });
+
+  it("refuses to upload an image to another user's custom card", async () => {
+    cardRepository.findById.mockResolvedValue(buildCard({ childId: "someone-elses-child" }));
+    childAccessService.assertOwnedByUser.mockRejectedValue(
+      new EntityNotFoundException("Child", "someone-elses-child"),
+    );
+
+    await expect(useCase.execute("card-1", buildFile(), "user-1")).rejects.toThrow(EntityNotFoundException);
     expect(storageService.uploadCardImage).not.toHaveBeenCalled();
   });
 });

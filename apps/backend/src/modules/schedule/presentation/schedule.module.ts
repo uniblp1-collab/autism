@@ -8,8 +8,10 @@ import { CompleteScheduleItemUseCase } from "../application/use-cases/complete-s
 import { ScheduleResetService } from "../application/schedule-reset.service";
 import { SCHEDULE_REPOSITORY } from "../domain/schedule.repository";
 import { PrismaScheduleRepository } from "../infrastructure/prisma-schedule.repository";
+import { ChildrenModule } from "../../children/presentation/children.module";
 
 @Module({
+  imports: [ChildrenModule],
   controllers: [ScheduleController],
   providers: [
     ScheduleService,

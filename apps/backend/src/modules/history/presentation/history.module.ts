@@ -6,9 +6,10 @@ import { ListHistoryUseCase } from "../application/use-cases/list-history.use-ca
 import { HISTORY_REPOSITORY } from "../domain/history.repository";
 import { PrismaHistoryRepository } from "../infrastructure/prisma-history.repository";
 import { CardsModule } from "../../cards/presentation/cards.module";
+import { ChildrenModule } from "../../children/presentation/children.module";
 
 @Module({
-  imports: [CardsModule],
+  imports: [CardsModule, ChildrenModule],
   controllers: [HistoryController],
   providers: [
     HistoryService,

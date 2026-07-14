@@ -21,8 +21,8 @@ export class CardsService {
     private readonly uploadCardImageUseCase: UploadCardImageUseCase,
   ) {}
 
-  create(dto: CreateCardDto): Promise<Card> {
-    return this.createCardUseCase.execute(dto);
+  create(userId: string, dto: CreateCardDto): Promise<Card> {
+    return this.createCardUseCase.execute(userId, dto);
   }
 
   search(dto: SearchCardsDto): Promise<Card[]> {
@@ -33,15 +33,15 @@ export class CardsService {
     return this.getCardUseCase.execute(id);
   }
 
-  update(id: string, dto: UpdateCardDto): Promise<Card> {
-    return this.updateCardUseCase.execute(id, dto);
+  update(userId: string, id: string, dto: UpdateCardDto): Promise<Card> {
+    return this.updateCardUseCase.execute(userId, id, dto);
   }
 
-  remove(id: string): Promise<void> {
-    return this.deleteCardUseCase.execute(id);
+  remove(userId: string, id: string): Promise<void> {
+    return this.deleteCardUseCase.execute(userId, id);
   }
 
-  uploadImage(id: string, file: Express.Multer.File | undefined): Promise<Card> {
-    return this.uploadCardImageUseCase.execute(id, file);
+  uploadImage(userId: string, id: string, file: Express.Multer.File | undefined): Promise<Card> {
+    return this.uploadCardImageUseCase.execute(id, file, userId);
   }
 }

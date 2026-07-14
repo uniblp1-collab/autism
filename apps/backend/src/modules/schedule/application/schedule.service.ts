@@ -17,19 +17,19 @@ export class ScheduleService {
     private readonly completeScheduleItemUseCase: CompleteScheduleItemUseCase,
   ) {}
 
-  create(dto: CreateScheduleDto): Promise<Schedule> {
-    return this.createScheduleUseCase.execute(dto);
+  create(userId: string, dto: CreateScheduleDto): Promise<Schedule> {
+    return this.createScheduleUseCase.execute(userId, dto);
   }
 
-  list(childId: string): Promise<Schedule[]> {
-    return this.listSchedulesUseCase.execute(childId);
+  list(userId: string, childId: string): Promise<Schedule[]> {
+    return this.listSchedulesUseCase.execute(userId, childId);
   }
 
-  addItem(scheduleId: string, dto: AddScheduleItemDto): Promise<Schedule> {
-    return this.addScheduleItemUseCase.execute(scheduleId, dto);
+  addItem(userId: string, scheduleId: string, dto: AddScheduleItemDto): Promise<Schedule> {
+    return this.addScheduleItemUseCase.execute(userId, scheduleId, dto);
   }
 
-  completeItem(itemId: string, isCompleted: boolean): Promise<ScheduleItem> {
-    return this.completeScheduleItemUseCase.execute(itemId, isCompleted);
+  completeItem(userId: string, itemId: string, isCompleted: boolean): Promise<ScheduleItem> {
+    return this.completeScheduleItemUseCase.execute(userId, itemId, isCompleted);
   }
 }
