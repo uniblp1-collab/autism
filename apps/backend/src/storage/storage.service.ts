@@ -39,6 +39,14 @@ export class StorageService implements OnModuleInit {
         accessKeyId: this.configService.get<string>("S3_ACCESS_KEY", "minioadmin"),
         secretAccessKey: this.configService.get<string>("S3_SECRET_KEY", "minioadmin"),
       },
+      // AWS SDK v3 с версии ~3.729 по умолчанию добавляет заголовки контрольной суммы
+      // (x-amz-checksum-*) на запросы, где это поддерживает модель API (WHEN_SUPPORTED).
+      // MinIO не реализует эти заголовки для PutBucketPolicy/PutBucketCors/PutObject и
+      // отвечает "A header you provided implies functionality that is not implemented".
+      // WHEN_REQUIRED возвращает старое поведение — считать контрольную сумму только там,
+      // где это реально обязательно.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
   }
 
