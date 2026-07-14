@@ -1,4 +1,6 @@
 import { UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import { RefreshTokenUseCase } from "./refresh-token.use-case";
 import { UserRepository } from "../../domain/user.repository";
 import { User } from "../../domain/user.entity";
@@ -17,8 +19,8 @@ function buildUser(overrides: Partial<{ isActive: boolean }> = {}): User {
 
 describe("RefreshTokenUseCase", () => {
   let userRepository: jest.Mocked<UserRepository>;
-  let jwtService: { verifyAsync: jest.Mock };
-  let configService: { get: jest.Mock };
+  let jwtService: jest.Mocked<Pick<JwtService, "verifyAsync">>;
+  let configService: jest.Mocked<Pick<ConfigService, "get">>;
   let useCase: RefreshTokenUseCase;
 
   beforeEach(() => {
@@ -30,9 +32,15 @@ describe("RefreshTokenUseCase", () => {
       setPasswordHash: jest.fn(),
       findParents: jest.fn(),
     };
-    jwtService = { verifyAsync: jest.fn().mockResolvedValue({ sub: "user-1", email: "parent@example.com", role: "PARENT" }) };
+    jwtService = {
+      verifyAsync: jest.fn().mockResolvedValue({ sub: "user-1", email: "parent@example.com", role: "PARENT" }),
+    };
     configService = { get: jest.fn().mockReturnValue("dev-refresh-secret") };
-    useCase = new RefreshTokenUseCase(userRepository, jwtService as any, configService as any);
+    useCase = new RefreshTokenUseCase(
+      userRepository,
+      jwtService as unknown as JwtService,
+      configService as unknown as ConfigService,
+    );
   });
 
   it("returns the user for a valid refresh token when the account is active", async () => {
