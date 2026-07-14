@@ -17,14 +17,15 @@ export class CreateHistoryUseCase {
   ) {}
 
   async execute(dto: CreateHistoryDto): Promise<HistoryEntry> {
-    const words: string[] = [];
-    for (const cardId of dto.cardIds) {
-      const card = await this.cardRepository.findById(cardId);
+    const cards = await this.cardRepository.findByIds(dto.cardIds);
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    const words = dto.cardIds.map((cardId) => {
+      const card = cardsById.get(cardId);
       if (!card) {
         throw new EntityNotFoundException("Card", cardId);
       }
-      words.push(card.ttsText);
-    }
+      return card.ttsText;
+    });
 
     const sentenceText = dto.sentenceText ?? words.join(" ");
     const entry = await this.historyRepository.create(dto.childId, sentenceText, dto.cardIds);

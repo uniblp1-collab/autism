@@ -43,6 +43,7 @@ describe("CreateHistoryUseCase", () => {
     };
     cardRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       search: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -52,9 +53,7 @@ describe("CreateHistoryUseCase", () => {
   });
 
   it("joins card TTS texts in order to build the sentence", async () => {
-    cardRepository.findById.mockImplementation((id: string) =>
-      Promise.resolve(id === "card-1" ? buildCard("card-1", "Хочу") : buildCard("card-2", "Яблоко")),
-    );
+    cardRepository.findByIds.mockResolvedValue([buildCard("card-1", "Хочу"), buildCard("card-2", "Яблоко")]);
     historyRepository.create.mockResolvedValue(
       new HistoryEntry("h1", "child-1", "Хочу Яблоко", ["card-1", "card-2"], new Date()),
     );
@@ -66,9 +65,7 @@ describe("CreateHistoryUseCase", () => {
   });
 
   it("uses the explicit sentenceText override instead of joining card TTS texts", async () => {
-    cardRepository.findById.mockImplementation((id: string) =>
-      Promise.resolve(id === "card-1" ? buildCard("card-1", "Дай") : buildCard("card-2", "яблоко")),
-    );
+    cardRepository.findByIds.mockResolvedValue([buildCard("card-1", "Дай"), buildCard("card-2", "яблоко")]);
     historyRepository.create.mockResolvedValue(
       new HistoryEntry("h1", "child-1", "Дай зелёное яблоко", ["card-1", "card-2"], new Date()),
     );
@@ -87,7 +84,7 @@ describe("CreateHistoryUseCase", () => {
   });
 
   it("throws when a referenced card does not exist", async () => {
-    cardRepository.findById.mockResolvedValue(null);
+    cardRepository.findByIds.mockResolvedValue([]);
 
     await expect(useCase.execute({ childId: "child-1", cardIds: ["missing"] })).rejects.toThrow(
       EntityNotFoundException,
@@ -96,7 +93,7 @@ describe("CreateHistoryUseCase", () => {
   });
 
   it("prunes entries beyond the 100-item limit after creating a new one", async () => {
-    cardRepository.findById.mockResolvedValue(buildCard("card-1", "Привет"));
+    cardRepository.findByIds.mockResolvedValue([buildCard("card-1", "Привет")]);
     historyRepository.create.mockResolvedValue(
       new HistoryEntry("h1", "child-1", "Привет", ["card-1"], new Date()),
     );
@@ -108,7 +105,7 @@ describe("CreateHistoryUseCase", () => {
   });
 
   it("does not prune when within the limit", async () => {
-    cardRepository.findById.mockResolvedValue(buildCard("card-1", "Привет"));
+    cardRepository.findByIds.mockResolvedValue([buildCard("card-1", "Привет")]);
     historyRepository.create.mockResolvedValue(
       new HistoryEntry("h1", "child-1", "Привет", ["card-1"], new Date()),
     );

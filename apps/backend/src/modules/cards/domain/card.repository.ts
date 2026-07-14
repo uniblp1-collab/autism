@@ -48,6 +48,7 @@ export interface SearchCardsFilter {
 
 export interface CardRepository {
   findById(id: string): Promise<Card | null>;
+  findByIds(ids: string[]): Promise<Card[]>;
   search(filter: SearchCardsFilter): Promise<Card[]>;
   create(data: CreateCardData): Promise<Card>;
   update(id: string, data: UpdateCardData): Promise<Card>;

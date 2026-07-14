@@ -38,6 +38,7 @@ describe("DeleteCardUseCase", () => {
   beforeEach(() => {
     cardRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       search: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),

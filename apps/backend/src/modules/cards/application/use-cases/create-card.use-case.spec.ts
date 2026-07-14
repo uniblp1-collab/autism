@@ -37,6 +37,7 @@ describe("CreateCardUseCase", () => {
   beforeEach(() => {
     repository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       search: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),

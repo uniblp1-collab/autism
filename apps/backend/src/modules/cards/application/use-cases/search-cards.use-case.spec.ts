@@ -9,6 +9,7 @@ describe("SearchCardsUseCase", () => {
   beforeEach(() => {
     repository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       search: jest.fn().mockResolvedValue([]),
       create: jest.fn(),
       update: jest.fn(),

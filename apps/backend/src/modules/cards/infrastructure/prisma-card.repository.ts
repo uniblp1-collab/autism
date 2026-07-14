@@ -14,6 +14,12 @@ export class PrismaCardRepository implements CardRepository {
     return record ? CardsMapper.toDomain(record) : null;
   }
 
+  async findByIds(ids: string[]): Promise<Card[]> {
+    if (ids.length === 0) return [];
+    const records = await this.prisma.card.findMany({ where: { id: { in: ids }, deletedAt: null } });
+    return records.map(CardsMapper.toDomain);
+  }
+
   async search(filter: SearchCardsFilter): Promise<Card[]> {
     const where: Prisma.CardWhereInput = { deletedAt: null, isSystemCard: filter.isSystemCard ?? false };
 
