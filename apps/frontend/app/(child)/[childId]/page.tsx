@@ -7,10 +7,12 @@ import {
   Button,
   CardButton,
   CategoryPill,
+  FAVORITES_PILL_COLOR,
   Icon,
   Input,
   MIN_TOUCH_TARGET_PX,
   Modal,
+  SCHEDULE_PILL_COLOR,
   ScheduleTile,
   SentenceBuilderPanel,
   YesNoStickyPanel,
@@ -38,8 +40,6 @@ function sortFavoritesFirst(cards: Card[], favoriteCardIds: Set<string>): Card[]
 
 const FAVORITES_TAB = "__favorites__";
 const SCHEDULE_TAB = "__schedule__";
-const FAVORITES_COLOR = "#633806"; // тон "Эмоции" — переиспользуется для пилюли «Избранное»
-const SCHEDULE_COLOR = "#0C447C"; // тон "Транспорт" — переиспользуется для пилюли «Расписание»
 
 // Режим редактирования (ТЗ §A.7) пока не защищён PIN-кодом — см. .env.example.
 const EDIT_MODE_ENABLED = process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
@@ -121,6 +121,7 @@ interface EditCardModalProps {
 // доступна только из админ-панели), поэтому родителю не нужен доступ в /admin, чтобы
 // добавить фото к карточке своего ребёнка.
 function EditCardModal({ card, onClose }: EditCardModalProps) {
+  const { tokens } = useTheme();
   const updateCard = useUpdateCard();
   const uploadImage = useUploadCardImage();
   const [title, setTitle] = useState(card.title);
@@ -158,7 +159,7 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
             className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden"
             style={{ borderRadius: 14, backgroundColor: card.color, backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined, backgroundSize: "cover", backgroundPosition: "center" }}
           >
-            {!card.imageUrl ? <span style={{ fontSize: 11, color: "#FFFFFF", textAlign: "center" }}>нет фото</span> : null}
+            {!card.imageUrl ? <span style={{ fontSize: 11, color: tokens.surface, textAlign: "center" }}>нет фото</span> : null}
           </div>
           <div className="flex flex-col gap-1">
             <label style={{ fontSize: 14, fontWeight: 500, color: "inherit", cursor: "pointer" }}>
@@ -182,7 +183,7 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
           </div>
         </div>
 
-        {imageError ? <p style={{ fontSize: 13, color: "#B91C1C" }}>{imageError}</p> : null}
+        {imageError ? <p style={{ fontSize: 13, color: tokens.danger }}>{imageError}</p> : null}
 
         {showInstructions ? (
           <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.85 }}>
@@ -259,7 +260,21 @@ export default function ChildScreenPage() {
   const noCard = yesNoCards.find((c) => c.title === "Нет");
   const { data: favoriteCards = [] } = useCards({ childId, includeCustom: true, cardType: CardType.NOUN });
 
-  const sb = useSentenceBuilder({ childId, difficultyLevel });
+  const { data: adjectiveCards = [] } = useCards({ cardType: CardType.ADJECTIVE });
+  const { data: nounCards = [] } = useCards({
+    categoryId: activeCategory?.id,
+    childId,
+    includeCustom: true,
+    cardType: CardType.NOUN,
+  });
+
+  const sb = useSentenceBuilder({
+    childId,
+    difficultyLevel,
+    categories: unlockedCategories,
+    adjectiveCards,
+    nounCards,
+  });
 
   // Пересинхронизируем состояние сборки фразы только при смене вкладки категории —
   // sb.selectCategory намеренно не входит в зависимости, чтобы не создавать цикл
@@ -270,13 +285,6 @@ export default function ChildScreenPage() {
   }, [activeTab, activeCategory, selectCategory]);
 
   const showAdjectiveStep = Boolean(activeCategory) && sb.needsAdjectiveStep;
-  const { data: adjectiveCards = [] } = useCards({ cardType: CardType.ADJECTIVE });
-  const { data: nounCards = [] } = useCards({
-    categoryId: activeCategory?.id,
-    childId,
-    includeCustom: true,
-    cardType: CardType.NOUN,
-  });
 
   const favoriteCardIds = new Set(favorites.map((f) => f.cardId));
   const visibleFavoriteCards: Card[] = favoriteCards.filter((c) => favoriteCardIds.has(c.id));
@@ -312,7 +320,7 @@ export default function ChildScreenPage() {
         <CategoryPill
           label="Избранное"
           icon="star"
-          color={FAVORITES_COLOR}
+          color={FAVORITES_PILL_COLOR}
           active={activeTab === FAVORITES_TAB}
           onClick={() => setActiveTab(FAVORITES_TAB)}
         />
@@ -330,7 +338,7 @@ export default function ChildScreenPage() {
         <CategoryPill
           label="Расписание"
           icon="calendar"
-          color={SCHEDULE_COLOR}
+          color={SCHEDULE_PILL_COLOR}
           active={activeTab === SCHEDULE_TAB}
           onClick={() => setActiveTab(SCHEDULE_TAB)}
         />

@@ -1,26 +1,28 @@
 "use client";
 
 import { create } from "zustand";
-import { Card, Category } from "@autism-connect/shared";
 
 // Редакция 3 механики (ТЗ §A): фраза — это глагол (Category) + опционально прилагательное
 // (только уровень сложности 3) + существительное, а не произвольная цепочка карточек.
+// Стор хранит только id выбранных сущностей, а не сами объекты — сами Card/Category уже
+// живут в кэше React Query (useCards/useCategories), дублировать их здесь запрещено
+// правилом CLAUDE.md §5.2. Разрешение id -> объект делает useSentenceBuilder.
 interface SentenceState {
-  category: Category | null;
-  adjective: Card | null;
-  noun: Card | null;
-  setCategory: (category: Category | null) => void;
-  setAdjective: (card: Card | null) => void;
-  setNoun: (card: Card | null) => void;
+  categoryId: string | null;
+  adjectiveId: string | null;
+  nounId: string | null;
+  setCategoryId: (categoryId: string | null) => void;
+  setAdjectiveId: (adjectiveId: string | null) => void;
+  setNounId: (nounId: string | null) => void;
   reset: () => void;
 }
 
 export const useSentenceStore = create<SentenceState>((set) => ({
-  category: null,
-  adjective: null,
-  noun: null,
-  setCategory: (category) => set({ category, adjective: null, noun: null }),
-  setAdjective: (adjective) => set({ adjective }),
-  setNoun: (noun) => set({ noun }),
-  reset: () => set({ adjective: null, noun: null }),
+  categoryId: null,
+  adjectiveId: null,
+  nounId: null,
+  setCategoryId: (categoryId) => set({ categoryId, adjectiveId: null, nounId: null }),
+  setAdjectiveId: (adjectiveId) => set({ adjectiveId }),
+  setNounId: (nounId) => set({ nounId }),
+  reset: () => set({ adjectiveId: null, nounId: null }),
 }));

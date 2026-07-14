@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
+import Image from "next/image";
 import { resolveCategoryColorToken, useTheme } from "@autism-connect/ui";
 import { useCards, useCategories } from "../../../../features/cards/useCards";
 import { useUploadCardImage } from "../../../../features/admin/useAdmin";
@@ -61,9 +62,12 @@ export default function AdminCardsPage() {
               style={{ backgroundColor: tokens.surface, borderRadius: 14, padding: 16 }}
             >
               {card.imageUrl && !failedImageIds.has(card.id) ? (
-                <img
+                <Image
                   src={card.imageUrl}
                   alt=""
+                  width={64}
+                  height={64}
+                  loading="lazy"
                   className="h-16 w-16 object-contain"
                   onError={() => setFailedImageIds((prev) => new Set(prev).add(card.id))}
                 />

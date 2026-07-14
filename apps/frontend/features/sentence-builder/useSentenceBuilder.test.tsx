@@ -83,15 +83,33 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
+const defaultCategories = [buildCategory()];
+const defaultAdjectives = [buildAdjective()];
+const defaultNouns = [buildNoun()];
+
+function renderBuilder(difficultyLevel: 1 | 2 | 3, overrides: { nouns?: Card[]; adjectives?: Card[] } = {}) {
+  return renderHook(
+    () =>
+      useSentenceBuilder({
+        childId: "child-1",
+        difficultyLevel,
+        categories: defaultCategories,
+        adjectiveCards: overrides.adjectives ?? defaultAdjectives,
+        nounCards: overrides.nouns ?? defaultNouns,
+      }),
+    { wrapper },
+  );
+}
+
 describe("useSentenceBuilder", () => {
   beforeEach(() => {
     useSentenceStore.getState().reset();
-    useSentenceStore.setState({ category: null, adjective: null, noun: null });
+    useSentenceStore.setState({ categoryId: null, adjectiveId: null, nounId: null });
     apiFetch.mockClear();
   });
 
   it("level 1: speaks immediately on noun tap, without a visible builder row", async () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 1 }), { wrapper });
+    const { result } = renderBuilder(1);
     const speakFn = jest.fn();
 
     act(() => result.current.selectCategory(buildCategory()));
@@ -117,7 +135,7 @@ describe("useSentenceBuilder", () => {
   });
 
   it("level 2: noun tap fills the builder row without speaking; explicit speak() commits it", () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 2 }), { wrapper });
+    const { result } = renderBuilder(2);
     const speakFn = jest.fn();
 
     act(() => result.current.selectCategory(buildCategory()));
@@ -133,7 +151,7 @@ describe("useSentenceBuilder", () => {
   });
 
   it("level 3: blocks noun selection until an adjective is chosen, then agrees gender in the sentence", () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 3 }), { wrapper });
+    const { result } = renderBuilder(3);
     const speakFn = jest.fn();
 
     act(() => result.current.selectCategory(buildCategory()));
@@ -155,7 +173,7 @@ describe("useSentenceBuilder", () => {
   });
 
   it("speakImmediately bypasses the adjective step regardless of difficulty level (used by Избранное)", () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 3 }), { wrapper });
+    const { result } = renderBuilder(3);
     const speakFn = jest.fn();
 
     act(() => result.current.speakImmediately(buildCategory(), buildNoun(), speakFn));
@@ -164,7 +182,7 @@ describe("useSentenceBuilder", () => {
   });
 
   it("speakSystemCard speaks a Да/Nет card's own ttsText and logs it", async () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 1 }), { wrapper });
+    const { result } = renderBuilder(1);
     const speakFn = jest.fn();
     const yesCard = buildNoun({ id: "card-yes", title: "Да", ttsText: "Да", isSystemCard: true });
 
@@ -182,7 +200,7 @@ describe("useSentenceBuilder", () => {
   });
 
   it("does nothing when speaking with no noun selected", () => {
-    const { result } = renderHook(() => useSentenceBuilder({ childId: "child-1", difficultyLevel: 2 }), { wrapper });
+    const { result } = renderBuilder(2);
     const speakFn = jest.fn();
 
     act(() => result.current.selectCategory(buildCategory()));

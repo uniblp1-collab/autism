@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button, Input, resolveCategoryColorToken, useTheme } from "@autism-connect/ui";
+import { Button, CardButton, Input, useTheme } from "@autism-connect/ui";
 import { CardType } from "@autism-connect/shared";
 import { useCategories, useCards, useCreateCard } from "../../../features/cards/useCards";
 import { useUiStore } from "../../../store/uiStore";
@@ -73,18 +73,9 @@ function CardsPageContent() {
         </div>
         {isLoading ? <p>Загрузка...</p> : null}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {cards.map((card) => {
-            const tone = resolveCategoryColorToken(card.color);
-            return (
-              <div
-                key={card.id}
-                className="text-center"
-                style={{ backgroundColor: tone.bg, color: tone.fg, borderRadius: 14, padding: "16px 8px", fontSize: 14, fontWeight: 400 }}
-              >
-                {card.title}
-              </div>
-            );
-          })}
+          {cards.map((card) => (
+            <CardButton key={card.id} title={card.title} imageUrl={card.imageUrl} accentColor={card.color} size="small" />
+          ))}
         </div>
       </section>
 

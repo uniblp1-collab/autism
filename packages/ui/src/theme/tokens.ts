@@ -87,6 +87,12 @@ export const themeTokens = {
 export type ThemeMode = keyof typeof themeTokens;
 export type ThemeTokens = (typeof themeTokens)[ThemeMode];
 
+// Тон служебных пилюль «Избранное»/«Расписание» в зоне ребёнка — намеренно переиспользует
+// уже зафиксированные тона категорий «Эмоции»/«Транспорт» (см. categoryColorTokens ниже),
+// а не заводит новый цвет. Именованный токен вместо hex-литерала в apps/frontend (CLAUDE.md §5.3).
+export const FAVORITES_PILL_COLOR = "#633806"; // тон "Эмоции"
+export const SCHEDULE_PILL_COLOR = "#0C447C"; // тон "Транспорт"
+
 export interface CategoryColorToken {
   bg: string;
   fg: string;

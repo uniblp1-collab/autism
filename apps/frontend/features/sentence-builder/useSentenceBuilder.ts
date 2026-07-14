@@ -13,6 +13,10 @@ export type DifficultyLevel = 1 | 2 | 3;
 interface UseSentenceBuilderParams {
   childId: string | null;
   difficultyLevel: DifficultyLevel;
+  /** Списки уже загружены React Query на странице — используются только для разрешения id -> объект. */
+  categories: Category[];
+  adjectiveCards: Card[];
+  nounCards: Card[];
 }
 
 /**
@@ -22,15 +26,28 @@ interface UseSentenceBuilderParams {
  *  - уровень 3: то же, что уровень 2, но перед существительным обязателен шаг выбора прилагательного
  *    (согласование по роду существительного — см. sentenceEngine.ts).
  */
-export function useSentenceBuilder({ childId, difficultyLevel }: UseSentenceBuilderParams) {
-  const category = useSentenceStore((state) => state.category);
-  const adjective = useSentenceStore((state) => state.adjective);
-  const noun = useSentenceStore((state) => state.noun);
-  const setCategory = useSentenceStore((state) => state.setCategory);
-  const setAdjective = useSentenceStore((state) => state.setAdjective);
-  const setNoun = useSentenceStore((state) => state.setNoun);
+export function useSentenceBuilder({
+  childId,
+  difficultyLevel,
+  categories,
+  adjectiveCards,
+  nounCards,
+}: UseSentenceBuilderParams) {
+  const categoryId = useSentenceStore((state) => state.categoryId);
+  const adjectiveId = useSentenceStore((state) => state.adjectiveId);
+  const nounId = useSentenceStore((state) => state.nounId);
+  const setCategoryId = useSentenceStore((state) => state.setCategoryId);
+  const setAdjectiveId = useSentenceStore((state) => state.setAdjectiveId);
+  const setNounId = useSentenceStore((state) => state.setNounId);
   const reset = useSentenceStore((state) => state.reset);
   const queryClient = useQueryClient();
+
+  const category = useMemo(() => categories.find((c) => c.id === categoryId) ?? null, [categories, categoryId]);
+  const adjective = useMemo(
+    () => adjectiveCards.find((c) => c.id === adjectiveId) ?? null,
+    [adjectiveCards, adjectiveId],
+  );
+  const noun = useMemo(() => nounCards.find((c) => c.id === nounId) ?? null, [nounCards, nounId]);
 
   const logSentence = useMutation({
     mutationFn: (payload: { cardIds: string[]; sentenceText: string }) =>
@@ -78,16 +95,16 @@ export function useSentenceBuilder({ childId, difficultyLevel }: UseSentenceBuil
 
   const selectCategory = useCallback(
     (nextCategory: Category) => {
-      setCategory(nextCategory);
+      setCategoryId(nextCategory.id);
     },
-    [setCategory],
+    [setCategoryId],
   );
 
   const selectAdjective = useCallback(
     (card: Card) => {
-      setAdjective(card);
+      setAdjectiveId(card.id);
     },
-    [setAdjective],
+    [setAdjectiveId],
   );
 
   const selectNoun = useCallback(
@@ -103,9 +120,9 @@ export function useSentenceBuilder({ childId, difficultyLevel }: UseSentenceBuil
         return;
       }
 
-      setNoun(card);
+      setNounId(card.id);
     },
-    [category, difficultyLevel, adjective, commit, setNoun],
+    [category, difficultyLevel, adjective, commit, setNounId],
   );
 
   const speak = useCallback(
@@ -140,14 +157,14 @@ export function useSentenceBuilder({ childId, difficultyLevel }: UseSentenceBuil
       const word = builderWords[index];
       if (!word) return;
       if (word.id === adjective?.id) {
-        setAdjective(null);
+        setAdjectiveId(null);
         return;
       }
       if (word.id === noun?.id) {
-        setNoun(null);
+        setNounId(null);
       }
     },
-    [builderWords, adjective, noun, setAdjective, setNoun],
+    [builderWords, adjective, noun, setAdjectiveId, setNounId],
   );
 
   return {
