@@ -28,7 +28,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   private resolve(exception: unknown): ErrorResponseBody {
     if (exception instanceof DomainException) {
-      return { statusCode: exception.getStatus(), message: exception.message, code: exception.code };
+      return { statusCode: exception.statusCode, message: exception.message, code: exception.code };
     }
 
     if (exception instanceof HttpException) {

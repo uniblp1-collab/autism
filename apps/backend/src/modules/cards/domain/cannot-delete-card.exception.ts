@@ -1,4 +1,3 @@
-import { HttpStatus } from "@nestjs/common";
 import { DomainException } from "../../../common/exceptions/domain.exception";
 
 // Родитель может удалять/редактировать любую карточку (включая библиотечные) из режима
@@ -6,6 +5,6 @@ import { DomainException } from "../../../common/exceptions/domain.exception";
 // (isSystemCard) — они структурно обязательны для механики, а не обычный контент.
 export class CannotDeleteCardException extends DomainException {
   constructor() {
-    super("Служебные карточки (Да/Нет) удалять нельзя", "CANNOT_DELETE_CARD", HttpStatus.FORBIDDEN);
+    super("Служебные карточки (Да/Нет) удалять нельзя", "CANNOT_DELETE_CARD", 403);
   }
 }
