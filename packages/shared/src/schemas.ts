@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CardSize, CardType, Gender, SpeechLevel } from "./enums";
+import { MAX_CUSTOM_CARD_SIZE_PX, MIN_CUSTOM_CARD_SIZE_PX } from "./types";
 
 export const registerSchema = z.object({
   email: z.string().email(),
@@ -75,6 +76,8 @@ export const createCardSchema = z.object({
   phraseFormMasculine: z.string().max(60).optional().nullable(),
   phraseFormFeminine: z.string().max(60).optional().nullable(),
   phraseFormNeuter: z.string().max(60).optional().nullable(),
+  width: z.number().int().min(MIN_CUSTOM_CARD_SIZE_PX).max(MAX_CUSTOM_CARD_SIZE_PX).optional(),
+  height: z.number().int().min(MIN_CUSTOM_CARD_SIZE_PX).max(MAX_CUSTOM_CARD_SIZE_PX).optional(),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 

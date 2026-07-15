@@ -1,10 +1,21 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useState } from "react";
+import { ButtonHTMLAttributes, forwardRef, PointerEvent as ReactPointerEvent, SyntheticEvent, useRef, useState } from "react";
 import clsx from "clsx";
-import { MIN_TOUCH_TARGET_PX, paddingTokens, radiusTokens, resolveCategoryColorToken } from "../theme/tokens";
+import {
+  MAX_CUSTOM_CARD_PX,
+  MIN_CUSTOM_CARD_PX,
+  MIN_TOUCH_TARGET_PX,
+  paddingTokens,
+  radiusTokens,
+  resolveCategoryColorToken,
+} from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
 import { Icon } from "./Icon";
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
 
 export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
   /** Подпись карточки (sentence case, напр. «Позавтракать») — DESIGN.md §1. */
@@ -17,12 +28,21 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   icon?: string;
   selected?: boolean;
   size?: "small" | "medium" | "large";
+  /** Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null/undefined = размер по
+   * умолчанию из `size`. Задан — карточка не растягивается на всю колонку сетки, а занимает
+   * ровно этот фиксированный размер. */
+  width?: number | null;
+  height?: number | null;
+  /** Показывает маркер изменения размера в углу карточки — только когда передан колбэк
+   * (то есть только в режиме редактирования, см. вызывающий код). Вызывается один раз на
+   * pointerup с финальным размером — не на каждое перемещение (не долбить API жестом). */
+  onResize?: (width: number, height: number) => void;
   /** Показывает кнопку-крестик поверх карточки — только в режиме редактирования (ТЗ, часть A.7). */
   onDelete?: () => void;
-  /** В избранном у текущего ребёнка (TASK_PATCH_1.md §2) — определяет заливку звёздочки. */
+  /** В избранном у текущего ребёнка — определяет заливку звёздочки. */
   favorite?: boolean;
-  /** Показывает кнопку-звёздочку добавления/удаления из избранного — доступна и в обычном
-   * режиме просмотра, не только в режиме редактирования (TASK_PATCH_1.md §2). */
+  /** Показывает кнопку-звёздочку добавления/удаления из избранного — только когда передан
+   * колбэк (режим редактирования либо раздел «Избранное», см. вызывающий код, TASK_PATCH_3 §2/3). */
   onToggleFavorite?: () => void;
 }
 
@@ -32,7 +52,22 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
   (
-    { title, imageUrl, accentColor, icon, selected, size = "small", onDelete, favorite, onToggleFavorite, className, ...rest },
+    {
+      title,
+      imageUrl,
+      accentColor,
+      icon,
+      selected,
+      size = "small",
+      width,
+      height,
+      onResize,
+      onDelete,
+      favorite,
+      onToggleFavorite,
+      className,
+      ...rest
+    },
     ref,
   ) => {
     const { tokens } = useTheme();
@@ -40,6 +75,48 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     const dimension =
       size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : size === "medium" ? MIN_TOUCH_TARGET_PX * 1.2 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
+
+    // Кастомный размер (TASK_PATCH_3 §1) — вместо растягивания на всю колонку сетки карточка
+    // занимает фиксированный px-размер. dragSize — эфемерный визуальный стейт во время
+    // перетаскивания; sizeRef хранит то же значение без задержки ре-рендера, чтобы pointerup
+    // читал точно последнее значение, а не устаревшее из замыкания.
+    const hasCustomSize = width != null || height != null;
+    const baseWidth = width ?? dimension;
+    const baseHeight = height ?? dimension;
+    const [dragSize, setDragSize] = useState<{ width: number; height: number } | null>(null);
+    const sizeRef = useRef({ width: baseWidth, height: baseHeight });
+    const dragStartRef = useRef<{ pointerX: number; pointerY: number; width: number; height: number } | null>(null);
+
+    const effectiveWidth = dragSize?.width ?? baseWidth;
+    const effectiveHeight = dragSize?.height ?? baseHeight;
+
+    function handleResizePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+      event.stopPropagation();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      dragStartRef.current = {
+        pointerX: event.clientX,
+        pointerY: event.clientY,
+        width: effectiveWidth,
+        height: effectiveHeight,
+      };
+    }
+
+    function handleResizePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+      const start = dragStartRef.current;
+      if (!start) return;
+      const nextWidth = clamp(start.width + (event.clientX - start.pointerX), MIN_CUSTOM_CARD_PX, MAX_CUSTOM_CARD_PX);
+      const nextHeight = clamp(start.height + (event.clientY - start.pointerY), MIN_CUSTOM_CARD_PX, MAX_CUSTOM_CARD_PX);
+      sizeRef.current = { width: nextWidth, height: nextHeight };
+      setDragSize(sizeRef.current);
+    }
+
+    // Отправляем финальный размер один раз, по pointerup — не на каждое перемещение
+    // (не долбить API десятками запросов во время одного жеста, см. TASK_PATCH_3 §1).
+    function handleResizePointerUp() {
+      if (!dragStartRef.current) return;
+      dragStartRef.current = null;
+      onResize?.(Math.round(sizeRef.current.width), Math.round(sizeRef.current.height));
+    }
     // Если картинка недоступна (например, хранилище временно не отвечает), откатываемся на
     // иконку вместо "битой" картинки браузера — для ребёнка это выглядело бы как ошибка.
     const [imageFailed, setImageFailed] = useState(false);
@@ -79,6 +156,10 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     const overlayTextColor = isLightImage ? "#1A1A1A" : "#FFFFFF";
     const scrimRgb = isLightImage ? "255,255,255" : "0,0,0";
 
+    // Кастомный размер (заданный или в процессе перетаскивания) — фиксированный px-бокс вместо
+    // растягивания на всю колонку сетки; иначе (обычный режим) поведение не меняется.
+    const useFixedSize = hasCustomSize || dragSize !== null;
+
     const button = (
       <button
         ref={ref}
@@ -91,13 +172,13 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
           className,
         )}
         style={{
-          width: "100%",
-          // Явная высота 100% нужна только для варианта с картинкой — там всё содержимое
-          // расположено абсолютно (нет обычного потока, который задавал бы высоту сам).
-          // Без изображения высота по-прежнему считается от контента (иконка/подпись/паддинги).
-          height: hasImage ? "100%" : undefined,
-          minWidth: dimension,
-          minHeight: dimension,
+          width: useFixedSize ? effectiveWidth : "100%",
+          // Явная высота нужна для варианта с картинкой (содержимое расположено абсолютно —
+          // нет обычного потока, который задавал бы высоту сам) и всегда для кастомного размера.
+          // Без того и другого высота по-прежнему считается от контента (иконка/подпись/паддинги).
+          height: useFixedSize ? effectiveHeight : hasImage ? "100%" : undefined,
+          minWidth: useFixedSize ? effectiveWidth : dimension,
+          minHeight: useFixedSize ? effectiveHeight : dimension,
           backgroundColor: bg,
           color: fg,
           borderRadius: radiusTokens.md,
@@ -146,17 +227,19 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       </button>
     );
 
-    if (!onDelete && !onToggleFavorite) return button;
+    if (!onDelete && !onToggleFavorite && !onResize) return button;
 
-    // Крестик/звёздочка — отдельные кнопки поверх карточки, а не вложенные внутрь нее
-    // (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
+    // Крестик/звёздочка/маркер размера — отдельные кнопки поверх карточки, а не вложенные внутрь
+    // нее (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
     // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет.
     // Wrapper — прямой grid-элемент родительской сетки и по умолчанию растягивается на всю
     // ширину колонки (justify-items: stretch); сама кнопка теперь растягивается вместе с ним
     // (width: 100% ниже) — иначе крестик/звёздочка, спозиционированные относительно wrapper'а,
-    // "уезжали" за пределы физически более узкой кнопки на соседние колонки.
+    // "уезжали" за пределы физически более узкой кнопки на соседние колонки. При кастомном
+    // размере, наоборот, wrapper не должен растягиваться — иначе вокруг фиксированной по px
+    // кнопки остаётся пустое место шириной в колонку.
     return (
-      <div className="relative inline-flex w-full">
+      <div className={clsx("relative inline-flex", useFixedSize ? undefined : "w-full")}>
         {button}
         {onToggleFavorite ? (
           <button
@@ -195,6 +278,27 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
             }}
           >
             <Icon name="x" size={16} strokeWidth={2.5} />
+          </button>
+        ) : null}
+        {onResize ? (
+          <button
+            type="button"
+            aria-label={`Изменить размер карточки «${title}»`}
+            onPointerDown={handleResizePointerDown}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={handleResizePointerUp}
+            onClick={(event) => event.stopPropagation()}
+            className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
+            style={{
+              touchAction: "none",
+              cursor: "nwse-resize",
+              backgroundColor: tokens.surfaceMuted,
+              color: tokens.textSecondary,
+              // @ts-expect-error CSS custom property for focus ring color
+              "--tw-ring-color": tokens.focusRing,
+            }}
+          >
+            <Icon name="arrows-diagonal" size={16} strokeWidth={2.5} />
           </button>
         ) : null}
       </div>

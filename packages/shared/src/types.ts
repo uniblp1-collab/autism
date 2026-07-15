@@ -66,9 +66,18 @@ export interface Card {
   isCustom: boolean;
   /** true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью. */
   isSystemCard: boolean;
+  /** Кастомный размер карточки в px (точечный resize в режиме редактирования, TASK_PATCH_3 §1).
+   * null — использовать размер по умолчанию из сетки (Child.cardSize). */
+  width: number | null;
+  height: number | null;
   createdAt: string;
   updatedAt: string;
 }
+
+/** Границы точечного resize карточки (TASK_PATCH_3 §1) — не давать сжать до нечитаемого
+ * размера или растянуть на весь экран. */
+export const MIN_CUSTOM_CARD_SIZE_PX = 80;
+export const MAX_CUSTOM_CARD_SIZE_PX = 320;
 
 export interface Favorite {
   id: string;

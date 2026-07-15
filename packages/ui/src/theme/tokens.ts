@@ -8,6 +8,12 @@ export const fontFamily = "'Nunito', 'Inter', system-ui, sans-serif";
 // был сжат под canvas 680px). Карточка — не менее 96×96px (строже, чем прежние 88px).
 export const MIN_TOUCH_TARGET_PX = 96;
 
+// Точечный resize отдельной карточки (TASK_PATCH_3 §1) — сознательно более узкий диапазон,
+// чем MIN_TOUCH_TARGET_PX выше: это осознанный выбор родителя для конкретной карточки, а не
+// дефолтный размер сетки, поэтому нижняя граница ниже базового тач-таргета.
+export const MIN_CUSTOM_CARD_PX = 80;
+export const MAX_CUSTOM_CARD_PX = 320;
+
 export const radiusTokens = {
   sm: 10,
   md: 14,

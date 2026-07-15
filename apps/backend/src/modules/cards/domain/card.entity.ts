@@ -23,6 +23,10 @@ export class Card {
     public readonly isSystemCard: boolean,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    // Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null означает "размер по
+    // умолчанию из сетки" (Child.cardSize), задаётся только через resize-жест в edit-режиме.
+    public readonly width: number | null = null,
+    public readonly height: number | null = null,
   ) {}
 
   /** Словоформа прилагательного, согласованная с родом существительного. */

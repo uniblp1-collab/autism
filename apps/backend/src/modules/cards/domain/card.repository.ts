@@ -19,6 +19,8 @@ export interface CreateCardData {
   source: CardSource;
   isCustom: boolean;
   isSystemCard?: boolean;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface UpdateCardData {
@@ -34,6 +36,8 @@ export interface UpdateCardData {
   phraseFormMasculine?: string | null;
   phraseFormFeminine?: string | null;
   phraseFormNeuter?: string | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface SearchCardsFilter {

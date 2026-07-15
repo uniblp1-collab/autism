@@ -23,6 +23,8 @@ export class CardsMapper {
       record.isSystemCard,
       record.createdAt,
       record.updatedAt,
+      record.width,
+      record.height,
     );
   }
 }

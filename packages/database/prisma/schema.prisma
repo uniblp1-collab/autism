@@ -162,6 +162,11 @@ model Card {
   isCustom            Boolean    @default(false)
   // true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью, не в сетке категорий.
   isSystemCard Boolean   @default(false)
+  // Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null означает "использовать
+  // размер по умолчанию из сетки" (Child.cardSize), а не 0/фиксированное значение. Задаётся
+  // только через resize-жест в режиме редактирования, не на этапе создания карточки.
+  width        Int?
+  height       Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
