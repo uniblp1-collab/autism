@@ -3,6 +3,7 @@ import { CARD_REPOSITORY, CardRepository } from "../../domain/card.repository";
 import { CannotDeleteCardException } from "../../domain/cannot-delete-card.exception";
 import { GetCardUseCase } from "./get-card.use-case";
 import { ChildAccessService } from "../../../children/application/child-access.service";
+import { StorageService } from "../../../../storage/storage.service";
 
 @Injectable()
 export class DeleteCardUseCase {
@@ -10,6 +11,7 @@ export class DeleteCardUseCase {
     @Inject(CARD_REPOSITORY) private readonly cardRepository: CardRepository,
     private readonly getCardUseCase: GetCardUseCase,
     private readonly childAccessService: ChildAccessService,
+    private readonly storageService: StorageService,
   ) {}
 
   async execute(userId: string, id: string): Promise<void> {
@@ -26,5 +28,7 @@ export class DeleteCardUseCase {
       await this.childAccessService.assertOwnedByUser(card.childId, userId);
     }
     await this.cardRepository.softDelete(id);
+    // Удаление карточки не должно оставлять файл-сироту на диске.
+    await this.storageService.deleteCardImage(card.imageUrl);
   }
 }

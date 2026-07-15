@@ -5,6 +5,7 @@ import { Card } from "../../domain/card.entity";
 import { CannotDeleteCardException } from "../../domain/cannot-delete-card.exception";
 import { EntityNotFoundException } from "../../../../common/exceptions/domain.exception";
 import { ChildAccessService } from "../../../children/application/child-access.service";
+import { StorageService } from "../../../../storage/storage.service";
 
 function buildCard(overrides: Partial<Card> = {}): Card {
   return new Card(
@@ -33,6 +34,7 @@ function buildCard(overrides: Partial<Card> = {}): Card {
 describe("DeleteCardUseCase", () => {
   let cardRepository: jest.Mocked<CardRepository>;
   let childAccessService: jest.Mocked<Pick<ChildAccessService, "assertOwnedByUser">>;
+  let storageService: jest.Mocked<Pick<StorageService, "deleteCardImage">>;
   let useCase: DeleteCardUseCase;
 
   beforeEach(() => {
@@ -45,10 +47,12 @@ describe("DeleteCardUseCase", () => {
       softDelete: jest.fn(),
     };
     childAccessService = { assertOwnedByUser: jest.fn() };
+    storageService = { deleteCardImage: jest.fn() };
     useCase = new DeleteCardUseCase(
       cardRepository,
       new GetCardUseCase(cardRepository),
       childAccessService as unknown as ChildAccessService,
+      storageService as unknown as StorageService,
     );
   });
 
@@ -59,6 +63,21 @@ describe("DeleteCardUseCase", () => {
 
     expect(childAccessService.assertOwnedByUser).toHaveBeenCalledWith("child-1", "user-1");
     expect(cardRepository.softDelete).toHaveBeenCalledWith("card-1");
+  });
+
+  it("deletes the card's image file from disk", async () => {
+    cardRepository.findById.mockResolvedValue(
+      buildCard({
+        isCustom: true,
+        isSystemCard: false,
+        childId: "child-1",
+        imageUrl: "http://localhost:3001/uploads/cards/pic.png",
+      }),
+    );
+
+    await useCase.execute("user-1", "card-1");
+
+    expect(storageService.deleteCardImage).toHaveBeenCalledWith("http://localhost:3001/uploads/cards/pic.png");
   });
 
   it("throws when the card does not exist", async () => {

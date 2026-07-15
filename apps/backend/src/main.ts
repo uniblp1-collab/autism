@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppModule } from "./app.module";
@@ -7,7 +8,7 @@ import { GlobalExceptionFilter } from "./common/filters/global-exception.filter"
 import { JsonLoggerService } from "./common/logger/json-logger.service";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
   app.useLogger(new JsonLoggerService());
@@ -17,6 +18,10 @@ async function bootstrap() {
   app.enableCors({
     origin: config.get<string>("FRONTEND_URL", "http://localhost:3000"),
     credentials: true,
+  });
+  // Картинки карточек — обычные статические файлы с диска (см. StorageService), не S3.
+  app.useStaticAssets(config.get<string>("UPLOAD_DIR", "/app/uploads/cards"), {
+    prefix: "/uploads/cards/",
   });
   // /health остаётся вне префикса — liveness-проверка для dev-up.sh/оркестратора.
   app.setGlobalPrefix("api", { exclude: ["health"] });

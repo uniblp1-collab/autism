@@ -27,6 +27,10 @@ export class UploadCardImageUseCase {
     }
 
     const imageUrl = await this.storageService.uploadCardImage(file);
-    return this.cardRepository.update(cardId, { imageUrl });
+    const updated = await this.cardRepository.update(cardId, { imageUrl });
+    // Замена картинки — удаляем старый файл с диска ПОСЛЕ успешной записи новой карточки,
+    // чтобы неудачный upload/update никогда не оставлял карточку без картинки вовсе.
+    await this.storageService.deleteCardImage(card.imageUrl);
+    return updated;
   }
 }
