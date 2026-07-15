@@ -24,7 +24,7 @@ Autism Connect — AAC-веб-платформа (альтернативная �
 | Backend | NestJS, TypeScript |
 | ORM | Prisma |
 | БД | PostgreSQL |
-| Хранилище файлов | MinIO / S3-совместимое |
+| Хранилище файлов | локальный диск сервера (`fs/promises`), без S3-слоя (см. TASK_PATCH_STORAGE_DISK.md) |
 | Авторизация | JWT (access + refresh) |
 | Контейнеризация | Docker, Docker Compose |
 | Тесты backend | Jest |

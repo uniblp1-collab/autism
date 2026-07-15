@@ -18,7 +18,7 @@ AAC-платформа (альтернативная коммуникация) �
 | Frontend | Next.js (App Router), React, TypeScript, TailwindCSS, React Query, Zustand |
 | Backend | NestJS (DDD: domain/application/infrastructure/presentation) |
 | ORM / БД | Prisma / PostgreSQL |
-| Файлы | MinIO (S3-совместимое) |
+| Файлы | локальное файловое хранилище на диске backend |
 | Авторизация | JWT (access + refresh) |
 | Тесты | Jest (backend use-cases), Jest + React Testing Library (frontend) |
 
@@ -68,13 +68,12 @@ pnpm --filter @autism-connect/frontend run dev         # http://localhost:3000
 ```
 
 Одной командой: копирует `packages/docker/.env.example` в корневой `.env` (если его ещё
-нет), собирает и поднимает `postgres`, `minio`, `backend`, `frontend`, дожидается
+нет), собирает и поднимает `postgres`, `backend`, `frontend`, дожидается
 `GET /health` backend'а и прогоняет `prisma migrate deploy` + сид (идемпотентно —
 безопасно перезапускать). После этого:
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
-- MinIO-консоль: http://localhost:9001 (`minioadmin` / `minioadmin`)
 
 Уборка (останавливает и опционально удаляет контейнеры/volumes/образы):
 ```bash
@@ -107,9 +106,9 @@ use-case'ов модулей `cards`, `history`, `schedule`, `statistics` — р
 ## Известные ограничения MVP
 
 - Изображения карточек — placeholder-пути (`/cards/<category>/<slug>.svg`); реальные
-  файлы загружаются через админку/MinIO после первого запуска, не хранятся в репозитории.
-  Разрешение через `next/image`, но при показе они выглядят как «битые» до загрузки
-  реальных ассетов.
+  файлы загружаются через админку/режим редактирования на диск backend-контейнера после
+  первого запуска, не хранятся в репозитории. Разрешение через `next/image`, но при показе
+  они выглядят как «битые» до загрузки реальных ассетов.
 - Оба `Dockerfile` не собирались end-to-end в текущей песочнице — исходящие pull'ы
   базовых образов с Docker Hub блокируются сетевой политикой окружения. Вместо этого
   каждый шаг проверен эквивалентно вне контейнера: `docker compose config` валиден,

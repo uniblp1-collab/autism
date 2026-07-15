@@ -41,7 +41,7 @@ packages/
 - `ScheduleModule`
 - `StatisticsModule`
 - `AdminModule` — Part B техзадания (редакция 3). Не владеет своим доменом/агрегатом — оркестрирует `UserRepository` (из `AuthModule`) и `CardRepository` (из `CardsModule`) через их публичные порты. Scope строго ограничен: (1) загрузка/замена картинки карточки, (2) список/блокировка родительских аккаунтов, (3) сброс пароля. Полный CRUD категорий/карточек, биллинг, сквозная аналитика — вне scope.
-- `StorageModule` (`apps/backend/src/storage`, не в `modules/`, по аналогии с `PrismaModule`) — `StorageService` поверх `@aws-sdk/client-s3`, инкапсулирует загрузку картинок карточек в MinIO/S3-совместимое хранилище. Используется только `AdminModule`.
+- `StorageModule` (`apps/backend/src/storage`, не в `modules/`, по аналогии с `PrismaModule`) — `StorageService` инкапсулирует загрузку картинок карточек в локальное файловое хранилище на диске сервера (обычный `fs/promises`, без S3-слоя — масштаб проекта, один инстанс backend, не оправдывал отдельное S3-совместимое хранилище). Файлы отдаются самим backend через `app.useStaticAssets`. Импортируется `CardsModule` (загрузка из режима редактирования и из `AdminModule`, который переиспользует тот же `UploadCardImageUseCase`).
 
 ### 3.1 Слои внутри модуля
 
@@ -177,7 +177,7 @@ interface CardGeneratorPort {
 
 ## 6. Инфраструктура
 
-- **Docker Compose**: сервисы `frontend`, `backend`, `postgres`, `minio` (или интеграция с внешним S3), `nginx` (опционально, для reverse proxy в проде).
+- **Docker Compose**: сервисы `frontend`, `backend`, `postgres`, `nginx` (опционально, для reverse proxy в проде). Картинки карточек хранятся на диске backend-контейнера (volume `uploads`), не в отдельном хранилище — деплой ориентирован на один VDS/сервер с постоянным диском, горизонтальное масштабирование не планируется.
 - **Миграции:** через Prisma Migrate, запускаются автоматически в CI/CD перед деплоем backend.
 - **Тестовые окружения:** отдельная БД для e2e-тестов backend, поднимается через `docker-compose.test.yml`.
 - **Фоновые задачи (`@nestjs/schedule`):** `ScheduleResetService` (`modules/schedule/application`) ежедневно в 00:00 обнуляет `ScheduleItem.isCompleted` (ТЗ §6.11) через `ScheduleRepository.resetAllCompletions()` — не действием пользователя, а cron'ом, регистрируется через `ScheduleModule.forRoot()` из `@nestjs/schedule` в `AppModule` (алиас `CronScheduleModule` во избежание конфликта имён с собственным модулем `schedule`). Часовой пояс — переменная окружения `TZ` (по умолчанию UTC, **открытый вопрос к заказчику** — см. `.env.example`).
