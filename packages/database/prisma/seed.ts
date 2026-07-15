@@ -217,9 +217,12 @@ async function seedAdminUser() {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  // update тоже должен трогать passwordHash: без этого повторный `prisma db seed` после смены
+  // ADMIN_PASSWORD в .env молча оставляет старый пароль на уже существующей строке пользователя —
+  // админ меняет .env, перезапускает стек, ожидает новый пароль, но логинится всё ещё старым.
   await prisma.user.upsert({
     where: { email },
-    update: { role: Role.ADMIN },
+    update: { role: Role.ADMIN, passwordHash },
     create: { email, passwordHash, role: Role.ADMIN },
   });
 }
