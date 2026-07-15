@@ -76,11 +76,9 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : size === "medium" ? MIN_TOUCH_TARGET_PX * 1.2 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
 
-    // Кастомный размер (TASK_PATCH_3 §1) — вместо растягивания на всю колонку сетки карточка
-    // занимает фиксированный px-размер. dragSize — эфемерный визуальный стейт во время
+    // Кастомный размер (TASK_PATCH_3 §1) — dragSize эфемерный визуальный стейт во время
     // перетаскивания; sizeRef хранит то же значение без задержки ре-рендера, чтобы pointerup
     // читал точно последнее значение, а не устаревшее из замыкания.
-    const hasCustomSize = width != null || height != null;
     const baseWidth = width ?? dimension;
     const baseHeight = height ?? dimension;
     const [dragSize, setDragSize] = useState<{ width: number; height: number } | null>(null);
@@ -156,10 +154,6 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
     const overlayTextColor = isLightImage ? "#1A1A1A" : "#FFFFFF";
     const scrimRgb = isLightImage ? "255,255,255" : "0,0,0";
 
-    // Кастомный размер (заданный или в процессе перетаскивания) — фиксированный px-бокс вместо
-    // растягивания на всю колонку сетки; иначе (обычный режим) поведение не меняется.
-    const useFixedSize = hasCustomSize || dragSize !== null;
-
     const button = (
       <button
         ref={ref}
@@ -172,13 +166,16 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
           className,
         )}
         style={{
-          width: useFixedSize ? effectiveWidth : "100%",
-          // Явная высота нужна для варианта с картинкой (содержимое расположено абсолютно —
-          // нет обычного потока, который задавал бы высоту сам) и всегда для кастомного размера.
-          // Без того и другого высота по-прежнему считается от контента (иконка/подпись/паддинги).
-          height: useFixedSize ? effectiveHeight : hasImage ? "100%" : undefined,
-          minWidth: useFixedSize ? effectiveWidth : dimension,
-          minHeight: useFixedSize ? effectiveHeight : dimension,
+          // Всегда фиксированный px-размер (dimension от `size`, либо кастомный
+          // width/height, TASK_PATCH_3 §1) — карточка никогда не растягивается на всю
+          // колонку контейнера. Это специально: контейнер-грид ("Размер карточек: Мелкие/
+          // Средние/Крупные") — flex-wrap с карточками фиксированного размера, а не CSS Grid
+          // с columns-под-размер-по-умолчанию — иначе кастомно увеличенная карточка вылезала
+          // бы за пределы своей колонки и накладывалась на соседние (см. отчёт по багу).
+          width: effectiveWidth,
+          height: effectiveHeight,
+          minWidth: effectiveWidth,
+          minHeight: effectiveHeight,
           backgroundColor: bg,
           color: fg,
           borderRadius: radiusTokens.md,
@@ -231,15 +228,11 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
 
     // Крестик/звёздочка/маркер размера — отдельные кнопки поверх карточки, а не вложенные внутрь
     // нее (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
-    // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет.
-    // Wrapper — прямой grid-элемент родительской сетки и по умолчанию растягивается на всю
-    // ширину колонки (justify-items: stretch); сама кнопка теперь растягивается вместе с ним
-    // (width: 100% ниже) — иначе крестик/звёздочка, спозиционированные относительно wrapper'а,
-    // "уезжали" за пределы физически более узкой кнопки на соседние колонки. При кастомном
-    // размере, наоборот, wrapper не должен растягиваться — иначе вокруг фиксированной по px
-    // кнопки остаётся пустое место шириной в колонку.
+    // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет. Wrapper не
+    // растягивается (inline-flex, без w-full) — сама кнопка уже фиксированного px-размера,
+    // растягивать нечего.
     return (
-      <div className={clsx("relative inline-flex", useFixedSize ? undefined : "w-full")}>
+      <div className="relative inline-flex">
         {button}
         {onToggleFavorite ? (
           <button

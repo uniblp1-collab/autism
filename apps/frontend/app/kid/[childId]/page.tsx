@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   AddCardTile,
@@ -10,7 +10,6 @@ import {
   FAVORITES_PILL_COLOR,
   Icon,
   Input,
-  MIN_TOUCH_TARGET_PX,
   Modal,
   SCHEDULE_PILL_COLOR,
   ScheduleTile,
@@ -54,15 +53,6 @@ const CARD_SIZE_TO_BUTTON_SIZE: Record<CardSize, "small" | "medium" | "large"> =
   [CardSize.SMALL]: "small",
   [CardSize.MEDIUM]: "medium",
   [CardSize.LARGE]: "large",
-};
-
-// Совпадает с расчётом dimension внутри CardButton — используется, чтобы ширина колонок
-// сетки подстраивалась под выбранный размер карточек (крупные карточки => меньше и шире
-// колонок, сетка заполняет экран), а не оставалась на фиксированных 3/5 колонках.
-const CARD_SIZE_TO_MIN_PX: Record<CardSize, number> = {
-  [CardSize.SMALL]: MIN_TOUCH_TARGET_PX,
-  [CardSize.MEDIUM]: MIN_TOUCH_TARGET_PX * 1.2,
-  [CardSize.LARGE]: MIN_TOUCH_TARGET_PX * 1.4,
 };
 
 interface QuickAddCardModalProps {
@@ -214,6 +204,148 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
   );
 }
 
+// Карточки — фиксированного px-размера (CardButton, TASK_PATCH_3), не растягиваются на всю
+// колонку — поэтому сетка собрана flex-wrap, а не CSS Grid: карточки естественно переносятся
+// на новую строку, когда не помещаются в текущую, независимо от того, у скольких из них задан
+// кастомный resize-размер (грид с колонками под "размер по умолчанию" не мог этого учитывать —
+// увеличенная карточка вылезала за пределы своей колонки и накладывалась на соседние).
+// Если контента больше, чем помещается по высоте экрана — вместо скролла показываются
+// стрелочки пролистывания "на экран вверх/вниз"; сколько карточек поместится на один экран
+// (два или много) зависит от их размера и не фиксировано.
+function PagedCardGrid({ children }: { children: ReactNode }) {
+  const { tokens } = useTheme();
+  const outerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [pageStarts, setPageStarts] = useState<number[]>([0]);
+  const [totalHeight, setTotalHeight] = useState(0);
+  const [availableHeight, setAvailableHeight] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+
+  // Разбиваем контент на "экраны" по границам РЯДОВ flex-wrap-сетки, а не по произвольному
+  // clientHeight — иначе пролистывание останавливалось бы посреди ряда, и звёздочка/крестик/
+  // маркер resize (спозиционированные на карточке с отрицательным отступом, см. CardButton)
+  // наполовину скрытого ряда "повисали" бы поверх соседнего ряда — визуально то самое
+  // наложение карточек друг на друга, которое эта фича должна устранять.
+  function recompute() {
+    const outer = outerRef.current;
+    const content = contentRef.current;
+    if (!outer || !content) return;
+    const available = outer.clientHeight;
+    const rowStartSet = new Set<number>();
+    for (const child of Array.from(content.children)) {
+      rowStartSet.add((child as HTMLElement).offsetTop);
+    }
+    const rowStarts = Array.from(rowStartSet).sort((a, b) => a - b);
+    const contentHeight = content.scrollHeight;
+    setAvailableHeight(available);
+    setTotalHeight(contentHeight);
+
+    if (rowStarts.length === 0 || available <= 0) {
+      setPageStarts((prev) => (prev.length === 1 && prev[0] === 0 ? prev : [0]));
+      return;
+    }
+    const rowEnds = rowStarts.map((_, idx) => rowStarts[idx + 1] ?? contentHeight);
+
+    const nextPageStarts: number[] = [];
+    let i = 0;
+    while (i < rowStarts.length) {
+      nextPageStarts.push(rowStarts[i]);
+      let j = i;
+      // Добавляем к текущему "экрану" ещё ряды, пока они целиком помещаются в available —
+      // ряд, который не влезает целиком, уходит на следующий экран, а не обрезается.
+      while (j + 1 < rowStarts.length && rowEnds[j + 1] - rowStarts[i] <= available) {
+        j++;
+      }
+      i = j + 1;
+    }
+
+    setPageStarts((prev) => {
+      const same = prev.length === nextPageStarts.length && prev.every((v, idx) => v === nextPageStarts[idx]);
+      return same ? prev : nextPageStarts;
+    });
+  }
+
+  // На каждый рендер (новые/изменившиеся по размеру карточки, смена вкладки) — дешёвая
+  // проверка границ рядов. ResizeObserver отдельно нужен только для случая, когда меняется
+  // сам доступный размер (ресайз окна), не сопровождающегося React-рендером.
+  useEffect(() => {
+    recompute();
+  });
+
+  useEffect(() => {
+    const outer = outerRef.current;
+    if (!outer) return;
+    const ro = new ResizeObserver(() => recompute());
+    ro.observe(outer);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setPageIndex((prev) => Math.min(prev, pageStarts.length - 1));
+  }, [pageStarts]);
+
+  const pageStart = pageStarts[pageIndex] ?? 0;
+  const pageEnd = pageStarts[pageIndex + 1] ?? totalHeight;
+  const canPageUp = pageIndex > 0;
+  const canPageDown = pageIndex < pageStarts.length - 1;
+  // Звёздочка/крестик карточки спозиционированы с отрицательным отступом (-top-2 и т.п. в
+  // CardButton) и торчат на ~8px выше верхней границы своего ряда. Если следующий (скрытый)
+  // ряд начинается ровно на границе кадра, эти decorations всё равно попадают в видимую
+  // область — карточка ряда не видна, а её звёздочка/крестик "висят в воздухе". Подрезаем
+  // кадр на небольшой запас снизу, но только когда дальше есть ещё один экран — иначе это
+  // последний экран, обрезать нечего.
+  const ROW_DECORATION_BLEED_PX = 10;
+  const rawFrameHeight = Math.min(pageEnd - pageStart, availableHeight || pageEnd - pageStart);
+  const frameHeight = Math.max(0, rawFrameHeight - (canPageDown ? ROW_DECORATION_BLEED_PX : 0));
+
+  const arrowButtonStyle = {
+    backgroundColor: tokens.surface,
+    color: tokens.textPrimary,
+    border: `1px solid ${tokens.border}`,
+    "--tw-ring-color": tokens.focusRing,
+  };
+
+  return (
+    <div ref={outerRef} className="relative flex h-full min-h-0 flex-1 flex-col">
+      <div style={{ height: frameHeight, overflow: "hidden" }}>
+        <div
+          ref={contentRef}
+          style={{ marginTop: -pageStart }}
+          // relative — чтобы стать offsetParent для карточек-детей: иначе offsetTop у них
+          // считался бы от ближайшего позиционированного предка (outerRef), т.е. уже с учётом
+          // собственного отрицательного marginTop этого div'а, и границы рядов "плыли" бы
+          // при пересчёте после каждого переключения страницы.
+          className="relative flex flex-wrap content-start gap-2"
+        >
+          {children}
+        </div>
+      </div>
+      {canPageUp ? (
+        <button
+          type="button"
+          aria-label="Показать предыдущий экран карточек"
+          onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
+          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full shadow focus:outline-none focus-visible:ring-4"
+          style={arrowButtonStyle}
+        >
+          <Icon name="chevron-up" size={22} />
+        </button>
+      ) : null}
+      {canPageDown ? (
+        <button
+          type="button"
+          aria-label="Показать следующий экран карточек"
+          onClick={() => setPageIndex((prev) => Math.min(pageStarts.length - 1, prev + 1))}
+          className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full shadow focus:outline-none focus-visible:ring-4"
+          style={arrowButtonStyle}
+        >
+          <Icon name="chevron-down" size={22} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ChildScreenPage() {
   const params = useParams<{ childId: string }>();
   const childId = params.childId;
@@ -242,13 +374,6 @@ export default function ChildScreenPage() {
   const updateChild = useUpdateChild(childId);
   const isCardSizeDirty = Boolean(child) && draftCardSize !== child?.cardSize;
   const cardButtonSize = CARD_SIZE_TO_BUTTON_SIZE[draftCardSize];
-  // Число колонок подстраивается под выбранный размер карточек (auto-fill), а не остаётся
-  // фиксированным — иначе крупные карточки продолжали бы делить экран на то же число долек
-  // и не занимали бы дополнительное освободившееся место.
-  // auto-fit (не auto-fill) схлопывает пустые дорожки сетки — иначе при малом числе карточек
-  // они оставались бы на минимальном размере, а свободное 1fr-пространство уходило бы в
-  // невидимые пустые колонки вместо того, чтобы растянуть существующие карточки на весь экран.
-  const cardGridStyle = { gridTemplateColumns: `repeat(auto-fit, minmax(${CARD_SIZE_TO_MIN_PX[draftCardSize]}px, 1fr))` };
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
@@ -319,7 +444,12 @@ export default function ChildScreenPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ backgroundColor: tokens.background }}>
+    // h-screen (не min-h-screen) — фиксирует высоту корневого контейнера ровно на экран,
+    // иначе <main>'s flex-1/h-full цепочка не имеет определённой высоты, от которой можно
+    // отталкиваться: контент внутри PagedCardGrid просто раздвигал бы всю страницу вниз за
+    // пределы вьюпорта (документ скроллился бы целиком), а не оставался в границах видимой
+    // области с собственными стрелочками пролистывания.
+    <div className="flex h-screen flex-col" style={{ backgroundColor: tokens.background }}>
       <nav
         className="flex items-center gap-2 overflow-x-auto p-3"
         style={{ borderBottom: `1px solid ${tokens.border}` }}
@@ -406,9 +536,9 @@ export default function ChildScreenPage() {
         </div>
       ) : null}
 
-      <main className="flex-1 overflow-y-auto p-4 pb-40">
+      <main className="flex flex-1 flex-col overflow-hidden p-4 pb-40">
         {activeTab === SCHEDULE_TAB ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto">
             {schedules.map((schedule) => (
               <section key={schedule.id}>
                 <h2 className="mb-3" style={{ fontSize: 18, fontWeight: 500, color: tokens.textPrimary }}>
@@ -432,7 +562,7 @@ export default function ChildScreenPage() {
             ))}
           </div>
         ) : activeTab === FAVORITES_TAB ? (
-          <div className="grid gap-2" style={cardGridStyle}>
+          <PagedCardGrid key={activeTab}>
             {visibleFavoriteCards.map((card) => (
               <CardButton
                 key={card.id}
@@ -454,9 +584,9 @@ export default function ChildScreenPage() {
                 onResize={isEditMode ? (w, h) => handleResizeCard(card.id, w, h) : undefined}
               />
             ))}
-          </div>
+          </PagedCardGrid>
         ) : activeCategory ? (
-          <div className="grid gap-2" style={cardGridStyle}>
+          <PagedCardGrid key={`${activeTab}-${showAdjectiveStep}`}>
             {sortFavoritesFirst(showAdjectiveStep ? adjectiveCards : nounCards, favoriteCardIds).map((card) => (
               <CardButton
                 key={card.id}
@@ -482,9 +612,9 @@ export default function ChildScreenPage() {
               />
             ))}
             {isEditMode && !showAdjectiveStep ? (
-              <AddCardTile onClick={() => setIsAddModalOpen(true)} />
+              <AddCardTile size={cardButtonSize} onClick={() => setIsAddModalOpen(true)} />
             ) : null}
-          </div>
+          </PagedCardGrid>
         ) : null}
       </main>
 

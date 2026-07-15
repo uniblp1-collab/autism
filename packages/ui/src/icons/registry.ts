@@ -5,6 +5,8 @@ import {
   IconCalendar,
   IconCar,
   IconCheck,
+  IconChevronDown,
+  IconChevronUp,
   IconClock,
   IconCup,
   IconGift,
@@ -58,6 +60,8 @@ export const iconRegistry: Record<string, TablerIcon> = {
   x: IconX,
   pencil: IconPencil,
   "arrows-diagonal": IconArrowsDiagonal2,
+  "chevron-up": IconChevronUp,
+  "chevron-down": IconChevronDown,
 };
 
 export const FALLBACK_ICON_KEY = "tag";
