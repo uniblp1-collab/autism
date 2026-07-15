@@ -45,6 +45,22 @@ export function useResetUserPassword() {
   });
 }
 
+export interface CreateParentResult {
+  user: AdminUser;
+  temporaryPassword: string;
+}
+
+// TODO(безопасность, MVP-упрощение): временный пароль приходит прямо в ответе API, без
+// email-канала — то же осознанное упрощение, что и в useResetUserPassword (TASK_PATCH_3 §5).
+export function useCreateParent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (email: string) =>
+      apiFetch<CreateParentResult>("/admin/users", { method: "POST", body: JSON.stringify({ email }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
+  });
+}
+
 export function useUploadCardImage() {
   const queryClient = useQueryClient();
   return useMutation({

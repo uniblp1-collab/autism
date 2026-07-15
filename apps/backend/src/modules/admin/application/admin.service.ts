@@ -4,6 +4,7 @@ import { Card } from "../../cards/domain/card.entity";
 import { ListUsersUseCase, PaginatedUsers } from "./use-cases/list-users.use-case";
 import { SetUserActiveUseCase } from "./use-cases/set-user-active.use-case";
 import { ResetUserPasswordUseCase, ResetPasswordResult } from "./use-cases/reset-user-password.use-case";
+import { CreateParentUserUseCase, CreateParentResult } from "./use-cases/create-parent-user.use-case";
 import { UploadCardImageUseCase } from "../../cards/application/use-cases/upload-card-image.use-case";
 import { ListUsersQueryDto } from "./dto/list-users-query.dto";
 
@@ -13,6 +14,7 @@ export class AdminService {
     private readonly listUsersUseCase: ListUsersUseCase,
     private readonly setUserActiveUseCase: SetUserActiveUseCase,
     private readonly resetUserPasswordUseCase: ResetUserPasswordUseCase,
+    private readonly createParentUserUseCase: CreateParentUserUseCase,
     private readonly uploadCardImageUseCase: UploadCardImageUseCase,
   ) {}
 
@@ -26,6 +28,10 @@ export class AdminService {
 
   resetUserPassword(userId: string): Promise<ResetPasswordResult> {
     return this.resetUserPasswordUseCase.execute(userId);
+  }
+
+  createParent(email: string): Promise<CreateParentResult> {
+    return this.createParentUserUseCase.execute(email);
   }
 
   uploadCardImage(cardId: string, file: Express.Multer.File | undefined): Promise<Card> {

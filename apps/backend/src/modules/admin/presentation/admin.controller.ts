@@ -16,6 +16,7 @@ import { Roles } from "../../../common/decorators/roles.decorator";
 import { AdminService } from "../application/admin.service";
 import { UpdateUserStatusDto } from "../application/dto/update-user-status.dto";
 import { ListUsersQueryDto } from "../application/dto/list-users-query.dto";
+import { CreateParentDto } from "../application/dto/create-parent.dto";
 import { User } from "../../auth/domain/user.entity";
 import { Card } from "../../cards/domain/card.entity";
 
@@ -43,6 +44,12 @@ export class AdminController {
   async listUsers(@Query() query: ListUsersQueryDto) {
     const result = await this.adminService.listUsers(query);
     return { ...result, items: result.items.map(toUserResponse) };
+  }
+
+  @Post("users")
+  async createParent(@Body() dto: CreateParentDto) {
+    const { user, temporaryPassword } = await this.adminService.createParent(dto.email);
+    return { user: toUserResponse(user), temporaryPassword };
   }
 
   @Patch("users/:id/status")
