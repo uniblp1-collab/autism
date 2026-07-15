@@ -293,6 +293,7 @@ export default function ChildScreenPage() {
   const completeItem = useCompleteScheduleItem(childId);
   const deleteCard = useDeleteCard();
   const toggleFavorite = useToggleFavorite(childId);
+  const resizeCard = useUpdateCard();
 
   function handleToggleFavorite(cardId: string) {
     if (favoriteCardIds.has(cardId)) {
@@ -300,6 +301,12 @@ export default function ChildScreenPage() {
     } else {
       toggleFavorite.add.mutate(cardId);
     }
+  }
+
+  // Точечный resize карточки (TASK_PATCH_3 §1) — CardButton вызывает это один раз на pointerup
+  // с уже посчитанным финальным размером, не на каждое перемещение пальца/мыши.
+  function handleResizeCard(cardId: string, width: number, height: number) {
+    resizeCard.mutate({ cardId, input: { width, height } });
   }
 
   const showBuilderPanel = activeCategory !== null && difficultyLevel !== 1 && (sb.builderWords.length > 0 || !showAdjectiveStep);
@@ -433,13 +440,18 @@ export default function ChildScreenPage() {
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
                 size={cardButtonSize}
+                width={card.width}
+                height={card.height}
                 // В режиме редактирования тап открывает редактирование, как и в обычной
                 // сетке категории — раньше вкладка «Избранное» (открытая по умолчанию) не
                 // поддерживала ни редактирование, ни удаление вовсе.
                 onClick={() => (isEditMode ? setEditingCard(card) : handleFavoriteTap(card))}
-                onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
+                // Раздел «Избранное» никогда не показывает крестик удаления карточки из
+                // библиотеки — только «убрать из избранного» (TASK_PATCH_3 §3). Звезда, как и
+                // маркер resize, доступна только в режиме редактирования (TASK_PATCH_3 §2).
                 favorite
-                onToggleFavorite={() => handleToggleFavorite(card.id)}
+                onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                onResize={isEditMode ? (w, h) => handleResizeCard(card.id, w, h) : undefined}
               />
             ))}
           </div>
@@ -452,6 +464,8 @@ export default function ChildScreenPage() {
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
                 size={cardButtonSize}
+                width={card.width}
+                height={card.height}
                 selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
                 // В режиме редактирования тап по карточке открывает редактирование, а не
                 // выбирает её для фразы — включая библиотечные карточки, не только кастомные
@@ -461,7 +475,10 @@ export default function ChildScreenPage() {
                 }
                 onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
                 favorite={favoriteCardIds.has(card.id)}
-                onToggleFavorite={() => handleToggleFavorite(card.id)}
+                // Звезда видна только в режиме редактирования — ребёнок не должен видеть её
+                // и не должен иметь возможность нажать на неё в обычном режиме (TASK_PATCH_3 §2).
+                onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                onResize={isEditMode ? (w, h) => handleResizeCard(card.id, w, h) : undefined}
               />
             ))}
             {isEditMode && !showAdjectiveStep ? (
