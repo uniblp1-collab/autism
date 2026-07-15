@@ -24,5 +24,10 @@ RUN pnpm --filter @autism-connect/backend run build
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /app /app
+# Картинки карточек пишутся сюда (см. storage.service.ts) — создаём заранее, чтобы каталог
+# существовал и был доступен на запись ещё до первого mkdir(..., {recursive:true}) из кода;
+# важно, если контейнер когда-нибудь запустят от непривилегированного пользователя — иначе
+# writeFile упадёт с EACCES, хотя без Docker (локально) всё работало бы.
+RUN mkdir -p /app/uploads/cards
 EXPOSE 3000
 CMD ["node", "apps/backend/dist/main.js"]

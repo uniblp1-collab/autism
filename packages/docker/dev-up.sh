@@ -17,7 +17,7 @@ if [ ! -f "$ENV_FILE" ]; then
   cp "$ROOT_DIR/packages/docker/.env.example" "$ENV_FILE"
 fi
 
-echo "==> Собираю и поднимаю контейнеры (postgres, minio, backend, frontend)..."
+echo "==> Собираю и поднимаю контейнеры (postgres, backend, frontend)..."
 docker compose -f "$COMPOSE_FILE" up --build -d
 
 echo "==> Жду, пока backend поднимется..."
@@ -38,7 +38,6 @@ echo ""
 echo "Готово. Приложение доступно:"
 echo "  Frontend:      http://localhost:3000"
 echo "  Backend API:   http://localhost:3001"
-echo "  MinIO-консоль: http://localhost:9001  (minioadmin / minioadmin)"
 echo ""
 echo "Логи:   docker compose -f $COMPOSE_FILE logs -f"
 echo "Уборка: ./packages/docker/dev-clean.sh"

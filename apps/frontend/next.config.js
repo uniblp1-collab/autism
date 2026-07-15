@@ -5,10 +5,7 @@ const nextConfig = {
   output: "standalone",
   transpilePackages: ["@autism-connect/ui", "@autism-connect/shared"],
   images: {
-    remotePatterns: [
-      { protocol: "http", hostname: "localhost" },
-      { protocol: "http", hostname: "minio" },
-    ],
+    remotePatterns: [{ protocol: "http", hostname: "localhost" }],
   },
 };
 
