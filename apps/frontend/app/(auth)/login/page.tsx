@@ -14,8 +14,8 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await login.mutateAsync({ email, password });
-    router.replace("/children");
+    const result = await login.mutateAsync({ email, password });
+    router.replace(result.user.role === "ADMIN" ? "/admin" : "/parent");
   }
 
   return (

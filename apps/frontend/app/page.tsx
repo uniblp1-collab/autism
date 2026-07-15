@@ -9,7 +9,11 @@ export default function HomePage() {
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
-    router.replace(user ? "/children" : "/login");
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    router.replace(user.role === "ADMIN" ? "/admin" : "/parent");
   }, [router, user]);
 
   return null;

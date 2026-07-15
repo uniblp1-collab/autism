@@ -14,8 +14,10 @@ export default function RegisterPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    // Регистрация всегда создаёт role: PARENT (см. AuthController.register) — редирект без
+    // ветвления по роли, в отличие от логина, где role уже может быть ADMIN.
     await register.mutateAsync({ email, password });
-    router.replace("/children");
+    router.replace("/parent");
   }
 
   return (
