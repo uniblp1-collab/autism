@@ -1,6 +1,8 @@
 import { useAuthStore } from "../../store/authStore";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// Относительный путь того же origin: браузер шлёт запрос на /api/..., Next.js проксирует его
+// на backend (см. next.config.js rewrites). Абсолютный адрес backend больше не нужен фронтенду.
+const API_URL = "/api";
 
 export class ApiError extends Error {
   constructor(

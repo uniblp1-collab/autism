@@ -23,8 +23,10 @@ async function bootstrap() {
   app.useStaticAssets(config.get<string>("UPLOAD_DIR", "/app/uploads/cards"), {
     prefix: "/uploads/cards/",
   });
-  // /health остаётся вне префикса — liveness-проверка для dev-up.sh/оркестратора.
-  app.setGlobalPrefix("api", { exclude: ["health"] });
+  // Без глобального префикса /api: маршруты обслуживаются от корня (/auth, /cards, /health).
+  // Префикс /api добавляет только Next.js на этапе rewrites (apps/frontend/next.config.js) —
+  // держать префикс в двух слоях означало бы задвоение /api/api/... Прямой доступ к backend
+  // для отладки (curl/Postman) теперь тоже идёт от корня: http://localhost:3001/cards.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

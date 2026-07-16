@@ -15,9 +15,9 @@ RUN pnpm install --frozen-lockfile
 # поэтому значение должно прийти через ARG/ENV именно в этот стейдж, а не только через
 # `environment:` в docker-compose.yml (тот применяется лишь при старте контейнера).
 FROM deps AS build
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+# NEXT_PUBLIC_API_URL больше не встраивается: браузер обращается к API относительным путём
+# /api/..., который Next.js проксирует на backend в рантайме (см. next.config.js rewrites).
 ARG NEXT_PUBLIC_EDIT_MODE_ENABLED=true
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_EDIT_MODE_ENABLED=${NEXT_PUBLIC_EDIT_MODE_ENABLED}
 COPY . .
 RUN pnpm --filter @autism-connect/frontend run build
