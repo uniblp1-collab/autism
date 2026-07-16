@@ -177,7 +177,9 @@ async function seedDemoUser(unlockedCategoryIds: string[]) {
     },
   });
 
-  const washCard = await prisma.card.findFirst({ where: { title: "Лицо" } });
+  // Раздел гигиены теперь содержит действия (см. seed-data.ts) — привязываем шаг "Умыться"
+  // к карточке "Мыться" (раньше ссылались на "Лицо", которой больше нет).
+  const washCard = await prisma.card.findFirst({ where: { title: "Мыться" } });
   const eatCard = await prisma.card.findFirst({ where: { title: "Каша" } });
 
   const steps: { title: string; cardId?: string }[] = [

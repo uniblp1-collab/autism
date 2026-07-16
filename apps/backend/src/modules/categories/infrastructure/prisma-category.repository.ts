@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { CategoryRepository, CreateCategoryData } from "../domain/category.repository";
+import { CategoryRepository, CreateCategoryData, UpdateCategoryData } from "../domain/category.repository";
 import { Category } from "../domain/category.entity";
 import { CategoryMapper } from "./category.mapper";
 
@@ -23,6 +23,11 @@ export class PrismaCategoryRepository implements CategoryRepository {
 
   async create(data: CreateCategoryData): Promise<Category> {
     const record = await this.prisma.category.create({ data: { ...data, isSystem: false } });
+    return CategoryMapper.toDomain(record);
+  }
+
+  async update(id: string, data: UpdateCategoryData): Promise<Category> {
+    const record = await this.prisma.category.update({ where: { id }, data });
     return CategoryMapper.toDomain(record);
   }
 

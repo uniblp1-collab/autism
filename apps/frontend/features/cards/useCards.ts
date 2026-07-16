@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, Category, CreateCardInput, SearchCardsInput, UpdateCardInput } from "@autism-connect/shared";
+import {
+  Card,
+  Category,
+  CreateCardInput,
+  SearchCardsInput,
+  UpdateCardInput,
+  UpdateCategoryInput,
+} from "@autism-connect/shared";
 import { apiFetch } from "../../shared/api/client";
 
 export function useCategories() {
@@ -7,6 +14,16 @@ export function useCategories() {
     queryKey: ["categories"],
     queryFn: () => apiFetch<Category[]>("/categories"),
     staleTime: 5 * 60_000,
+  });
+}
+
+// Редактирование раздела (озвучка/название) из режима редактирования на экране ребёнка.
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ categoryId, input }: { categoryId: string; input: UpdateCategoryInput }) =>
+      apiFetch<Category>(`/categories/${categoryId}`, { method: "PATCH", body: JSON.stringify(input) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
   });
 }
 

@@ -58,6 +58,23 @@ export const createCategorySchema = z.object({
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
+// Частичное обновление категории (редактирование раздела из режима редактирования на экране
+// ребёнка — прежде всего "озвучка" phraseForm и название). Структурные флаги (isPrimary,
+// isHiddenFromNav, isSystem) намеренно не редактируются этой ручкой.
+export const updateCategorySchema = z.object({
+  title: z.string().min(1).max(60).optional(),
+  icon: z.string().min(1).max(30).optional(),
+  color: z
+    .string()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+    .optional(),
+  order: z.number().int().min(0).optional(),
+  // Пустая строка допустима: у категорий вроде "Гигиена" глагол-связка отсутствует.
+  phraseForm: z.string().max(60).optional(),
+  sentenceTemplate: z.string().min(1).max(120).optional(),
+});
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+
 export const createCardSchema = z.object({
   categoryId: z.string().uuid(),
   childId: z.string().uuid().optional().nullable(),

@@ -24,6 +24,7 @@ import {
   useCreateCard,
   useDeleteCard,
   useUpdateCard,
+  useUpdateCategory,
   useUploadCardImage,
 } from "../../../features/cards/useCards";
 import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavorites";
@@ -204,6 +205,56 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
   );
 }
 
+interface EditCategoryModalProps {
+  category: Category;
+  onClose: () => void;
+}
+
+// Редактирование «озвучки» раздела из режима редактирования (запрос заказчика): родитель
+// правит, как произносится начало фразы для всего раздела ("Дай", "Идём", ...) и его название
+// на пилюле. Окно намеренно устроено так же, как EditCardModal для карточки. Шаблон фразы и
+// структурные флаги здесь не трогаются — только контент, который слышит/видит ребёнок.
+function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
+  const { tokens } = useTheme();
+  const updateCategory = useUpdateCategory();
+  const [title, setTitle] = useState(category.title);
+  const [phraseForm, setPhraseForm] = useState(category.phraseForm);
+
+  // Предпросмотр начала фразы: у разделов-глаголов ("Дай мяч") впереди слышен phraseForm;
+  // у разделов без глагола-связки ("Гигиена") он пустой — карточка озвучивается сама.
+  const trimmed = phraseForm.trim();
+  const preview = trimmed ? `«${trimmed} …»` : "«…» (карточка озвучивается сама)";
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!title.trim()) return;
+    await updateCategory.mutateAsync({
+      categoryId: category.id,
+      input: { title: title.trim(), phraseForm: phraseForm.trim() },
+    });
+    onClose();
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`Раздел «${category.title}»`}>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <Input label="Название раздела" required value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input
+          label="Озвучка (слово в начале фразы, напр. «Дай» или «Идём»)"
+          value={phraseForm}
+          onChange={(e) => setPhraseForm(e.target.value)}
+        />
+        <p style={{ fontSize: 13, color: tokens.textSecondary }}>
+          Как прозвучит: <span style={{ color: tokens.textPrimary, fontWeight: 500 }}>{preview}</span>
+        </p>
+        <Button type="submit" disabled={updateCategory.isPending}>
+          {updateCategory.isPending ? "Сохраняем..." : "Сохранить"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
 // Карточки — фиксированного px-размера (CardButton, TASK_PATCH_3), не растягиваются на всю
 // колонку — поэтому сетка собрана flex-wrap, а не CSS Grid: карточки естественно переносятся
 // на новую строку, когда не помещаются в текущую, независимо от того, у скольких из них задан
@@ -364,6 +415,7 @@ export default function ChildScreenPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Черновик размера сетки — применяется к карточкам сразу (предпросмотр), но
   // сохраняется на бэкенде только по нажатию «Сохранить».
@@ -525,6 +577,27 @@ export default function ChildScreenPage() {
               {option.label}
             </button>
           ))}
+          {/* Редактирование озвучки/названия активного раздела (запрос заказчика). Доступно
+              только для настоящих разделов — не для «Избранного»/«Расписания» (activeCategory
+              там null). */}
+          {activeCategory ? (
+            <button
+              type="button"
+              onClick={() => setEditingCategory(activeCategory)}
+              className="flex items-center gap-1 px-3 py-1 focus:outline-none focus-visible:ring-4"
+              style={{
+                borderRadius: 999,
+                fontSize: 14,
+                backgroundColor: tokens.surfaceMuted,
+                color: tokens.textSecondary,
+                // @ts-expect-error CSS custom property for focus ring color
+                "--tw-ring-color": tokens.focusRing,
+              }}
+            >
+              <Icon name="pencil" size={14} />
+              Озвучка раздела
+            </button>
+          ) : null}
           <Button
             type="button"
             className="ml-auto"
@@ -653,6 +726,10 @@ export default function ChildScreenPage() {
       ) : null}
 
       {editingCard ? <EditCardModal card={editingCard} onClose={() => setEditingCard(null)} /> : null}
+
+      {editingCategory ? (
+        <EditCategoryModal category={editingCategory} onClose={() => setEditingCategory(null)} />
+      ) : null}
     </div>
   );
 }
