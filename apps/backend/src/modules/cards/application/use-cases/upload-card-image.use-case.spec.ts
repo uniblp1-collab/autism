@@ -59,35 +59,35 @@ describe("UploadCardImageUseCase", () => {
 
   it("uploads the image and updates the card's imageUrl", async () => {
     cardRepository.findById.mockResolvedValue(buildCard());
-    storageService.uploadCardImage.mockResolvedValue("http://localhost:3001/uploads/cards/new.png");
-    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "http://localhost:3001/uploads/cards/new.png" }));
+    storageService.uploadCardImage.mockResolvedValue("/uploads/cards/new.png");
+    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "/uploads/cards/new.png" }));
 
     const file = buildFile();
     const result = await useCase.execute("card-1", file);
 
     expect(storageService.uploadCardImage).toHaveBeenCalledWith(file);
     expect(cardRepository.update).toHaveBeenCalledWith("card-1", {
-      imageUrl: "http://localhost:3001/uploads/cards/new.png",
+      imageUrl: "/uploads/cards/new.png",
     });
-    expect(result.imageUrl).toBe("http://localhost:3001/uploads/cards/new.png");
+    expect(result.imageUrl).toBe("/uploads/cards/new.png");
   });
 
   it("deletes the previous image file from disk after replacing it", async () => {
     cardRepository.findById.mockResolvedValue(
-      buildCard({ imageUrl: "http://localhost:3001/uploads/cards/old.png" }),
+      buildCard({ imageUrl: "/uploads/cards/old.png" }),
     );
-    storageService.uploadCardImage.mockResolvedValue("http://localhost:3001/uploads/cards/new.png");
-    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "http://localhost:3001/uploads/cards/new.png" }));
+    storageService.uploadCardImage.mockResolvedValue("/uploads/cards/new.png");
+    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "/uploads/cards/new.png" }));
 
     await useCase.execute("card-1", buildFile());
 
-    expect(storageService.deleteCardImage).toHaveBeenCalledWith("http://localhost:3001/uploads/cards/old.png");
+    expect(storageService.deleteCardImage).toHaveBeenCalledWith("/uploads/cards/old.png");
   });
 
   it("does not attempt to delete anything when the card had no previous image", async () => {
     cardRepository.findById.mockResolvedValue(buildCard({ imageUrl: null }));
-    storageService.uploadCardImage.mockResolvedValue("http://localhost:3001/uploads/cards/new.png");
-    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "http://localhost:3001/uploads/cards/new.png" }));
+    storageService.uploadCardImage.mockResolvedValue("/uploads/cards/new.png");
+    cardRepository.update.mockResolvedValue(buildCard({ imageUrl: "/uploads/cards/new.png" }));
 
     await useCase.execute("card-1", buildFile());
 
@@ -103,7 +103,7 @@ describe("UploadCardImageUseCase", () => {
 
   it("skips the ownership check when called without a userId (admin panel)", async () => {
     cardRepository.findById.mockResolvedValue(buildCard({ childId: "child-1" }));
-    storageService.uploadCardImage.mockResolvedValue("http://localhost:3001/uploads/cards/new.png");
+    storageService.uploadCardImage.mockResolvedValue("/uploads/cards/new.png");
     cardRepository.update.mockResolvedValue(buildCard({ childId: "child-1" }));
 
     await useCase.execute("card-1", buildFile());

@@ -11,19 +11,24 @@ const nextConfig = {
   // Нужен для многоэтапного Dockerfile — копируется только .next/standalone + .next/static + public.
   output: "standalone",
   transpilePackages: ["@autism-connect/ui", "@autism-connect/shared"],
-  images: {
-    remotePatterns: [{ protocol: "http", hostname: "localhost" }],
-  },
-  // Браузер обращается к API относительным путём /api/... (тот же origin, что и сайт), а
-  // Next.js проксирует его на backend внутри сети. Один порт наружу вместо двух, CORS
-  // перестаёт быть критичным для веб-версии. Backend не имеет глобального префикса /api
-  // (см. apps/backend/src/main.ts) — префикс добавляется только здесь, поэтому destination
-  // без /api, иначе было бы задвоение /api/api/...
+  // remotePatterns под абсолютный http://localhost больше не нужен: картинки карточек теперь
+  // отдаются относительным путём /uploads/... того же origin (см. rewrites ниже и
+  // StorageService), а next/image считает такие пути локальными без доп. настройки.
+  // Браузер обращается к API (/api/...) и картинкам (/uploads/...) относительным путём того же
+  // origin, что и сайт, а Next.js проксирует их на backend внутри сети. Один порт наружу вместо
+  // двух, CORS не критичен для веб-версии, и всё работает снаружи (мобильный/туннель cloudflared)
+  // без абсолютных адресов backend. Backend без глобального префикса /api (см. main.ts) — префикс
+  // /api добавляется только здесь (destination без /api, иначе задвоение /api/api/...); /uploads
+  // на backend отдаётся как есть (app.useStaticAssets), поэтому destination сохраняет /uploads.
   async rewrites() {
     return [
       {
         source: "/api/:path*",
         destination: `${BACKEND_INTERNAL_URL}/:path*`,
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${BACKEND_INTERNAL_URL}/uploads/:path*`,
       },
     ];
   },
