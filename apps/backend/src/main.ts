@@ -20,8 +20,16 @@ async function bootstrap() {
     credentials: true,
   });
   // Картинки карточек — обычные статические файлы с диска (см. StorageService), не S3.
+  // Имя файла — случайный UUID (StorageService.uploadCardImage), не сам путь карточки: замена
+  // фото создаёт НОВЫЙ файл и удаляет старый (StorageService.deleteCardImage), поэтому конкретный
+  // URL картинки никогда не меняет содержимое — можно кэшировать агрессивно и с immutable,
+  // без риска отдать браузеру/мобильному клиенту устаревшую картинку из кэша. Раньше кэш-заголовков
+  // не было вовсе — каждый показ карточки заново качал файл по сети (особенно заметно на
+  // мобильном/через cloudflared-туннель, см. отчёт по задаче про долгую загрузку картинок).
   app.useStaticAssets(config.get<string>("UPLOAD_DIR", "/app/uploads/cards"), {
     prefix: "/uploads/cards/",
+    maxAge: "365d",
+    immutable: true,
   });
   // Без глобального префикса /api: маршруты обслуживаются от корня (/auth, /cards, /health).
   // Префикс /api добавляет только Next.js на этапе rewrites (apps/frontend/next.config.js) —

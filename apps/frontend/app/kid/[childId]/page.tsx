@@ -270,6 +270,11 @@ function PagedCardGrid({ children, cardsPerPage }: { children: ReactNode; cardsP
     setPageIndex((prev) => Math.min(prev, pageCount - 1));
   }, [pageCount]);
 
+  const start = pageIndex * cardsPerPage;
+  const pageItems = items.slice(start, start + cardsPerPage);
+  const canPrev = pageIndex > 0;
+  const canNext = pageIndex < pageCount - 1;
+
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
@@ -279,19 +284,22 @@ function PagedCardGrid({ children, cardsPerPage }: { children: ReactNode; cardsP
       const width = node.clientWidth;
       const height = node.clientHeight;
       if (width <= 0 || height <= 0) return;
-      const next = computeGridLayout(width, height, cardsPerPage, GAP_PX);
+      // Считаем раскладку под РЕАЛЬНОЕ число карточек на этой странице (pageItems.length), а не
+      // под константу cardsPerPage — иначе для разделов с карточками меньше cardsPerPage
+      // (например, «Гигиена» из 3 карточек при cardsPerPage=6) или для последней неполной
+      // страницы алгоритм пытался бы уместить несуществующие "лишние" слоты, что давало
+      // некорректный (обычно завышенный или странно расположенный) размер плитки.
+      const slotCount = Math.max(1, Math.min(cardsPerPage, pageItems.length));
+      const next = computeGridLayout(width, height, slotCount, GAP_PX);
       setLayout((prev) => (prev.columns === next.columns && prev.tileSize === next.tileSize ? prev : next));
     }
     recompute();
     const ro = new ResizeObserver(recompute);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [cardsPerPage]);
-
-  const start = pageIndex * cardsPerPage;
-  const pageItems = items.slice(start, start + cardsPerPage);
-  const canPrev = pageIndex > 0;
-  const canNext = pageIndex < pageCount - 1;
+    // pageItems.length меняется при переходе между страницами (последняя может быть неполной)
+    // и при изменении числа карточек в разделе — оба случая должны пересчитать раскладку.
+  }, [cardsPerPage, pageItems.length]);
 
   const arrowButtonStyle = {
     backgroundColor: tokens.surface,

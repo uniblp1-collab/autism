@@ -3,13 +3,17 @@ import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "crypto";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import { join } from "path";
+import sharp from "sharp";
 import { assertValidCardImage } from "./card-image-validator";
+import { InvalidImageFileException } from "./invalid-image-file.exception";
 
-const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-};
+// Карточка никогда не рендерится крупнее пары сотен px даже в адаптивной сетке на планшете
+// (TASK_GRID_AND_TTS.md §A) — 640px по длинной стороне с запасом на Retina-плотность, но
+// намного меньше исходников с телефона (часто по несколько МБ), которые раньше отдавались
+// как есть. Это и есть основная причина долгой загрузки картинок на мобильном/через туннель
+// (см. отчёт по задаче) — не сеть виновата, а размер самого файла.
+const MAX_IMAGE_DIMENSION_PX = 640;
+const WEBP_QUALITY = 82;
 
 // Библиотека карточек и масштаб проекта (один инстанс backend, без горизонтального
 // масштабирования) не оправдывают S3-совместимое хранилище — обычный диск сервера с
@@ -29,8 +33,32 @@ export class StorageService {
     assertValidCardImage(file);
 
     await mkdir(this.uploadDir, { recursive: true });
-    const filename = `${randomUUID()}${EXTENSION_BY_MIME_TYPE[file.mimetype] ?? ""}`;
-    await writeFile(join(this.uploadDir, filename), file.buffer);
+    // Всегда .webp на выходе независимо от формата загрузки (jpeg/png/webp) — единый формат
+    // проще кэшировать/поддерживать, и webp даёт заметно меньший размер файла при том же
+    // визуальном качестве, чем jpeg/png (вторая часть фикса "долгой загрузки картинок").
+    const filename = `${randomUUID()}.webp`;
+    let optimized: Buffer;
+    try {
+      optimized = await sharp(file.buffer)
+        // .rotate() без аргументов — применяет поворот по EXIF-ориентации кадра с телефона
+        // ДО ресайза, иначе фото со смартфона в портретной съёмке могло бы лечь на бок.
+        .rotate()
+        .resize({
+          width: MAX_IMAGE_DIMENSION_PX,
+          height: MAX_IMAGE_DIMENSION_PX,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: WEBP_QUALITY })
+        .toBuffer();
+    } catch (error) {
+      // sharp падает на битых/неполных файлах, которые прошли поверхностную проверку
+      // mime-type/размера в assertValidCardImage — это тоже "невалидный файл", а не 500.
+      throw new InvalidImageFileException(
+        `Не удалось обработать файл изображения: ${(error as Error).message}`,
+      );
+    }
+    await writeFile(join(this.uploadDir, filename), optimized);
 
     // Относительный путь того же origin, а не абсолютный http://host:port/... — браузер
     // грузит картинку с того же адреса, что и сам сайт, а Next.js проксирует /uploads на
