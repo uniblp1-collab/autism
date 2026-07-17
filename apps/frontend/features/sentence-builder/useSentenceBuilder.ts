@@ -93,6 +93,17 @@ export function useSentenceBuilder({
     [logAndSpeak],
   );
 
+  // Редакция 4 (TASK_GRID_AND_TTS.md §B): карточка озвучивается своей готовой фразой `ttsPhrase`
+  // целиком, без сборки из частей и независимо от уровня сложности. Fallback на ttsText — для
+  // карточек, у которых фраза ещё не заполнена. Уровни сложности (1/2/3) в коде сохранены, но
+  // на озвучивание больше не влияют — это открытый вопрос к заказчику (см. отчёт).
+  const speakCard = useCallback(
+    (card: Card, speakFn: (text: string) => void = speakText) => {
+      logAndSpeak([card.id], card.ttsPhrase || card.ttsText, speakFn);
+    },
+    [logAndSpeak],
+  );
+
   const selectCategory = useCallback(
     (nextCategory: Category) => {
       setCategoryId(nextCategory.id);
@@ -177,6 +188,7 @@ export function useSentenceBuilder({
     speak,
     speakImmediately,
     speakSystemCard,
+    speakCard,
     reset,
     needsAdjectiveStep,
     needsNounStep,

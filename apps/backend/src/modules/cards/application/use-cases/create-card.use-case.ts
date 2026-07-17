@@ -25,8 +25,10 @@ export class CreateCardUseCase {
       imageUrl: dto.imageUrl ?? null,
       color: dto.color,
       priority: dto.priority,
-      ttsText: dto.ttsText,
-      phraseForm: dto.phraseForm,
+      ttsPhrase: dto.ttsPhrase,
+      // ttsText/phraseForm — легаси: если не переданы, берём фразу озвучивания / пустую строку.
+      ttsText: dto.ttsText ?? dto.ttsPhrase,
+      phraseForm: dto.phraseForm ?? "",
       cardType: dto.cardType,
       gender: dto.gender,
       phraseFormMasculine: dto.phraseFormMasculine,

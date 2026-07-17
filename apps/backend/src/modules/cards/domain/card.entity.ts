@@ -12,6 +12,8 @@ export class Card {
     public readonly color: string,
     public readonly priority: number,
     public readonly ttsText: string,
+    // Полная фраза озвучивания (редакция 4) — что произносится при выборе карточки целиком.
+    public readonly ttsPhrase: string,
     public readonly phraseForm: string,
     public readonly cardType: CardType,
     public readonly gender: Gender | null,
@@ -23,10 +25,6 @@ export class Card {
     public readonly isSystemCard: boolean,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    // Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null означает "размер по
-    // умолчанию из сетки" (Child.cardSize), задаётся только через resize-жест в edit-режиме.
-    public readonly width: number | null = null,
-    public readonly height: number | null = null,
   ) {}
 
   /** Словоформа прилагательного, согласованная с родом существительного. */

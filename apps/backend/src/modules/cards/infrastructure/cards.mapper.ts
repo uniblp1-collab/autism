@@ -24,6 +24,7 @@ export class CardsMapper {
       record.color,
       record.priority,
       record.ttsText,
+      record.ttsPhrase,
       record.phraseForm,
       record.cardType,
       record.gender,
@@ -35,8 +36,6 @@ export class CardsMapper {
       record.isSystemCard,
       record.createdAt,
       record.updatedAt,
-      record.width,
-      record.height,
     );
   }
 }

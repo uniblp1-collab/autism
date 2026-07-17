@@ -14,6 +14,7 @@ export class Child {
     public readonly difficultyLevel: DifficultyLevel,
     public readonly unlockedCategoryIds: string[],
     public readonly cardSize: CardSize,
+    public readonly cardsPerPage: number,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

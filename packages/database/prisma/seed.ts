@@ -70,7 +70,9 @@ async function seedVerbCategoriesAndNouns() {
         imageUrl: null,
         color: category.color,
         priority: index,
+        // ttsText — короткая подпись (легаси), ttsPhrase — полная фраза озвучивания (редакция 4).
         ttsText: noun.title,
+        ttsPhrase: noun.ttsPhrase,
         isSystemCard: false,
       };
       await prisma.card.upsert({ where: { id: cardId }, update: data, create: { id: cardId, ...data } });
@@ -106,6 +108,7 @@ async function seedAdjectiveCards() {
       color: adjective.color,
       priority: index,
       ttsText: adjective.title,
+      ttsPhrase: adjective.title,
       isSystemCard: false,
     };
     await prisma.card.upsert({ where: { id: cardId }, update: data, create: { id: cardId, ...data } });
@@ -135,6 +138,7 @@ async function seedYesNoCards() {
       color: card.color,
       priority: index,
       ttsText: card.ttsText,
+      ttsPhrase: card.ttsText,
       isSystemCard: true,
     };
     await prisma.card.upsert({ where: { id: cardId }, update: data, create: { id: cardId, ...data } });

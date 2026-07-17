@@ -18,6 +18,7 @@ export class CreateChildUseCase {
       difficultyLevel: dto.difficultyLevel,
       unlockedCategoryIds: dto.unlockedCategoryIds,
       cardSize: dto.cardSize,
+      cardsPerPage: dto.cardsPerPage,
     });
   }
 }

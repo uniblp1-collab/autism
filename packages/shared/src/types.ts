@@ -20,8 +20,12 @@ export interface Child {
   // Редакция 3 механики (TASK_REVISE_MECHANICS_AND_ADMIN.md §A.4/A.7).
   difficultyLevel: 1 | 2 | 3;
   unlockedCategoryIds: string[];
-  /** Общий размер карточек в сетке категории — переключается в режиме редактирования. */
+  /** Легаси (редакция 3): размер задавался пресетом Мелкие/Средние/Крупные. В редакции 4
+   * размер определяется числом карточек на экране (cardsPerPage) и адаптивной сеткой. */
   cardSize: CardSize;
+  /** Сколько карточек показывать на одном экране (2–10) — редакция 4. Задаёт и размер плиток
+   * (адаптивная сетка делит ширину), и порог клиентской пагинации. */
+  cardsPerPage: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,7 +57,10 @@ export interface Card {
   color: string;
   priority: number;
   ttsText: string;
-  /** Словоформа для вставки во фразу (винительный и т.д.): "каша" -> "кашу". */
+  /** Полная фраза озвучивания, задаётся на карточке целиком ("Пойдём во двор") — редакция 4.
+   * Именно это произносится при выборе карточки, без сборки из частей. */
+  ttsPhrase: string;
+  /** Легаси словоформа для прежней сборки фразы (редакция 3) — для озвучивания больше не источник. */
   phraseForm: string;
   cardType: CardType;
   /** Только для NOUN (собственный род) — используется для согласования прилагательного. */
@@ -66,18 +73,9 @@ export interface Card {
   isCustom: boolean;
   /** true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью. */
   isSystemCard: boolean;
-  /** Кастомный размер карточки в px (точечный resize в режиме редактирования, TASK_PATCH_3 §1).
-   * null — использовать размер по умолчанию из сетки (Child.cardSize). */
-  width: number | null;
-  height: number | null;
   createdAt: string;
   updatedAt: string;
 }
-
-/** Границы точечного resize карточки (TASK_PATCH_3 §1) — не давать сжать до нечитаемого
- * размера или растянуть на весь экран. */
-export const MIN_CUSTOM_CARD_SIZE_PX = 80;
-export const MAX_CUSTOM_CARD_SIZE_PX = 320;
 
 export interface Favorite {
   id: string;

@@ -16,6 +16,7 @@ export class ChildMapper {
       record.difficultyLevel as 1 | 2 | 3,
       record.unlockedCategoryIds,
       record.cardSize,
+      record.cardsPerPage,
       record.createdAt,
       record.updatedAt,
     );

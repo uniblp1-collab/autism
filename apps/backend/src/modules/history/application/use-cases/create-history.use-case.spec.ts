@@ -16,6 +16,7 @@ function buildCard(id: string, ttsText: string): Card {
     0,
     ttsText,
     ttsText,
+    ttsText,
     "NOUN",
     null,
     null,

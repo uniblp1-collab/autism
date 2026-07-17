@@ -12,6 +12,7 @@ export interface CreateChildData {
   difficultyLevel?: DifficultyLevel;
   unlockedCategoryIds?: string[];
   cardSize?: CardSize;
+  cardsPerPage?: number;
 }
 
 export interface UpdateChildData {
@@ -23,6 +24,7 @@ export interface UpdateChildData {
   difficultyLevel?: DifficultyLevel;
   unlockedCategoryIds?: string[];
   cardSize?: CardSize;
+  cardsPerPage?: number;
 }
 
 export interface ChildRepository {

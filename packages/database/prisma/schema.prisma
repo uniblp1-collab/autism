@@ -77,7 +77,12 @@ model Child {
   // (проверяется в коде, не через отсутствие в этом списке — см. A.7).
   unlockedCategoryIds String[]    @default([])
   // Размер карточек в сетке — переключается в режиме редактирования экрана ребёнка.
+  // Легаси (редакция 3): в редакции 4 размер задаётся числом карточек на экране (cardsPerPage),
+  // а сетка адаптивная (1fr). Колонка оставлена, чтобы не терять данные; UI её больше не меняет.
   cardSize            CardSize    @default(SMALL)
+  // Сколько карточек показывать на одном экране (2–10) — TASK_GRID_AND_TTS.md §A.2. Задаёт и
+  // размер плиток (адаптивная сетка делит ширину), и порог клиентской пагинации (§A.3).
+  cardsPerPage        Int         @default(6)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
@@ -147,7 +152,13 @@ model Card {
   color    String  @default("#4F46E5")
   priority Int     @default(0)
   ttsText  String
-  // Словоформа для вставки во фразу (винительный и т.д.): "каша" -> "кашу".
+  // Полная фраза озвучивания, задаётся на самой карточке целиком ("Пойдём во двор",
+  // "Болит голова", "Дай пить") — TASK_GRID_AND_TTS.md, редакция 4. Именно это произносится
+  // при выборе карточки; фраза больше не собирается программно из Category.phraseForm +
+  // Card.phraseForm + Category.sentenceTemplate (те поля остались, но для TTS не используются).
+  ttsPhrase String @default("")
+  // Словоформа для вставки во фразу (винительный и т.д.): "каша" -> "кашу". Осталась от прежней
+  // сборки фразы из частей (редакция 3) — для озвучивания больше не источник (см. ttsPhrase).
   phraseForm String   @default("")
   cardType   CardType @default(NOUN)
   // Только для NOUN (собственный род существительного) и ADJECTIVE (см. поля ниже) —
@@ -162,11 +173,6 @@ model Card {
   isCustom            Boolean    @default(false)
   // true только для "Да"/"Нет" — рендерятся отдельной sticky-панелью, не в сетке категорий.
   isSystemCard Boolean   @default(false)
-  // Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null означает "использовать
-  // размер по умолчанию из сетки" (Child.cardSize), а не 0/фиксированное значение. Задаётся
-  // только через resize-жест в режиме редактирования, не на этапе создания карточки.
-  width        Int?
-  height       Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?

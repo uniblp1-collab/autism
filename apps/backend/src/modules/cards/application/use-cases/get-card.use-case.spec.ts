@@ -13,6 +13,7 @@ function buildCard(overrides: Partial<Card> = {}): Card {
     overrides.color ?? "#F97316",
     overrides.priority ?? 0,
     overrides.ttsText ?? "Яблоко",
+    overrides.ttsPhrase ?? "Яблоко",
     overrides.phraseForm ?? "яблоко",
     overrides.cardType ?? "NOUN",
     overrides.gender ?? "NEUTER",

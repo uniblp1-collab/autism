@@ -38,6 +38,7 @@ export class PrismaChildRepository implements ChildRepository {
         difficultyLevel: data.difficultyLevel,
         unlockedCategoryIds: data.unlockedCategoryIds,
         cardSize: data.cardSize,
+        cardsPerPage: data.cardsPerPage,
         favoriteCategories: data.favoriteCategoryIds
           ? { create: data.favoriteCategoryIds.map((categoryId) => ({ categoryId })) }
           : undefined,
@@ -58,6 +59,7 @@ export class PrismaChildRepository implements ChildRepository {
         difficultyLevel: data.difficultyLevel,
         unlockedCategoryIds: data.unlockedCategoryIds,
         cardSize: data.cardSize,
+        cardsPerPage: data.cardsPerPage,
         favoriteCategories:
           data.favoriteCategoryIds !== undefined
             ? {

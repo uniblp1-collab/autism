@@ -10,7 +10,8 @@ export interface CreateCardData {
   color?: string;
   priority?: number;
   ttsText: string;
-  phraseForm: string;
+  ttsPhrase: string;
+  phraseForm?: string;
   cardType?: CardType;
   gender?: Gender | null;
   phraseFormMasculine?: string | null;
@@ -19,8 +20,6 @@ export interface CreateCardData {
   source: CardSource;
   isCustom: boolean;
   isSystemCard?: boolean;
-  width?: number | null;
-  height?: number | null;
 }
 
 export interface UpdateCardData {
@@ -30,14 +29,13 @@ export interface UpdateCardData {
   color?: string;
   priority?: number;
   ttsText?: string;
+  ttsPhrase?: string;
   phraseForm?: string;
   cardType?: CardType;
   gender?: Gender | null;
   phraseFormMasculine?: string | null;
   phraseFormFeminine?: string | null;
   phraseFormNeuter?: string | null;
-  width?: number | null;
-  height?: number | null;
 }
 
 export interface SearchCardsFilter {

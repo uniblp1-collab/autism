@@ -1,35 +1,35 @@
-// Данные базовой библиотеки категорий-глаголов и карточек — редакция 3 механики
-// (TASK_REVISE_MECHANICS_AND_ADMIN.md §A). Эти данные используются ТОЛЬКО seed-скриптом
-// (packages/database/prisma/seed.ts) — после первого запуска редактирование происходит
-// через админку/API, а не правкой этого файла.
+// Данные базовой библиотеки категорий и карточек. Используются ТОЛЬКО seed-скриптом
+// (packages/database/prisma/seed.ts) — после первого запуска редактирование происходит через
+// админку/API, а не правкой этого файла.
 //
-// ВАЖНО про контент ниже: набор существительных на категорию (6 шт.) и конкретные
-// sentenceTemplate — временный, демонстрационный набор с безопасными дефолтами.
-// Финальное наполнение "Идти"/"Мыться" и точные шаблоны фраз для "Болит"/"Дай" —
-// открытые вопросы к заказчику (см. отчёт по задаче), не финальное решение.
+// Редакция 4 (TASK_GRID_AND_TTS.md, часть B): фраза озвучивания задаётся на КАЖДОЙ карточке
+// целиком в поле `ttsPhrase` — родитель пишет готовую грамматически верную фразу, приложение
+// не собирает её из частей. Это закрывает прежние грамматические сложности (безличное "Болит",
+// повелительное "Дай", предлоги движения "во двор"). Поля `phraseForm`/`sentenceTemplate`
+// категории остались в схеме, но для озвучивания больше не используются.
 
 export type CardGender = "MASCULINE" | "FEMININE" | "NEUTER";
 
 export interface SeedNounCard {
-  title: string; // именительный падеж
-  phraseForm: string; // словоформа для вставки во фразу
+  title: string; // короткая подпись на плитке (именительный падеж): "Двор"
+  ttsPhrase: string; // полная фраза озвучивания: "Идём во двор"
+  phraseForm: string; // легаси (прежняя сборка фразы) — оставлено для истории, для TTS не нужно
   gender: CardGender;
 }
 
 export interface SeedVerbCategory {
   slug: string;
-  title: string; // сам глагол/просьба: "Дай", "Болит", ...
+  title: string; // название раздела: "Дай", "Гигиена", ...
   icon: string;
   order: number;
   color: string;
   isPrimary?: boolean;
-  phraseForm: string; // словоформа 1-го лица: "Есть" -> "Ем"
-  sentenceTemplate: string;
+  phraseForm: string; // легаси (словоформа 1-го лица) — для TTS больше не источник
+  sentenceTemplate: string; // легаси — для TTS больше не источник
   nouns: SeedNounCard[];
 }
 
-// Дефолтный шаблон "{verb} {noun}" — безопасный, но не всегда естественный
-// (см. §A.3 задачи: не додумывать финальные шаблоны самостоятельно).
+// Легаси-шаблон — больше не участвует в озвучивании (фраза берётся из Card.ttsPhrase).
 const DEFAULT_TEMPLATE = "{verb} {noun}";
 
 export const seedVerbCategories: SeedVerbCategory[] = [
@@ -43,15 +43,14 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     phraseForm: "Дай",
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
-      { title: "Мяч", phraseForm: "мяч", gender: "MASCULINE" },
-      { title: "Сок", phraseForm: "сок", gender: "MASCULINE" },
-      { title: "Игрушка", phraseForm: "игрушку", gender: "FEMININE" },
-      { title: "Печенье", phraseForm: "печенье", gender: "NEUTER" },
-      { title: "Вода", phraseForm: "воду", gender: "FEMININE" },
-      { title: "Книга", phraseForm: "книгу", gender: "FEMININE" },
-      // Дополнительно — для демонстрации согласования прилагательных (см. README прилагательных ниже).
-      { title: "Шар", phraseForm: "шар", gender: "MASCULINE" },
-      { title: "Машина", phraseForm: "машину", gender: "FEMININE" },
+      { title: "Мяч", ttsPhrase: "Дай мяч", phraseForm: "мяч", gender: "MASCULINE" },
+      { title: "Сок", ttsPhrase: "Дай сок", phraseForm: "сок", gender: "MASCULINE" },
+      { title: "Игрушка", ttsPhrase: "Дай игрушку", phraseForm: "игрушку", gender: "FEMININE" },
+      { title: "Печенье", ttsPhrase: "Дай печенье", phraseForm: "печенье", gender: "NEUTER" },
+      { title: "Вода", ttsPhrase: "Дай воду", phraseForm: "воду", gender: "FEMININE" },
+      { title: "Книга", ttsPhrase: "Дай книгу", phraseForm: "книгу", gender: "FEMININE" },
+      { title: "Шар", ttsPhrase: "Дай шар", phraseForm: "шар", gender: "MASCULINE" },
+      { title: "Машина", ttsPhrase: "Дай машину", phraseForm: "машину", gender: "FEMININE" },
     ],
   },
   {
@@ -61,18 +60,14 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     order: 2,
     color: "#9B1C1C",
     phraseForm: "Болит",
-    // ВНИМАНИЕ: "болит" грамматически требует именительный падеж ("болит живот"),
-    // а не винительный, как большинство остальных категорий. phraseForm у карточек
-    // ниже намеренно совпадает с title (именительный) — это осознанное расхождение
-    // с общим полем "словоформа для вставки", требует подтверждения у заказчика.
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
-      { title: "Живот", phraseForm: "живот", gender: "MASCULINE" },
-      { title: "Голова", phraseForm: "голова", gender: "FEMININE" },
-      { title: "Зуб", phraseForm: "зуб", gender: "MASCULINE" },
-      { title: "Горло", phraseForm: "горло", gender: "NEUTER" },
-      { title: "Ухо", phraseForm: "ухо", gender: "NEUTER" },
-      { title: "Нога", phraseForm: "нога", gender: "FEMININE" },
+      { title: "Живот", ttsPhrase: "Болит живот", phraseForm: "живот", gender: "MASCULINE" },
+      { title: "Голова", ttsPhrase: "Болит голова", phraseForm: "голова", gender: "FEMININE" },
+      { title: "Зуб", ttsPhrase: "Болит зуб", phraseForm: "зуб", gender: "MASCULINE" },
+      { title: "Горло", ttsPhrase: "Болит горло", phraseForm: "горло", gender: "NEUTER" },
+      { title: "Ухо", ttsPhrase: "Болит ухо", phraseForm: "ухо", gender: "NEUTER" },
+      { title: "Нога", ttsPhrase: "Болит нога", phraseForm: "нога", gender: "FEMININE" },
     ],
   },
   {
@@ -81,22 +76,15 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     icon: "run",
     order: 3,
     color: "#2F4F8C",
-    // Форма глагола — совместное побуждение "Идём" (по запросу заказчика заменено с более
-    // раннего "Пойдём"). Предлог и падеж зависят от конкретного существительного ("во двор",
-    // но "в школу", "домой") — не выводятся по правилу для всей категории, поэтому предлог+падеж
-    // зашиты целиком в phraseForm каждой карточки, а sentenceTemplate остаётся "{verb} {noun}"
-    // (сам движок шаблонов не менялся, вся коррекция — в данных). Итог: "Идём в магазин",
-    // "Идём домой", "Идём в парк".
     phraseForm: "Идём",
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
-      { title: "Парк", phraseForm: "в парк", gender: "MASCULINE" },
-      { title: "Магазин", phraseForm: "в магазин", gender: "MASCULINE" },
-      // "Домой", не "в дом" — стандартная идиома для "идти домой" в русском.
-      { title: "Дом", phraseForm: "домой", gender: "MASCULINE" },
-      { title: "Улица", phraseForm: "на улицу", gender: "FEMININE" },
-      { title: "Школа", phraseForm: "в школу", gender: "FEMININE" },
-      { title: "Двор", phraseForm: "во двор", gender: "MASCULINE" },
+      { title: "Парк", ttsPhrase: "Идём в парк", phraseForm: "в парк", gender: "MASCULINE" },
+      { title: "Магазин", ttsPhrase: "Идём в магазин", phraseForm: "в магазин", gender: "MASCULINE" },
+      { title: "Дом", ttsPhrase: "Идём домой", phraseForm: "домой", gender: "MASCULINE" },
+      { title: "Улица", ttsPhrase: "Идём на улицу", phraseForm: "на улицу", gender: "FEMININE" },
+      { title: "Школа", ttsPhrase: "Идём в школу", phraseForm: "в школу", gender: "FEMININE" },
+      { title: "Двор", ttsPhrase: "Идём во двор", phraseForm: "во двор", gender: "MASCULINE" },
     ],
   },
   {
@@ -108,35 +96,30 @@ export const seedVerbCategories: SeedVerbCategory[] = [
     phraseForm: "Ем",
     sentenceTemplate: DEFAULT_TEMPLATE,
     nouns: [
-      { title: "Яблоко", phraseForm: "яблоко", gender: "NEUTER" },
-      { title: "Банан", phraseForm: "банан", gender: "MASCULINE" },
-      { title: "Каша", phraseForm: "кашу", gender: "FEMININE" },
-      { title: "Суп", phraseForm: "суп", gender: "MASCULINE" },
-      { title: "Йогурт", phraseForm: "йогурт", gender: "MASCULINE" },
-      { title: "Хлеб", phraseForm: "хлеб", gender: "MASCULINE" },
+      { title: "Яблоко", ttsPhrase: "Ем яблоко", phraseForm: "яблоко", gender: "NEUTER" },
+      { title: "Банан", ttsPhrase: "Ем банан", phraseForm: "банан", gender: "MASCULINE" },
+      { title: "Каша", ttsPhrase: "Ем кашу", phraseForm: "кашу", gender: "FEMININE" },
+      { title: "Суп", ttsPhrase: "Ем суп", phraseForm: "суп", gender: "MASCULINE" },
+      { title: "Йогурт", ttsPhrase: "Ем йогурт", phraseForm: "йогурт", gender: "MASCULINE" },
+      { title: "Хлеб", ttsPhrase: "Ем хлеб", phraseForm: "хлеб", gender: "MASCULINE" },
     ],
   },
   {
-    // slug остаётся "wash" (детерминированный id категории привязан к нему) — так seed
-    // обновляет ту же категорию на месте, а не создаёт новую рядом со старой "Мыться".
+    // slug остаётся "wash" (детерминированный id категории привязан к нему) — seed обновляет
+    // ту же категорию на месте, а не создаёт новую рядом со старой "Мыться".
     slug: "wash",
     title: "Гигиена",
     icon: "bath",
     order: 5,
     color: "#0E6B6B",
-    // По запросу заказчика раздел переименован из "Мыться" в "Гигиена", а карточки-объекты
-    // (лицо/рука/…) заменены на самостоятельные действия: "Туалет", "Мыться", "Чистить зубы".
-    // Это разнородные по грамматике элементы (существительное + два глагольных оборота) без
-    // общего глагола-связки, поэтому категория озвучивает карточку саму по себе: phraseForm
-    // категории пустой, а sentenceTemplate = "{noun}" (тап по "Чистить зубы" произносит
-    // "чистить зубы", без приставки-глагола впереди). gender у этих карточек не несёт смысла
-    // (согласование прилагательного здесь не применяется) — проставлен нейтральный дефолт.
+    // Раздел гигиены — самостоятельные действия; фраза озвучивания у каждой карточки своя
+    // (в редакции 4 это норма для всех разделов, не исключение).
     phraseForm: "",
     sentenceTemplate: "{noun}",
     nouns: [
-      { title: "Туалет", phraseForm: "туалет", gender: "MASCULINE" },
-      { title: "Мыться", phraseForm: "мыться", gender: "MASCULINE" },
-      { title: "Чистить зубы", phraseForm: "чистить зубы", gender: "MASCULINE" },
+      { title: "Туалет", ttsPhrase: "Хочу в туалет", phraseForm: "туалет", gender: "MASCULINE" },
+      { title: "Мыться", ttsPhrase: "Хочу мыться", phraseForm: "мыться", gender: "MASCULINE" },
+      { title: "Чистить зубы", ttsPhrase: "Хочу чистить зубы", phraseForm: "чистить зубы", gender: "MASCULINE" },
     ],
   },
 ];
@@ -157,8 +140,7 @@ export const seedAdjectives: SeedAdjectiveCard[] = [
   { title: "Красный", masculine: "красный", feminine: "красная", neuter: "красное", color: "#B91C1C" },
 ];
 
-// Редакция 2 патча (TASK_PATCH_1.md §3): заказчик поменял решение на противоположное —
-// Да теперь синяя, Нет — красная (ближе к общепринятой AAC-конвенции, где красный = "нет").
+// Редакция 2 патча (TASK_PATCH_1.md §3): Да синяя, Нет — красная (AAC-конвенция: красный = "нет").
 export const YES_CARD = { title: "Да", ttsText: "Да", color: "#1D4ED8" };
 export const NO_CARD = { title: "Нет", ttsText: "Нет", color: "#B91C1C" };
 

@@ -37,4 +37,11 @@ export class CreateChildDto {
   @IsOptional()
   @IsEnum(CARD_SIZES)
   cardSize?: CardSize;
+
+  // Число карточек на экране (2–10) — редакция 4, адаптивная сетка + пагинация.
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  @Max(10)
+  cardsPerPage?: number;
 }

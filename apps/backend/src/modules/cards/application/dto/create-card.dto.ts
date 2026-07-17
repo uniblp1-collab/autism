@@ -1,26 +1,8 @@
-import {
-  IsEnum,
-  IsHexColor,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  MaxLength,
-  Min,
-} from "class-validator";
+import { IsEnum, IsHexColor, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from "class-validator";
 import { CardType, Gender } from "../../domain/card.entity";
 
 const CARD_TYPES: CardType[] = ["NOUN", "ADJECTIVE"];
 const GENDERS: Gender[] = ["MASCULINE", "FEMININE", "NEUTER"];
-
-// Дублирует MIN_CUSTOM_CARD_PX/MAX_CUSTOM_CARD_PX из packages/ui (TASK_PATCH_3 §1) — не
-// импортируется оттуда намеренно: backend не должен зависеть от frontend-пакета UI-примитивов,
-// а @autism-connect/shared не годится для рантайм-импорта в backend (его "main" указывает на
-// нескомпилированный .ts — `nest build` не бандлит workspace-зависимости, в отличие от Next.js
-// с transpilePackages, поэтому node dist/main.js не смог бы разрешить такой импорт).
-const MIN_CUSTOM_CARD_SIZE_PX = 80;
-const MAX_CUSTOM_CARD_SIZE_PX = 320;
 
 export class CreateCardDto {
   @IsUUID()
@@ -34,7 +16,7 @@ export class CreateCardDto {
   @MaxLength(60)
   title: string;
 
-  // Изображение загружается отдельно через админку (POST /admin/cards/:id/image).
+  // Изображение загружается отдельно через POST /cards/:id/image.
   @IsOptional()
   @IsString()
   imageUrl?: string;
@@ -49,13 +31,21 @@ export class CreateCardDto {
   @Max(100)
   priority?: number;
 
+  // Полная фраза озвучивания (редакция 4) — что произносится при выборе карточки.
   @IsString()
   @MaxLength(200)
-  ttsText: string;
+  ttsPhrase: string;
 
+  // ttsText/phraseForm — легаси; если не переданы, use-case подставит ttsPhrase/"".
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  ttsText?: string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(60)
-  phraseForm: string;
+  phraseForm?: string;
 
   @IsOptional()
   @IsEnum(CARD_TYPES)
@@ -79,18 +69,4 @@ export class CreateCardDto {
   @IsString()
   @MaxLength(60)
   phraseFormNeuter?: string;
-
-  // Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — задаётся через resize-жест
-  // в режиме редактирования, границы совпадают с ограничением на фронтенде (packages/ui).
-  @IsOptional()
-  @IsInt()
-  @Min(MIN_CUSTOM_CARD_SIZE_PX)
-  @Max(MAX_CUSTOM_CARD_SIZE_PX)
-  width?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(MIN_CUSTOM_CARD_SIZE_PX)
-  @Max(MAX_CUSTOM_CARD_SIZE_PX)
-  height?: number;
 }

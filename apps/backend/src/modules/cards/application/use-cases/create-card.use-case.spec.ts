@@ -15,6 +15,7 @@ function buildCard(overrides: Partial<Card> = {}): Card {
     overrides.color ?? "#F97316",
     overrides.priority ?? 0,
     overrides.ttsText ?? "Яблоко",
+    overrides.ttsPhrase ?? "Яблоко",
     overrides.phraseForm ?? "яблоко",
     overrides.cardType ?? "NOUN",
     overrides.gender ?? "NEUTER",
@@ -52,6 +53,7 @@ describe("CreateCardUseCase", () => {
       categoryId: "category-1",
       title: "Яблоко",
       imageUrl: "/cards/food/apple.svg",
+      ttsPhrase: "Дай яблоко",
       ttsText: "Яблоко",
       phraseForm: "яблоко",
     };
@@ -71,6 +73,7 @@ describe("CreateCardUseCase", () => {
       childId: "child-1",
       title: "Любимый мишка",
       imageUrl: "/cards/custom/bear.svg",
+      ttsPhrase: "Дай мишку",
       ttsText: "Мишка",
       phraseForm: "мишку",
     };
@@ -89,6 +92,7 @@ describe("CreateCardUseCase", () => {
       categoryId: "category-1",
       childId: "someone-elses-child",
       title: "Любимый мишка",
+      ttsPhrase: "Дай мишку",
       ttsText: "Мишка",
       phraseForm: "мишку",
     };

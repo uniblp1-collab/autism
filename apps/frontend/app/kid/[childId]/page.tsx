@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Children, FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   AddCardTile,
@@ -13,11 +13,10 @@ import {
   Modal,
   SCHEDULE_PILL_COLOR,
   ScheduleTile,
-  SentenceBuilderPanel,
   YesNoStickyPanel,
   useTheme,
 } from "@autism-connect/ui";
-import { Card, CardSize, CardType, Category } from "@autism-connect/shared";
+import { Card, CardType, Category } from "@autism-connect/shared";
 import {
   useCategories,
   useCards,
@@ -44,17 +43,9 @@ const SCHEDULE_TAB = "__schedule__";
 // Режим редактирования (ТЗ §A.7) пока не защищён PIN-кодом — см. .env.example.
 const EDIT_MODE_ENABLED = process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
 
-const CARD_SIZE_OPTIONS: { value: CardSize; label: string }[] = [
-  { value: CardSize.SMALL, label: "Мелкие" },
-  { value: CardSize.MEDIUM, label: "Средние" },
-  { value: CardSize.LARGE, label: "Крупные" },
-];
-
-const CARD_SIZE_TO_BUTTON_SIZE: Record<CardSize, "small" | "medium" | "large"> = {
-  [CardSize.SMALL]: "small",
-  [CardSize.MEDIUM]: "medium",
-  [CardSize.LARGE]: "large",
-};
+// Границы числа карточек на экране (TASK_GRID_AND_TTS.md §A.2).
+const MIN_CARDS_PER_PAGE = 2;
+const MAX_CARDS_PER_PAGE = 10;
 
 interface QuickAddCardModalProps {
   open: boolean;
@@ -66,32 +57,32 @@ interface QuickAddCardModalProps {
 function QuickAddCardModal({ open, onClose, category, childId }: QuickAddCardModalProps) {
   const createCard = useCreateCard();
   const [title, setTitle] = useState("");
-  const [phraseForm, setPhraseForm] = useState("");
+  const [ttsPhrase, setTtsPhrase] = useState("");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!title.trim() || !phraseForm.trim()) return;
+    if (!title.trim() || !ttsPhrase.trim()) return;
     await createCard.mutateAsync({
       categoryId: category.id,
       childId,
       title: title.trim(),
-      phraseForm: phraseForm.trim(),
-      ttsText: title.trim(),
+      // Полная фраза озвучивания задаётся на карточке целиком (редакция 4).
+      ttsPhrase: ttsPhrase.trim(),
     });
     setTitle("");
-    setPhraseForm("");
+    setTtsPhrase("");
     onClose();
   }
 
   return (
     <Modal open={open} onClose={onClose} title={`Добавить карточку в «${category.title}»`}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input label="Подпись на карточке (напр. «Двор»)" required value={title} onChange={(e) => setTitle(e.target.value)} />
         <Input
-          label="Словоформа во фразе (напр. «кашу» для «Ем кашу»)"
+          label="Что произносить (напр. «Идём во двор»)"
           required
-          value={phraseForm}
-          onChange={(e) => setPhraseForm(e.target.value)}
+          value={ttsPhrase}
+          onChange={(e) => setTtsPhrase(e.target.value)}
         />
         <Button type="submit" disabled={createCard.isPending}>
           {createCard.isPending ? "Сохраняем..." : "Добавить"}
@@ -116,16 +107,16 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
   const updateCard = useUpdateCard();
   const uploadImage = useUploadCardImage();
   const [title, setTitle] = useState(card.title);
-  const [phraseForm, setPhraseForm] = useState(card.phraseForm);
+  const [ttsPhrase, setTtsPhrase] = useState(card.ttsPhrase || card.ttsText);
   const [imageError, setImageError] = useState<string | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!title.trim() || !phraseForm.trim()) return;
+    if (!title.trim() || !ttsPhrase.trim()) return;
     await updateCard.mutateAsync({
       cardId: card.id,
-      input: { title: title.trim(), phraseForm: phraseForm.trim(), ttsText: title.trim() },
+      input: { title: title.trim(), ttsPhrase: ttsPhrase.trim() },
     });
     onClose();
   }
@@ -189,12 +180,12 @@ function EditCardModal({ card, onClose }: EditCardModalProps) {
         ) : null}
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input label="Подпись на карточке" required value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input
-            label="Словоформа во фразе (напр. «кашу» для «Ем кашу»)"
+            label="Что произносить (напр. «Идём во двор»)"
             required
-            value={phraseForm}
-            onChange={(e) => setPhraseForm(e.target.value)}
+            value={ttsPhrase}
+            onChange={(e) => setTtsPhrase(e.target.value)}
           />
           <Button type="submit" disabled={updateCard.isPending}>
             {updateCard.isPending ? "Сохраняем..." : "Сохранить"}
@@ -210,27 +201,22 @@ interface EditCategoryModalProps {
   onClose: () => void;
 }
 
-// Редактирование «озвучки» раздела из режима редактирования (запрос заказчика): родитель
-// правит, как произносится начало фразы для всего раздела ("Дай", "Идём", ...) и его название
-// на пилюле. Окно намеренно устроено так же, как EditCardModal для карточки. Шаблон фразы и
-// структурные флаги здесь не трогаются — только контент, который слышит/видит ребёнок.
+// Редактирование НАЗВАНИЯ раздела из режима редактирования (TASK_GRID_AND_TTS.md §B.5 — эту
+// возможность заказчик просил сохранить). Озвучивание больше НЕ живёт на уровне раздела: фраза
+// задаётся на каждой карточке (Card.ttsPhrase), поэтому переименование раздела ("Гигиена",
+// "Ванна", ...) не влияет на то, что произносят его карточки. Это же убирает прежний баг:
+// «озвучка раздела» не работала в «Гигиене», где не было глагола-связки.
 function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
   const { tokens } = useTheme();
   const updateCategory = useUpdateCategory();
   const [title, setTitle] = useState(category.title);
-  const [phraseForm, setPhraseForm] = useState(category.phraseForm);
-
-  // Предпросмотр начала фразы: у разделов-глаголов ("Дай мяч") впереди слышен phraseForm;
-  // у разделов без глагола-связки ("Гигиена") он пустой — карточка озвучивается сама.
-  const trimmed = phraseForm.trim();
-  const preview = trimmed ? `«${trimmed} …»` : "«…» (карточка озвучивается сама)";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!title.trim()) return;
     await updateCategory.mutateAsync({
       categoryId: category.id,
-      input: { title: title.trim(), phraseForm: phraseForm.trim() },
+      input: { title: title.trim() },
     });
     onClose();
   }
@@ -239,13 +225,9 @@ function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
     <Modal open onClose={onClose} title={`Раздел «${category.title}»`}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <Input label="Название раздела" required value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Input
-          label="Озвучка (слово в начале фразы, напр. «Дай» или «Идём»)"
-          value={phraseForm}
-          onChange={(e) => setPhraseForm(e.target.value)}
-        />
         <p style={{ fontSize: 13, color: tokens.textSecondary }}>
-          Как прозвучит: <span style={{ color: tokens.textPrimary, fontWeight: 500 }}>{preview}</span>
+          Фраза озвучивания задаётся на каждой карточке отдельно (её поле «Что произносить») —
+          название раздела на неё не влияет.
         </p>
         <Button type="submit" disabled={updateCategory.isPending}>
           {updateCategory.isPending ? "Сохраняем..." : "Сохранить"}
@@ -255,99 +237,61 @@ function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
   );
 }
 
-// Карточки — фиксированного px-размера (CardButton, TASK_PATCH_3), не растягиваются на всю
-// колонку — поэтому сетка собрана flex-wrap, а не CSS Grid: карточки естественно переносятся
-// на новую строку, когда не помещаются в текущую, независимо от того, у скольких из них задан
-// кастомный resize-размер (грид с колонками под "размер по умолчанию" не мог этого учитывать —
-// увеличенная карточка вылезала за пределы своей колонки и накладывалась на соседние).
-// Если контента больше, чем помещается по высоте экрана — вместо скролла показываются
-// стрелочки пролистывания "на экран вверх/вниз"; сколько карточек поместится на один экран
-// (два или много) зависит от их размера и не фиксировано.
-function PagedCardGrid({ children }: { children: ReactNode }) {
+// Адаптивная сетка карточек с клиентской пагинацией (TASK_GRID_AND_TTS.md §A). На один экран
+// помещается ровно `cardsPerPage` квадратных плиток; раскладка колонки×строки подбирается под
+// размер и ориентацию экрана так, чтобы плитки были как можно крупнее и заполняли ширину без
+// пустой колонки справа (прежний баг). Лишние карточки уходят на следующую страницу, переход —
+// круглой стрелкой в углу (вниз/вверх). Пагинация чисто клиентская: все карточки уже загружены.
+function computeGridLayout(width: number, height: number, cardsPerPage: number, gap: number) {
+  // Перебираем число колонок и выбираем то, при котором квадратная плитка максимальна и при этом
+  // все `cardsPerPage` штук помещаются и по ширине, и по высоте — классическая "N квадратов в WxH".
+  let best = { columns: 1, tileSize: 0 };
+  for (let columns = 1; columns <= cardsPerPage; columns++) {
+    const rows = Math.ceil(cardsPerPage / columns);
+    const tileByWidth = (width - (columns - 1) * gap) / columns;
+    const tileByHeight = (height - (rows - 1) * gap) / rows;
+    const tileSize = Math.min(tileByWidth, tileByHeight);
+    if (tileSize > best.tileSize) best = { columns, tileSize };
+  }
+  return best;
+}
+
+function PagedCardGrid({ children, cardsPerPage }: { children: ReactNode; cardsPerPage: number }) {
   const { tokens } = useTheme();
   const outerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [pageStarts, setPageStarts] = useState<number[]>([0]);
-  const [totalHeight, setTotalHeight] = useState(0);
-  const [availableHeight, setAvailableHeight] = useState(0);
+  const [layout, setLayout] = useState<{ columns: number; tileSize: number }>({ columns: 2, tileSize: 0 });
   const [pageIndex, setPageIndex] = useState(0);
 
-  // Разбиваем контент на "экраны" по границам РЯДОВ flex-wrap-сетки, а не по произвольному
-  // clientHeight — иначе пролистывание останавливалось бы посреди ряда, и звёздочка/крестик/
-  // маркер resize (спозиционированные на карточке с отрицательным отступом, см. CardButton)
-  // наполовину скрытого ряда "повисали" бы поверх соседнего ряда — визуально то самое
-  // наложение карточек друг на друга, которое эта фича должна устранять.
-  function recompute() {
-    const outer = outerRef.current;
-    const content = contentRef.current;
-    if (!outer || !content) return;
-    const available = outer.clientHeight;
-    const rowStartSet = new Set<number>();
-    for (const child of Array.from(content.children)) {
-      rowStartSet.add((child as HTMLElement).offsetTop);
-    }
-    const rowStarts = Array.from(rowStartSet).sort((a, b) => a - b);
-    const contentHeight = content.scrollHeight;
-    setAvailableHeight(available);
-    setTotalHeight(contentHeight);
+  const GAP_PX = 12;
+  const items = Children.toArray(children);
+  const pageCount = Math.max(1, Math.ceil(items.length / cardsPerPage));
 
-    if (rowStarts.length === 0 || available <= 0) {
-      setPageStarts((prev) => (prev.length === 1 && prev[0] === 0 ? prev : [0]));
-      return;
-    }
-    const rowEnds = rowStarts.map((_, idx) => rowStarts[idx + 1] ?? contentHeight);
-
-    const nextPageStarts: number[] = [];
-    let i = 0;
-    while (i < rowStarts.length) {
-      nextPageStarts.push(rowStarts[i]);
-      let j = i;
-      // Добавляем к текущему "экрану" ещё ряды, пока они целиком помещаются в available —
-      // ряд, который не влезает целиком, уходит на следующий экран, а не обрезается.
-      while (j + 1 < rowStarts.length && rowEnds[j + 1] - rowStarts[i] <= available) {
-        j++;
-      }
-      i = j + 1;
-    }
-
-    setPageStarts((prev) => {
-      const same = prev.length === nextPageStarts.length && prev.every((v, idx) => v === nextPageStarts[idx]);
-      return same ? prev : nextPageStarts;
-    });
-  }
-
-  // На каждый рендер (новые/изменившиеся по размеру карточки, смена вкладки) — дешёвая
-  // проверка границ рядов. ResizeObserver отдельно нужен только для случая, когда меняется
-  // сам доступный размер (ресайз окна), не сопровождающегося React-рендером.
   useEffect(() => {
+    setPageIndex((prev) => Math.min(prev, pageCount - 1));
+  }, [pageCount]);
+
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    function recompute() {
+      const node = outerRef.current;
+      if (!node) return;
+      const width = node.clientWidth;
+      const height = node.clientHeight;
+      if (width <= 0 || height <= 0) return;
+      const next = computeGridLayout(width, height, cardsPerPage, GAP_PX);
+      setLayout((prev) => (prev.columns === next.columns && prev.tileSize === next.tileSize ? prev : next));
+    }
     recompute();
-  });
-
-  useEffect(() => {
-    const outer = outerRef.current;
-    if (!outer) return;
-    const ro = new ResizeObserver(() => recompute());
-    ro.observe(outer);
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [cardsPerPage]);
 
-  useEffect(() => {
-    setPageIndex((prev) => Math.min(prev, pageStarts.length - 1));
-  }, [pageStarts]);
-
-  const pageStart = pageStarts[pageIndex] ?? 0;
-  const pageEnd = pageStarts[pageIndex + 1] ?? totalHeight;
-  const canPageUp = pageIndex > 0;
-  const canPageDown = pageIndex < pageStarts.length - 1;
-  // Звёздочка/крестик карточки спозиционированы с отрицательным отступом (-top-2 и т.п. в
-  // CardButton) и торчат на ~8px выше верхней границы своего ряда. Если следующий (скрытый)
-  // ряд начинается ровно на границе кадра, эти decorations всё равно попадают в видимую
-  // область — карточка ряда не видна, а её звёздочка/крестик "висят в воздухе". Подрезаем
-  // кадр на небольшой запас снизу, но только когда дальше есть ещё один экран — иначе это
-  // последний экран, обрезать нечего.
-  const ROW_DECORATION_BLEED_PX = 10;
-  const rawFrameHeight = Math.min(pageEnd - pageStart, availableHeight || pageEnd - pageStart);
-  const frameHeight = Math.max(0, rawFrameHeight - (canPageDown ? ROW_DECORATION_BLEED_PX : 0));
+  const start = pageIndex * cardsPerPage;
+  const pageItems = items.slice(start, start + cardsPerPage);
+  const canPrev = pageIndex > 0;
+  const canNext = pageIndex < pageCount - 1;
 
   const arrowButtonStyle = {
     backgroundColor: tokens.surface,
@@ -357,21 +301,17 @@ function PagedCardGrid({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div ref={outerRef} className="relative flex h-full min-h-0 flex-1 flex-col">
-      <div style={{ height: frameHeight, overflow: "hidden" }}>
-        <div
-          ref={contentRef}
-          style={{ marginTop: -pageStart }}
-          // relative — чтобы стать offsetParent для карточек-детей: иначе offsetTop у них
-          // считался бы от ближайшего позиционированного предка (outerRef), т.е. уже с учётом
-          // собственного отрицательного marginTop этого div'а, и границы рядов "плыли" бы
-          // при пересчёте после каждого переключения страницы.
-          className="relative flex flex-wrap content-start gap-2"
-        >
-          {children}
-        </div>
+    <div ref={outerRef} className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div
+        className="grid content-start justify-center"
+        style={{
+          gridTemplateColumns: `repeat(${layout.columns}, ${layout.tileSize}px)`,
+          gap: GAP_PX,
+        }}
+      >
+        {pageItems}
       </div>
-      {canPageUp ? (
+      {canPrev ? (
         <button
           type="button"
           aria-label="Показать предыдущий экран карточек"
@@ -382,16 +322,27 @@ function PagedCardGrid({ children }: { children: ReactNode }) {
           <Icon name="chevron-up" size={22} />
         </button>
       ) : null}
-      {canPageDown ? (
+      {canNext ? (
         <button
           type="button"
           aria-label="Показать следующий экран карточек"
-          onClick={() => setPageIndex((prev) => Math.min(pageStarts.length - 1, prev + 1))}
+          onClick={() => setPageIndex((prev) => Math.min(pageCount - 1, prev + 1))}
           className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full shadow focus:outline-none focus-visible:ring-4"
           style={arrowButtonStyle}
         >
           <Icon name="chevron-down" size={22} />
         </button>
+      ) : null}
+      {pageCount > 1 ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <span
+              key={i}
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: i === pageIndex ? tokens.textSecondary : tokens.border }}
+            />
+          ))}
+        </div>
       ) : null}
     </div>
   );
@@ -417,15 +368,15 @@ export default function ChildScreenPage() {
   const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  // Черновик размера сетки — применяется к карточкам сразу (предпросмотр), но
+  // Черновик числа карточек на экране — применяется к сетке сразу (предпросмотр), но
   // сохраняется на бэкенде только по нажатию «Сохранить».
-  const [draftCardSize, setDraftCardSize] = useState<CardSize>(child?.cardSize ?? CardSize.SMALL);
+  const savedCardsPerPage = child?.cardsPerPage ?? 6;
+  const [draftCardsPerPage, setDraftCardsPerPage] = useState<number>(savedCardsPerPage);
   useEffect(() => {
-    if (child?.cardSize) setDraftCardSize(child.cardSize);
-  }, [child?.cardSize]);
+    if (child?.cardsPerPage) setDraftCardsPerPage(child.cardsPerPage);
+  }, [child?.cardsPerPage]);
   const updateChild = useUpdateChild(childId);
-  const isCardSizeDirty = Boolean(child) && draftCardSize !== child?.cardSize;
-  const cardButtonSize = CARD_SIZE_TO_BUTTON_SIZE[draftCardSize];
+  const isCardsPerPageDirty = Boolean(child) && draftCardsPerPage !== savedCardsPerPage;
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
 
@@ -461,8 +412,6 @@ export default function ChildScreenPage() {
     if (activeCategory) selectCategory(activeCategory);
   }, [activeTab, activeCategory, selectCategory]);
 
-  const showAdjectiveStep = Boolean(activeCategory) && sb.needsAdjectiveStep;
-
   const favoriteCardIds = new Set(favorites.map((f) => f.cardId));
   const visibleFavoriteCards: Card[] = favoriteCards.filter((c) => favoriteCardIds.has(c.id));
 
@@ -470,7 +419,6 @@ export default function ChildScreenPage() {
   const completeItem = useCompleteScheduleItem(childId);
   const deleteCard = useDeleteCard();
   const toggleFavorite = useToggleFavorite(childId);
-  const resizeCard = useUpdateCard();
 
   function handleToggleFavorite(cardId: string) {
     if (favoriteCardIds.has(cardId)) {
@@ -480,20 +428,7 @@ export default function ChildScreenPage() {
     }
   }
 
-  // Точечный resize карточки (TASK_PATCH_3 §1) — CardButton вызывает это один раз на pointerup
-  // с уже посчитанным финальным размером, не на каждое перемещение пальца/мыши.
-  function handleResizeCard(cardId: string, width: number, height: number) {
-    resizeCard.mutate({ cardId, input: { width, height } });
-  }
-
-  const showBuilderPanel = activeCategory !== null && difficultyLevel !== 1 && (sb.builderWords.length > 0 || !showAdjectiveStep);
   const showYesNo = activeTab !== SCHEDULE_TAB;
-
-  function handleFavoriteTap(card: Card) {
-    const ownerCategory = categories.find((c) => c.id === card.categoryId);
-    if (!ownerCategory) return;
-    sb.speakImmediately(ownerCategory, card);
-  }
 
   return (
     // h-screen (не min-h-screen) — фиксирует высоту корневого контейнера ровно на экран,
@@ -557,29 +492,46 @@ export default function ChildScreenPage() {
           className="flex flex-wrap items-center gap-2 p-3"
           style={{ borderBottom: `1px solid ${tokens.border}` }}
         >
-          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Размер карточек:</span>
-          {CARD_SIZE_OPTIONS.map((option) => (
+          {/* Число карточек на экране (2–10) — задаёт и размер плиток (адаптивная сетка), и
+              порог пагинации (TASK_GRID_AND_TTS.md §A.2). */}
+          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Карточек на экране:</span>
+          <div className="flex items-center gap-2">
             <button
-              key={option.value}
               type="button"
-              aria-pressed={draftCardSize === option.value}
-              onClick={() => setDraftCardSize(option.value)}
-              className="px-3 py-1 focus:outline-none focus-visible:ring-4"
+              aria-label="Меньше карточек на экране"
+              disabled={draftCardsPerPage <= MIN_CARDS_PER_PAGE}
+              onClick={() => setDraftCardsPerPage((n) => Math.max(MIN_CARDS_PER_PAGE, n - 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 disabled:opacity-40"
               style={{
-                borderRadius: 999,
-                fontSize: 14,
-                backgroundColor: draftCardSize === option.value ? tokens.accentSoft : tokens.surfaceMuted,
-                color: draftCardSize === option.value ? tokens.accentText : tokens.textSecondary,
+                backgroundColor: tokens.surfaceMuted,
+                color: tokens.textSecondary,
                 // @ts-expect-error CSS custom property for focus ring color
                 "--tw-ring-color": tokens.focusRing,
               }}
             >
-              {option.label}
+              <Icon name="minus" size={16} strokeWidth={2.5} />
             </button>
-          ))}
-          {/* Редактирование озвучки/названия активного раздела (запрос заказчика). Доступно
-              только для настоящих разделов — не для «Избранного»/«Расписания» (activeCategory
-              там null). */}
+            <span style={{ fontSize: 16, fontWeight: 600, minWidth: 20, textAlign: "center", color: tokens.textPrimary }}>
+              {draftCardsPerPage}
+            </span>
+            <button
+              type="button"
+              aria-label="Больше карточек на экране"
+              disabled={draftCardsPerPage >= MAX_CARDS_PER_PAGE}
+              onClick={() => setDraftCardsPerPage((n) => Math.min(MAX_CARDS_PER_PAGE, n + 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 disabled:opacity-40"
+              style={{
+                backgroundColor: tokens.surfaceMuted,
+                color: tokens.textSecondary,
+                // @ts-expect-error CSS custom property for focus ring color
+                "--tw-ring-color": tokens.focusRing,
+              }}
+            >
+              <Icon name="plus" size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+          {/* Переименование активного раздела (TASK_GRID_AND_TTS.md §B.5). Только для настоящих
+              разделов — не для «Избранного»/«Расписания» (activeCategory там null). */}
           {activeCategory ? (
             <button
               type="button"
@@ -595,14 +547,14 @@ export default function ChildScreenPage() {
               }}
             >
               <Icon name="pencil" size={14} />
-              Озвучка раздела
+              Название раздела
             </button>
           ) : null}
           <Button
             type="button"
             className="ml-auto"
-            disabled={!isCardSizeDirty || updateChild.isPending}
-            onClick={() => updateChild.mutate({ cardSize: draftCardSize })}
+            disabled={!isCardsPerPageDirty || updateChild.isPending}
+            onClick={() => updateChild.mutate({ cardsPerPage: draftCardsPerPage })}
           >
             {updateChild.isPending ? "Сохраняем..." : "Сохранить"}
           </Button>
@@ -635,58 +587,43 @@ export default function ChildScreenPage() {
             ))}
           </div>
         ) : activeTab === FAVORITES_TAB ? (
-          <PagedCardGrid key={activeTab}>
+          <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
             {visibleFavoriteCards.map((card) => (
               <CardButton
                 key={card.id}
                 title={card.title}
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
-                size={cardButtonSize}
-                width={card.width}
-                height={card.height}
-                // В режиме редактирования тап открывает редактирование, как и в обычной
-                // сетке категории — раньше вкладка «Избранное» (открытая по умолчанию) не
-                // поддерживала ни редактирование, ни удаление вовсе.
-                onClick={() => (isEditMode ? setEditingCard(card) : handleFavoriteTap(card))}
+                // В режиме редактирования тап открывает редактирование; иначе — озвучивает
+                // готовую фразу карточки (редакция 4, независимо от уровня сложности).
+                onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
                 // Раздел «Избранное» никогда не показывает крестик удаления карточки из
-                // библиотеки — только «убрать из избранного» (TASK_PATCH_3 §3). Звезда, как и
-                // маркер resize, доступна только в режиме редактирования (TASK_PATCH_3 §2).
+                // библиотеки — только «убрать из избранного» (TASK_PATCH_3 §3). Звезда доступна
+                // только в режиме редактирования (TASK_PATCH_3 §2).
                 favorite
                 onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
-                onResize={isEditMode ? (w, h) => handleResizeCard(card.id, w, h) : undefined}
               />
             ))}
           </PagedCardGrid>
         ) : activeCategory ? (
-          <PagedCardGrid key={`${activeTab}-${showAdjectiveStep}`}>
-            {sortFavoritesFirst(showAdjectiveStep ? adjectiveCards : nounCards, favoriteCardIds).map((card) => (
+          <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
+            {sortFavoritesFirst(nounCards, favoriteCardIds).map((card) => (
               <CardButton
                 key={card.id}
                 title={card.title}
                 imageUrl={card.imageUrl}
                 accentColor={card.color}
-                size={cardButtonSize}
-                width={card.width}
-                height={card.height}
-                selected={showAdjectiveStep ? sb.adjective?.id === card.id : sb.noun?.id === card.id}
                 // В режиме редактирования тап по карточке открывает редактирование, а не
-                // выбирает её для фразы — включая библиотечные карточки, не только кастомные
-                // (явное продуктовое решение; бэкенд по-прежнему защищает только Да/Нет).
-                onClick={() =>
-                  isEditMode ? setEditingCard(card) : showAdjectiveStep ? sb.selectAdjective(card) : sb.selectNoun(card)
-                }
+                // озвучивает — включая библиотечные карточки (бэкенд защищает только Да/Нет).
+                // Иначе — озвучивает готовую фразу карточки (Card.ttsPhrase, редакция 4).
+                onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
                 onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
                 favorite={favoriteCardIds.has(card.id)}
-                // Звезда видна только в режиме редактирования — ребёнок не должен видеть её
-                // и не должен иметь возможность нажать на неё в обычном режиме (TASK_PATCH_3 §2).
+                // Звезда видна только в режиме редактирования (TASK_PATCH_3 §2).
                 onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
-                onResize={isEditMode ? (w, h) => handleResizeCard(card.id, w, h) : undefined}
               />
             ))}
-            {isEditMode && !showAdjectiveStep ? (
-              <AddCardTile size={cardButtonSize} onClick={() => setIsAddModalOpen(true)} />
-            ) : null}
+            {isEditMode ? <AddCardTile onClick={() => setIsAddModalOpen(true)} /> : null}
           </PagedCardGrid>
         ) : null}
       </main>
@@ -695,15 +632,6 @@ export default function ChildScreenPage() {
         className="fixed inset-x-0 bottom-0 flex flex-col"
         style={{ borderTop: `1px solid ${tokens.border}`, backgroundColor: tokens.background }}
       >
-        {showBuilderPanel ? (
-          <div className="p-3">
-            <SentenceBuilderPanel
-              words={sb.builderWords.map((card) => ({ id: card.id, title: card.title }))}
-              onRemoveWord={sb.removeBuilderWordAt}
-              onSpeak={() => sb.speak()}
-            />
-          </div>
-        ) : null}
         {showYesNo && yesCard && noCard ? (
           <YesNoStickyPanel
             yesCard={yesCard}

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { CardSize, CardType, Gender, SpeechLevel } from "./enums";
-import { MAX_CUSTOM_CARD_SIZE_PX, MIN_CUSTOM_CARD_SIZE_PX } from "./types";
 
 export const registerSchema = z.object({
   email: z.string().email(),
@@ -30,6 +29,8 @@ export const createChildSchema = z.object({
   difficultyLevel: difficultyLevelSchema.optional(),
   unlockedCategoryIds: z.array(z.string().uuid()).optional(),
   cardSize: z.nativeEnum(CardSize).optional(),
+  // Число карточек на экране (2–10) — редакция 4, адаптивная сетка + пагинация.
+  cardsPerPage: z.number().int().min(2).max(10).optional(),
 });
 export type CreateChildInput = z.infer<typeof createChildSchema>;
 
@@ -86,15 +87,17 @@ export const createCardSchema = z.object({
     .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
     .optional(),
   priority: z.number().int().min(0).max(100).optional(),
-  ttsText: z.string().min(1).max(200),
-  phraseForm: z.string().min(1).max(60),
+  // Полная фраза озвучивания (редакция 4) — что реально произносится при выборе карточки.
+  ttsPhrase: z.string().min(1).max(200),
+  // ttsText — легаси; если не передан, бэкенд подставит ttsPhrase. phraseForm — тоже легаси
+  // (прежняя сборка фразы из частей), теперь необязателен.
+  ttsText: z.string().min(1).max(200).optional(),
+  phraseForm: z.string().max(60).optional(),
   cardType: z.nativeEnum(CardType).optional(),
   gender: z.nativeEnum(Gender).optional().nullable(),
   phraseFormMasculine: z.string().max(60).optional().nullable(),
   phraseFormFeminine: z.string().max(60).optional().nullable(),
   phraseFormNeuter: z.string().max(60).optional().nullable(),
-  width: z.number().int().min(MIN_CUSTOM_CARD_SIZE_PX).max(MAX_CUSTOM_CARD_SIZE_PX).optional(),
-  height: z.number().int().min(MIN_CUSTOM_CARD_SIZE_PX).max(MAX_CUSTOM_CARD_SIZE_PX).optional(),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
 

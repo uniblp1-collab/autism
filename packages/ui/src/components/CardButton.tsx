@@ -1,132 +1,52 @@
 "use client";
 
-import { ButtonHTMLAttributes, forwardRef, PointerEvent as ReactPointerEvent, SyntheticEvent, useRef, useState } from "react";
+import { ButtonHTMLAttributes, forwardRef, SyntheticEvent, useState } from "react";
 import clsx from "clsx";
-import {
-  MAX_CUSTOM_CARD_PX,
-  MIN_CUSTOM_CARD_PX,
-  MIN_TOUCH_TARGET_PX,
-  paddingTokens,
-  radiusTokens,
-  resolveCategoryColorToken,
-} from "../theme/tokens";
+import { paddingTokens, radiusTokens, resolveCategoryColorToken } from "../theme/tokens";
 import { useTheme } from "../theme/HighContrastThemeProvider";
 import { Icon } from "./Icon";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
   /** Подпись карточки (sentence case, напр. «Позавтракать») — DESIGN.md §1. */
   title: string;
-  /** URL изображения карточки; данные из БД/MinIO, не хардкод. */
+  /** URL изображения карточки; данные из БД, не хардкод. */
   imageUrl?: string | null;
   /** Цвет категории карточки из БД — 800-й тон; фон вычисляется по формуле DESIGN.md §3.4. */
   accentColor: string;
   /** Ключ иконки из реестра Tabler Icons — резервный визуал, пока нет imageUrl. */
   icon?: string;
   selected?: boolean;
-  size?: "small" | "medium" | "large";
-  /** Точечный кастомный размер карточки в px (TASK_PATCH_3 §1) — null/undefined = размер по
-   * умолчанию из `size`. Задан — карточка не растягивается на всю колонку сетки, а занимает
-   * ровно этот фиксированный размер. */
-  width?: number | null;
-  height?: number | null;
-  /** Показывает маркер изменения размера в углу карточки — только когда передан колбэк
-   * (то есть только в режиме редактирования, см. вызывающий код). Вызывается один раз на
-   * pointerup с финальным размером — не на каждое перемещение (не долбить API жестом). */
-  onResize?: (width: number, height: number) => void;
   /** Показывает кнопку-крестик поверх карточки — только в режиме редактирования (ТЗ, часть A.7). */
   onDelete?: () => void;
   /** В избранном у текущего ребёнка — определяет заливку звёздочки. */
   favorite?: boolean;
   /** Показывает кнопку-звёздочку добавления/удаления из избранного — только когда передан
-   * колбэк (режим редактирования либо раздел «Избранное», см. вызывающий код, TASK_PATCH_3 §2/3). */
+   * колбэк (режим редактирования либо раздел «Избранное», TASK_PATCH_3 §2/3). */
   onToggleFavorite?: () => void;
 }
 
 /**
  * Единственный способ отрисовать кликабельную карточку в зоне ребёнка (DESIGN.md §6.3).
  * Плоский дизайн: заливка category-100, подпись/иконка — category-800, без теней и градиентов.
+ *
+ * Размер карточки задаёт адаптивная сетка (TASK_GRID_AND_TTS.md §A): карточка занимает всю
+ * ширину своей ячейки (`w-full`) и квадратная (`aspect-ratio: 1`) — число колонок/строк и, как
+ * следствие, размер плиток определяется настройкой «карточек на экране» (Child.cardsPerPage),
+ * а не фиксированным px-размером или перетаскиванием (попиксельный resize из TASK_PATCH_3 убран).
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
-  (
-    {
-      title,
-      imageUrl,
-      accentColor,
-      icon,
-      selected,
-      size = "small",
-      width,
-      height,
-      onResize,
-      onDelete,
-      favorite,
-      onToggleFavorite,
-      className,
-      ...rest
-    },
-    ref,
-  ) => {
+  ({ title, imageUrl, accentColor, icon, selected, onDelete, favorite, onToggleFavorite, className, ...rest }, ref) => {
     const { tokens } = useTheme();
-    // "small" — минимально допустимый тач-таргет (DESIGN.md §6.3), не уменьшаем ниже него.
-    const dimension =
-      size === "large" ? MIN_TOUCH_TARGET_PX * 1.4 : size === "medium" ? MIN_TOUCH_TARGET_PX * 1.2 : MIN_TOUCH_TARGET_PX;
     const { bg, fg } = resolveCategoryColorToken(accentColor);
 
-    // Кастомный размер (TASK_PATCH_3 §1) — dragSize эфемерный визуальный стейт во время
-    // перетаскивания; sizeRef хранит то же значение без задержки ре-рендера, чтобы pointerup
-    // читал точно последнее значение, а не устаревшее из замыкания.
-    const baseWidth = width ?? dimension;
-    const baseHeight = height ?? dimension;
-    const [dragSize, setDragSize] = useState<{ width: number; height: number } | null>(null);
-    const sizeRef = useRef({ width: baseWidth, height: baseHeight });
-    const dragStartRef = useRef<{ pointerX: number; pointerY: number; width: number; height: number } | null>(null);
-
-    const effectiveWidth = dragSize?.width ?? baseWidth;
-    const effectiveHeight = dragSize?.height ?? baseHeight;
-
-    function handleResizePointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
-      event.stopPropagation();
-      event.currentTarget.setPointerCapture(event.pointerId);
-      dragStartRef.current = {
-        pointerX: event.clientX,
-        pointerY: event.clientY,
-        width: effectiveWidth,
-        height: effectiveHeight,
-      };
-    }
-
-    function handleResizePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
-      const start = dragStartRef.current;
-      if (!start) return;
-      const nextWidth = clamp(start.width + (event.clientX - start.pointerX), MIN_CUSTOM_CARD_PX, MAX_CUSTOM_CARD_PX);
-      const nextHeight = clamp(start.height + (event.clientY - start.pointerY), MIN_CUSTOM_CARD_PX, MAX_CUSTOM_CARD_PX);
-      sizeRef.current = { width: nextWidth, height: nextHeight };
-      setDragSize(sizeRef.current);
-    }
-
-    // Отправляем финальный размер один раз, по pointerup — не на каждое перемещение
-    // (не долбить API десятками запросов во время одного жеста, см. TASK_PATCH_3 §1).
-    function handleResizePointerUp() {
-      if (!dragStartRef.current) return;
-      dragStartRef.current = null;
-      onResize?.(Math.round(sizeRef.current.width), Math.round(sizeRef.current.height));
-    }
-    // Если картинка недоступна (например, хранилище временно не отвечает), откатываемся на
-    // иконку вместо "битой" картинки браузера — для ребёнка это выглядело бы как ошибка.
+    // Если картинка недоступна — откатываемся на иконку вместо "битой" картинки браузера.
     const [imageFailed, setImageFailed] = useState(false);
-    // null = ещё не измерено (или измерить не удалось, напр. без CORS с картинки другого
-    // источника) — по умолчанию считаем картинку тёмной: белый текст на тёмном скриме читается
-    // лучше как безопасный вариант, чем чёрный текст без скрима на непредсказуемо тёмном фото.
+    // null = ещё не измерено — по умолчанию считаем картинку тёмной (белый текст на скриме).
     const [isLightImage, setIsLightImage] = useState<boolean | null>(null);
     const hasImage = Boolean(imageUrl) && !imageFailed;
 
-    // Определяем светлая/тёмная картинка по среднему значению яркости небольшой выборки
-    // пикселей — нужно, чтобы подпись поверх фото (белая или тёмная) не терялась на фоне
-    // (ТЗ: учитывать инверсию цвета текста для тёмных/светлых картинок).
+    // Светлая/тёмная картинка по средней яркости выборки пикселей — чтобы подпись поверх фото
+    // (белая/тёмная) не терялась на фоне.
     function handleImageLoad(event: SyntheticEvent<HTMLImageElement>) {
       const img = event.currentTarget;
       try {
@@ -146,8 +66,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         }
         setIsLightImage(total / count > 150);
       } catch {
-        // Картинка с другого источника без CORS-заголовков "заражает" canvas — читать пиксели
-        // нельзя (SecurityError). Оставляем isLightImage=null (безопасный тёмный вариант).
+        // Картинка с другого источника без CORS "заражает" canvas — читать пиксели нельзя.
       }
     }
 
@@ -160,22 +79,16 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
         type="button"
         aria-pressed={selected}
         className={clsx(
+          "w-full",
           hasImage ? "relative overflow-hidden" : "flex flex-col items-center justify-center gap-2",
           "transition-transform duration-150 ease-out active:scale-95",
           "focus:outline-none focus-visible:ring-4",
           className,
         )}
         style={{
-          // Всегда фиксированный px-размер (dimension от `size`, либо кастомный
-          // width/height, TASK_PATCH_3 §1) — карточка никогда не растягивается на всю
-          // колонку контейнера. Это специально: контейнер-грид ("Размер карточек: Мелкие/
-          // Средние/Крупные") — flex-wrap с карточками фиксированного размера, а не CSS Grid
-          // с columns-под-размер-по-умолчанию — иначе кастомно увеличенная карточка вылезала
-          // бы за пределы своей колонки и накладывалась на соседние (см. отчёт по багу).
-          width: effectiveWidth,
-          height: effectiveHeight,
-          minWidth: effectiveWidth,
-          minHeight: effectiveHeight,
+          // Карточка заполняет ячейку адаптивной сетки и квадратная — размер приходит от сетки
+          // (число колонок под Child.cardsPerPage), а не фиксированный px (см. JSDoc компонента).
+          aspectRatio: "1",
           backgroundColor: bg,
           color: fg,
           borderRadius: radiusTokens.md,
@@ -188,8 +101,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       >
         {hasImage ? (
           <>
-            {/* Картинка растянута на всю карточку (object-fit: cover) — ленивая загрузка вне
-                видимой области, бюджет производительности (ARCHITECTURE.md §7). */}
+            {/* Картинка на всю карточку (object-fit: cover), ленивая загрузка (ARCHITECTURE.md §7). */}
             {/* eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image */}
             <img
               src={imageUrl ?? undefined}
@@ -200,8 +112,6 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
               onError={() => setImageFailed(true)}
               className="absolute inset-0 h-full w-full object-cover"
             />
-            {/* Скрим-градиент внизу карточки — гарантирует контраст подписи независимо от того,
-                насколько точно определилась яркость картинки. */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{ background: `linear-gradient(to top, rgba(${scrimRgb}, 0.78) 0%, rgba(${scrimRgb}, 0) 60%)` }}
@@ -224,15 +134,12 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       </button>
     );
 
-    if (!onDelete && !onToggleFavorite && !onResize) return button;
+    if (!onDelete && !onToggleFavorite) return button;
 
-    // Крестик/звёздочка/маркер размера — отдельные кнопки поверх карточки, а не вложенные внутрь
-    // нее (вложенные <button> недопустимы), поэтому оборачиваем в relative-контейнер только
-    // когда хотя бы одна из них нужна — обычный рендер разметку иначе не меняет. Wrapper не
-    // растягивается (inline-flex, без w-full) — сама кнопка уже фиксированного px-размера,
-    // растягивать нечего.
+    // Крестик/звёздочка — отдельные кнопки поверх карточки (вложенные <button> недопустимы),
+    // поэтому оборачиваем в relative-контейнер во всю ширину ячейки только когда что-то из них нужно.
     return (
-      <div className="relative inline-flex">
+      <div className="relative w-full">
         {button}
         {onToggleFavorite ? (
           <button
@@ -271,27 +178,6 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
             }}
           >
             <Icon name="x" size={16} strokeWidth={2.5} />
-          </button>
-        ) : null}
-        {onResize ? (
-          <button
-            type="button"
-            aria-label={`Изменить размер карточки «${title}»`}
-            onPointerDown={handleResizePointerDown}
-            onPointerMove={handleResizePointerMove}
-            onPointerUp={handleResizePointerUp}
-            onClick={(event) => event.stopPropagation()}
-            className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
-            style={{
-              touchAction: "none",
-              cursor: "nwse-resize",
-              backgroundColor: tokens.surfaceMuted,
-              color: tokens.textSecondary,
-              // @ts-expect-error CSS custom property for focus ring color
-              "--tw-ring-color": tokens.focusRing,
-            }}
-          >
-            <Icon name="arrows-diagonal" size={16} strokeWidth={2.5} />
           </button>
         ) : null}
       </div>

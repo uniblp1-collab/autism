@@ -26,8 +26,7 @@ function CardsPageContent() {
 
   const createCard = useCreateCard();
   const [title, setTitle] = useState("");
-  const [ttsText, setTtsText] = useState("");
-  const [phraseForm, setPhraseForm] = useState("");
+  const [ttsPhrase, setTtsPhrase] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   // Плитка «Добавить» в режиме редактирования экрана ребёнка ведёт сюда с предзаполненной
   // категорией — полная форма создания карточки уже реализована здесь, дублировать её
@@ -41,13 +40,11 @@ function CardsPageContent() {
       categoryId: formCategoryId,
       childId: selectedChildId ?? undefined,
       title,
-      ttsText: ttsText || title,
-      phraseForm: phraseForm || title,
+      ttsPhrase: ttsPhrase || title,
       imageUrl: imageUrl || undefined,
     });
     setTitle("");
-    setTtsText("");
-    setPhraseForm("");
+    setTtsPhrase("");
     setImageUrl("");
   }
 
@@ -74,7 +71,7 @@ function CardsPageContent() {
         {isLoading ? <p>Загрузка...</p> : null}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {cards.map((card) => (
-            <CardButton key={card.id} title={card.title} imageUrl={card.imageUrl} accentColor={card.color} size="small" />
+            <CardButton key={card.id} title={card.title} imageUrl={card.imageUrl} accentColor={card.color} />
           ))}
         </div>
       </section>
@@ -99,17 +96,11 @@ function CardsPageContent() {
               ))}
             </select>
           </label>
-          <Input label="Название (именительный падеж)" required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input label="Подпись на карточке" required value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input
-            label="Словоформа для вставки во фразу (напр. «кашу» для «Ем кашу»)"
-            required
-            value={phraseForm}
-            onChange={(e) => setPhraseForm(e.target.value)}
-          />
-          <Input
-            label="Текст для озвучивания (необязательно)"
-            value={ttsText}
-            onChange={(e) => setTtsText(e.target.value)}
+            label="Что произносить (напр. «Идём во двор»; по умолчанию — подпись)"
+            value={ttsPhrase}
+            onChange={(e) => setTtsPhrase(e.target.value)}
           />
           <Input label="URL изображения (необязательно)" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
           <Button type="submit" disabled={createCard.isPending}>
