@@ -6,6 +6,8 @@ import {
   AddCardTile,
   Button,
   CardButton,
+  CATEGORY_COLOR_PRESETS,
+  CATEGORY_ICON_PRESETS,
   CategoryPill,
   FAVORITES_PILL_COLOR,
   Icon,
@@ -201,22 +203,27 @@ interface EditCategoryModalProps {
   onClose: () => void;
 }
 
-// Редактирование НАЗВАНИЯ раздела из режима редактирования (TASK_GRID_AND_TTS.md §B.5 — эту
-// возможность заказчик просил сохранить). Озвучивание больше НЕ живёт на уровне раздела: фраза
-// задаётся на каждой карточке (Card.ttsPhrase), поэтому переименование раздела ("Гигиена",
-// "Ванна", ...) не влияет на то, что произносят его карточки. Это же убирает прежний баг:
-// «озвучка раздела» не работала в «Гигиене», где не было глагола-связки.
+// Редактирование раздела из режима редактирования (TASK_GRID_AND_TTS.md §B.5 — переименование
+// заказчик просил сохранить; иконка/цвет кнопки — по новому запросу, самостоятельная замена
+// без участия разработчика). Озвучивание больше НЕ живёт на уровне раздела: фраза задаётся на
+// каждой карточке (Card.ttsPhrase), поэтому изменения здесь не влияют на то, что произносят
+// карточки раздела. Иконка выбирается из готового набора Tabler-иконок (CATEGORY_ICON_PRESETS),
+// цвет — из набора предустановленных тонов DESIGN.md §3.4 (CATEGORY_COLOR_PRESETS), а не
+// произвольный ввод — так гарантирован контраст фон/текст пилюли и карточек этого раздела
+// (CLAUDE.md §5.3: только токены темы, не хардкод цвета в компонентах).
 function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
   const { tokens } = useTheme();
   const updateCategory = useUpdateCategory();
   const [title, setTitle] = useState(category.title);
+  const [icon, setIcon] = useState(category.icon);
+  const [color, setColor] = useState(category.color);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!title.trim()) return;
     await updateCategory.mutateAsync({
       categoryId: category.id,
-      input: { title: title.trim() },
+      input: { title: title.trim(), icon, color },
     });
     onClose();
   }
@@ -225,9 +232,70 @@ function EditCategoryModal({ category, onClose }: EditCategoryModalProps) {
     <Modal open onClose={onClose} title={`Раздел «${category.title}»`}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <Input label="Название раздела" required value={title} onChange={(e) => setTitle(e.target.value)} />
+
+        <div className="flex flex-col gap-2">
+          <span style={{ fontSize: 14, fontWeight: 500, color: tokens.textPrimary }}>Кнопка раздела</span>
+          <CategoryPill label={title.trim() || category.title} icon={icon} color={color} active />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Иконка</span>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_ICON_PRESETS.map((iconKey) => (
+              <button
+                key={iconKey}
+                type="button"
+                aria-label={`Иконка «${iconKey}»`}
+                aria-pressed={icon === iconKey}
+                onClick={() => setIcon(iconKey)}
+                className="flex h-11 w-11 items-center justify-center focus:outline-none focus-visible:ring-4"
+                style={{
+                  borderRadius: 999,
+                  backgroundColor: icon === iconKey ? tokens.accentSoft : tokens.surfaceMuted,
+                  color: icon === iconKey ? tokens.accentText : tokens.textSecondary,
+                  border: icon === iconKey ? `2px solid ${tokens.accentText}` : "none",
+                  // @ts-expect-error CSS custom property for focus ring color
+                  "--tw-ring-color": tokens.focusRing,
+                }}
+              >
+                <Icon name={iconKey} size={20} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Цвет</span>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.hex}
+                type="button"
+                aria-label={`Цвет «${preset.label}»`}
+                aria-pressed={color.toUpperCase() === preset.hex}
+                onClick={() => setColor(preset.hex)}
+                className="flex h-9 w-9 items-center justify-center focus:outline-none focus-visible:ring-4"
+                style={{
+                  borderRadius: 999,
+                  backgroundColor: preset.hex,
+                  // Иконка check рендерится в currentColor (см. packages/ui/Icon.tsx) — белый
+                  // текстовый цвет кнопки делает галочку видимой на любом из пресетов.
+                  color: "#FFFFFF",
+                  border:
+                    color.toUpperCase() === preset.hex ? `3px solid ${tokens.textPrimary}` : `1px solid ${tokens.border}`,
+                  // @ts-expect-error CSS custom property for focus ring color
+                  "--tw-ring-color": tokens.focusRing,
+                }}
+              >
+                {color.toUpperCase() === preset.hex ? <Icon name="check" size={16} /> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <p style={{ fontSize: 13, color: tokens.textSecondary }}>
           Фраза озвучивания задаётся на каждой карточке отдельно (её поле «Что произносить») —
-          название раздела на неё не влияет.
+          название, иконка и цвет раздела на неё не влияют.
         </p>
         <Button type="submit" disabled={updateCategory.isPending}>
           {updateCategory.isPending ? "Сохраняем..." : "Сохранить"}
@@ -449,6 +517,14 @@ export default function ChildScreenPage() {
         className="flex items-center gap-2 overflow-x-auto p-3"
         style={{ borderBottom: `1px solid ${tokens.border}` }}
       >
+        {/* Расписание — первая пилюля слева (по запросу заказчика). */}
+        <CategoryPill
+          label="Расписание"
+          icon="calendar"
+          color={SCHEDULE_PILL_COLOR}
+          active={activeTab === SCHEDULE_TAB}
+          onClick={() => setActiveTab(SCHEDULE_TAB)}
+        />
         <CategoryPill
           label="Избранное"
           icon="star"
@@ -467,13 +543,6 @@ export default function ChildScreenPage() {
             active={activeTab === category.id}
           />
         ))}
-        <CategoryPill
-          label="Расписание"
-          icon="calendar"
-          color={SCHEDULE_PILL_COLOR}
-          active={activeTab === SCHEDULE_TAB}
-          onClick={() => setActiveTab(SCHEDULE_TAB)}
-        />
 
         {EDIT_MODE_ENABLED ? (
           <button

@@ -68,6 +68,33 @@ export const iconRegistry: Record<string, TablerIcon> = {
 
 export const FALLBACK_ICON_KEY = "tag";
 
+// Подмножество предметных иконок реестра, предлагаемое в UI-пикере иконки раздела
+// (самостоятельное изменение кнопки категории родителем) — без служебных/UI-иконок
+// (check/x/plus/minus/pencil/arrows-diagonal/chevron-*), которые используются под конкретные
+// элементы интерфейса (крестик удаления, плюс "Добавить" и т.п.), а не как иллюстрация раздела.
+export const CATEGORY_ICON_PRESETS: string[] = [
+  "apple",
+  "cup",
+  "puzzle",
+  "users",
+  "run",
+  "mood-smile",
+  "paw",
+  "shirt",
+  "car",
+  "bath",
+  "stethoscope",
+  "clock",
+  "sun",
+  "palette",
+  "number-123",
+  "school",
+  "gift",
+  "home",
+  "star",
+  "calendar",
+];
+
 export function resolveIcon(key: string): TablerIcon {
   return iconRegistry[key] ?? iconRegistry[FALLBACK_ICON_KEY];
 }

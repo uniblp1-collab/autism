@@ -124,6 +124,23 @@ export const categoryColorTokens: Record<string, CategoryColorToken> = {
   "#1D4ED8": { bg: "#C6D8FA", fg: "#1E3A8A" }, // Да
 };
 
+// Тот же набор из 9 базовых категорий DESIGN.md §3.4 (без Да/Нет — они зарезервированы для
+// системных карточек), с подписями для UI-пикера цвета раздела (самостоятельное изменение
+// кнопки категории родителем). Родитель выбирает ИЗ этого набора, а не вводит произвольный hex —
+// так гарантирован контраст фон/текст (CLAUDE.md §5.3: только токены темы, не хардкод цвета
+// в компонентах). Порядок и значения синхронизированы с ключами `categoryColorTokens` выше.
+export const CATEGORY_COLOR_PRESETS: { hex: string; label: string }[] = [
+  { hex: "#712B13", label: "Еда" },
+  { hex: "#085041", label: "Напитки" },
+  { hex: "#3C3489", label: "Игрушки" },
+  { hex: "#72243E", label: "Семья" },
+  { hex: "#791F1F", label: "Действия" },
+  { hex: "#633806", label: "Эмоции" },
+  { hex: "#27500A", label: "Животные" },
+  { hex: "#444441", label: "Одежда" },
+  { hex: "#0C447C", label: "Транспорт" },
+];
+
 function mixWithWhite(hex: string, whiteRatio: number): string {
   const clean = hex.replace("#", "");
   const bigint = parseInt(clean.length === 3 ? clean.replace(/(.)/g, "$1$1") : clean, 16);
