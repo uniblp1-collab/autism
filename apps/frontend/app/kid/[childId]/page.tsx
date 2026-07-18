@@ -24,6 +24,7 @@ import {
   useCards,
   useCreateCard,
   useDeleteCard,
+  usePromoteCard,
   useUpdateCard,
   useUpdateCategory,
   useUploadCardImage,
@@ -494,6 +495,7 @@ export default function ChildScreenPage() {
   const { data: schedules = [] } = useSchedules(childId);
   const completeItem = useCompleteScheduleItem(childId);
   const deleteCard = useDeleteCard();
+  const promoteCard = usePromoteCard();
   const toggleFavorite = useToggleFavorite(childId);
 
   function handleToggleFavorite(cardId: string) {
@@ -702,6 +704,9 @@ export default function ChildScreenPage() {
                 favorite={favoriteCardIds.has(card.id)}
                 // Звезда видна только в режиме редактирования (TASK_PATCH_3 §2).
                 onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                // "Поставить на первое место в разделе" — по запросу заказчика, только в режиме
+                // редактирования (см. usePromoteCard/PromoteCardUseCase).
+                onPromote={isEditMode ? () => promoteCard.mutate({ cardId: card.id, childId }) : undefined}
               />
             ))}
             {isEditMode ? <AddCardTile onClick={() => setIsAddModalOpen(true)} /> : null}

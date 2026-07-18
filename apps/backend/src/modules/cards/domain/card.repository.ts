@@ -55,4 +55,6 @@ export interface CardRepository {
   create(data: CreateCardData): Promise<Card>;
   update(id: string, data: UpdateCardData): Promise<Card>;
   softDelete(id: string): Promise<void>;
+  /** Атомарно проставляет priority сразу нескольким карточкам (см. PromoteCardUseCase). */
+  updatePriorities(items: { id: string; priority: number }[]): Promise<void>;
 }

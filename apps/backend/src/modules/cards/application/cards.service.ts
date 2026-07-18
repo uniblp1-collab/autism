@@ -9,6 +9,7 @@ import { GetCardUseCase } from "./use-cases/get-card.use-case";
 import { UpdateCardUseCase } from "./use-cases/update-card.use-case";
 import { DeleteCardUseCase } from "./use-cases/delete-card.use-case";
 import { UploadCardImageUseCase } from "./use-cases/upload-card-image.use-case";
+import { PromoteCardUseCase } from "./use-cases/promote-card.use-case";
 
 @Injectable()
 export class CardsService {
@@ -19,6 +20,7 @@ export class CardsService {
     private readonly updateCardUseCase: UpdateCardUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
     private readonly uploadCardImageUseCase: UploadCardImageUseCase,
+    private readonly promoteCardUseCase: PromoteCardUseCase,
   ) {}
 
   create(userId: string, dto: CreateCardDto): Promise<Card> {
@@ -43,5 +45,9 @@ export class CardsService {
 
   uploadImage(userId: string, id: string, file: Express.Multer.File | undefined): Promise<Card> {
     return this.uploadCardImageUseCase.execute(id, file, userId);
+  }
+
+  promote(userId: string, id: string, childId: string): Promise<Card> {
+    return this.promoteCardUseCase.execute(userId, id, childId);
   }
 }

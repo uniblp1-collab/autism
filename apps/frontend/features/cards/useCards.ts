@@ -71,6 +71,17 @@ export function useDeleteCard() {
   });
 }
 
+// "Поставить карточку на первое место в разделе" — режим редактирования на экране ребёнка
+// (см. CardsController.promote/PromoteCardUseCase на бэкенде).
+export function usePromoteCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cardId, childId }: { cardId: string; childId: string }) =>
+      apiFetch<Card>(`/cards/${cardId}/promote`, { method: "PATCH", body: JSON.stringify({ childId }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards"] }),
+  });
+}
+
 // Доступно из режима редактирования на экране ребёнка — отдельная (не-админская) ручка,
 // см. CardsController.uploadImage на бэкенде.
 export function useUploadCardImage() {

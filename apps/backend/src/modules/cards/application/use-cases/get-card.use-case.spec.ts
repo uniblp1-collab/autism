@@ -40,6 +40,7 @@ describe("GetCardUseCase", () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      updatePriorities: jest.fn(),
     };
     useCase = new GetCardUseCase(repository);
   });

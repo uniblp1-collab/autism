@@ -7,6 +7,7 @@ import { GetCardUseCase } from "../application/use-cases/get-card.use-case";
 import { UpdateCardUseCase } from "../application/use-cases/update-card.use-case";
 import { DeleteCardUseCase } from "../application/use-cases/delete-card.use-case";
 import { UploadCardImageUseCase } from "../application/use-cases/upload-card-image.use-case";
+import { PromoteCardUseCase } from "../application/use-cases/promote-card.use-case";
 import { CARD_REPOSITORY } from "../domain/card.repository";
 import { PrismaCardRepository } from "../infrastructure/prisma-card.repository";
 import { CARD_GENERATOR_PORT } from "../domain/card-generator.port";
@@ -25,6 +26,7 @@ import { ChildrenModule } from "../../children/presentation/children.module";
     UpdateCardUseCase,
     DeleteCardUseCase,
     UploadCardImageUseCase,
+    PromoteCardUseCase,
     { provide: CARD_REPOSITORY, useClass: PrismaCardRepository },
     { provide: CARD_GENERATOR_PORT, useClass: NoopCardGeneratorAdapter },
   ],

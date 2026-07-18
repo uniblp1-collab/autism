@@ -43,6 +43,7 @@ describe("CreateCardUseCase", () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      updatePriorities: jest.fn(),
     };
     childAccessService = { assertOwnedByUser: jest.fn() };
     useCase = new CreateCardUseCase(repository, childAccessService as unknown as ChildAccessService);

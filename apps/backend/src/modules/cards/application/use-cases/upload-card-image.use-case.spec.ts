@@ -48,6 +48,7 @@ describe("UploadCardImageUseCase", () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      updatePriorities: jest.fn(),
     };
     storageService = { uploadCardImage: jest.fn(), deleteCardImage: jest.fn() };
     childAccessService = { assertOwnedByUser: jest.fn() };

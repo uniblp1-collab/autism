@@ -23,6 +23,9 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   /** Показывает кнопку-звёздочку добавления/удаления из избранного — только когда передан
    * колбэк (режим редактирования либо раздел «Избранное», TASK_PATCH_3 §2/3). */
   onToggleFavorite?: () => void;
+  /** Показывает кнопку «поставить карточку на первое место в разделе» (нижний левый угол) —
+   * только в режиме редактирования (запрос заказчика: популярную карточку — в начало раздела). */
+  onPromote?: () => void;
 }
 
 /**
@@ -35,7 +38,10 @@ export interface CardButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
  * а не фиксированным px-размером или перетаскиванием (попиксельный resize из TASK_PATCH_3 убран).
  */
 export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
-  ({ title, imageUrl, accentColor, icon, selected, onDelete, favorite, onToggleFavorite, className, ...rest }, ref) => {
+  (
+    { title, imageUrl, accentColor, icon, selected, onDelete, favorite, onToggleFavorite, onPromote, className, ...rest },
+    ref,
+  ) => {
     const { tokens } = useTheme();
     const { bg, fg } = resolveCategoryColorToken(accentColor);
 
@@ -134,7 +140,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       </button>
     );
 
-    if (!onDelete && !onToggleFavorite) return button;
+    if (!onDelete && !onToggleFavorite && !onPromote) return button;
 
     // Крестик/звёздочка — отдельные кнопки поверх карточки (вложенные <button> недопустимы),
     // поэтому оборачиваем в relative-контейнер во всю ширину ячейки только когда что-то из них нужно.
@@ -178,6 +184,25 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
             }}
           >
             <Icon name="x" size={16} strokeWidth={2.5} />
+          </button>
+        ) : null}
+        {onPromote ? (
+          <button
+            type="button"
+            aria-label={`Поставить карточку «${title}» на первое место в разделе`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPromote();
+            }}
+            className="absolute -bottom-2 -left-2 flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4"
+            style={{
+              backgroundColor: tokens.surfaceMuted,
+              color: tokens.textSecondary,
+              // @ts-expect-error CSS custom property for focus ring color
+              "--tw-ring-color": tokens.focusRing,
+            }}
+          >
+            <Icon name="arrow-bar-to-left" size={16} strokeWidth={2.5} />
           </button>
         ) : null}
       </div>

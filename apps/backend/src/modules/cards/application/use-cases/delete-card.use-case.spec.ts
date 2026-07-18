@@ -46,6 +46,7 @@ describe("DeleteCardUseCase", () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      updatePriorities: jest.fn(),
     };
     childAccessService = { assertOwnedByUser: jest.fn() };
     storageService = { deleteCardImage: jest.fn() };

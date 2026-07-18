@@ -49,6 +49,7 @@ describe("CreateHistoryUseCase", () => {
       create: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      updatePriorities: jest.fn(),
     };
     useCase = new CreateHistoryUseCase(historyRepository, cardRepository);
   });

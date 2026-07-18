@@ -55,4 +55,10 @@ export class PrismaCardRepository implements CardRepository {
   async softDelete(id: string): Promise<void> {
     await this.prisma.card.update({ where: { id }, data: { deletedAt: new Date() } });
   }
+
+  async updatePriorities(items: { id: string; priority: number }[]): Promise<void> {
+    await this.prisma.$transaction(
+      items.map(({ id, priority }) => this.prisma.card.update({ where: { id }, data: { priority } })),
+    );
+  }
 }

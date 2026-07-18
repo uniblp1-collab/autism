@@ -17,6 +17,7 @@ import { CardsService } from "../application/cards.service";
 import { CreateCardDto } from "../application/dto/create-card.dto";
 import { UpdateCardDto } from "../application/dto/update-card.dto";
 import { SearchCardsDto } from "../application/dto/search-cards.dto";
+import { PromoteCardDto } from "../application/dto/promote-card.dto";
 import { Card } from "../domain/card.entity";
 import { CurrentUser, CurrentUserPayload } from "../../../common/decorators/current-user.decorator";
 
@@ -67,5 +68,14 @@ export class CardsController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<Card> {
     return this.cardsService.uploadImage(user.userId, id, file);
+  }
+
+  // "Поставить карточку на первое место в разделе" — режим редактирования на экране ребёнка.
+  // childId обязателен: именно он определяет набор карточек-"соседей" (библиотечные + кастомные
+  // этого ребёнка), которым пересчитывается priority, см. PromoteCardUseCase.
+  @HttpCode(HttpStatus.OK)
+  @Patch(":id/promote")
+  promote(@CurrentUser() user: CurrentUserPayload, @Param("id") id: string, @Body() dto: PromoteCardDto): Promise<Card> {
+    return this.cardsService.promote(user.userId, id, dto.childId);
   }
 }

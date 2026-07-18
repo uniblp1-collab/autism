@@ -1,5 +1,6 @@
 import {
   IconApple,
+  IconArrowBarToLeft,
   IconArrowsDiagonal2,
   IconBath,
   IconCalendar,
@@ -64,6 +65,7 @@ export const iconRegistry: Record<string, TablerIcon> = {
   "arrows-diagonal": IconArrowsDiagonal2,
   "chevron-up": IconChevronUp,
   "chevron-down": IconChevronDown,
+  "arrow-bar-to-left": IconArrowBarToLeft,
 };
 
 export const FALLBACK_ICON_KEY = "tag";
