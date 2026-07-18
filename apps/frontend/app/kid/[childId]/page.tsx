@@ -517,11 +517,14 @@ export default function ChildScreenPage() {
         className="flex items-center gap-2 overflow-x-auto p-3"
         style={{ borderBottom: `1px solid ${tokens.border}` }}
       >
-        {/* Расписание — первая пилюля слева (по запросу заказчика). */}
+        {/* Расписание — первая пилюля слева (по запросу заказчика). Расписание/Избранное —
+            только иконка, без подписи (по запросу заказчика); label остаётся — используется
+            как aria-label кнопки (см. CategoryPill). */}
         <CategoryPill
           label="Расписание"
           icon="calendar"
           color={SCHEDULE_PILL_COLOR}
+          showLabel={false}
           active={activeTab === SCHEDULE_TAB}
           onClick={() => setActiveTab(SCHEDULE_TAB)}
         />
@@ -529,6 +532,7 @@ export default function ChildScreenPage() {
           label="Избранное"
           icon="star"
           color={FAVORITES_PILL_COLOR}
+          showLabel={false}
           active={activeTab === FAVORITES_TAB}
           onClick={() => setActiveTab(FAVORITES_TAB)}
         />
@@ -624,7 +628,7 @@ export default function ChildScreenPage() {
               }}
             >
               <Icon name="pencil" size={14} />
-              Название раздела
+              Раздел
             </button>
           ) : null}
           <Button
