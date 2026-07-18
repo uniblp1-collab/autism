@@ -1,6 +1,10 @@
 import { PrismaClient, Role, SpeechLevel } from "../generated/client";
 import * as bcrypt from "bcryptjs";
-import { NO_CARD, seedAdjectives, seedVerbCategories, slugify, YES_CARD } from "./seed-data";
+import { existsSync } from "fs";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
+import sharp from "sharp";
+import { CARD_IMAGE_FILES, NO_CARD, seedAdjectives, seedVerbCategories, slugify, YES_CARD } from "./seed-data";
 
 const prisma = new PrismaClient();
 
@@ -15,6 +19,59 @@ function deterministicUuid(seed: string): string {
     ((parseInt(hash.substring(16, 17), 16) & 0x3) | 0x8).toString(16) + hash.substring(17, 20),
     hash.substring(20, 32),
   ].join("-");
+}
+
+// Базовые иллюстрации библиотечных карточек (packages/database/seed-assets/cards/, см.
+// CARD_IMAGE_FILES) применяются прямо здесь, автоматически при обычном `prisma db seed` —
+// без отдельного ручного шага/скрипта и без обращения к работающему backend по HTTP: seed
+// выполняется в том же контейнере/окружении, что и backend (см. packages/docker/dev-up.sh —
+// `prisma db seed` гоняется на каждом запуске), поэтому имеет прямой доступ к тому же диску
+// (UPLOAD_DIR), куда backend кладёт и отдаёт картинки карточек (StorageService).
+const SEED_ASSETS_DIR = path.join(__dirname, "..", "seed-assets", "cards");
+// Если UPLOAD_DIR не абсолютный (как в apps/backend/.env.example для локальной разработки
+// без Docker), считаем его относительно apps/backend — именно там, а не от cwd текущего
+// процесса, backend резолвит этот путь в проде (см. StorageService).
+const BACKEND_DIR = path.resolve(__dirname, "..", "..", "..", "apps", "backend");
+const MAX_IMAGE_DIMENSION_PX = 640;
+const WEBP_QUALITY = 82;
+
+// То же самое значение по умолчанию, что и в StorageService (apps/backend/src/storage/storage.service.ts)
+// — если UPLOAD_DIR нигде не задан (ни в .env, ни в окружении), backend фактически использует
+// именно этот абсолютный путь, а не относительный из .env.example. seed.ts обязан резолвить
+// директорию точно так же, иначе картинки уйдут туда, откуда backend их не отдаёт.
+const DEFAULT_UPLOAD_DIR = "/app/uploads/cards";
+
+function resolveUploadDir(): string {
+  const configured = process.env.UPLOAD_DIR ?? DEFAULT_UPLOAD_DIR;
+  return path.isAbsolute(configured) ? configured : path.resolve(BACKEND_DIR, configured);
+}
+
+// Пережимаем в WebP теми же параметрами, что и StorageService при загрузке через API —
+// картинка карточки никогда не рендерится крупнее пары сотен px даже в адаптивной сетке.
+// Имя выходного файла детерминированное (не randomUUID) — иначе повторный `prisma db seed`
+// плодил бы новый файл на диске при каждом запуске.
+async function resolveSeedCardImageUrl(title: string): Promise<string | null> {
+  const sourceFilename = CARD_IMAGE_FILES[title];
+  if (!sourceFilename) return null;
+
+  const uploadDir = resolveUploadDir();
+  // Имя выходного файла берём из ASCII-имени исходного ассета (banan.png -> seed-banan.webp),
+  // а не транслитерируем название карточки — так URL картинки не зависит от корректной обработки
+  // не-ASCII символов в пути на стороне статики/прокси/CDN.
+  const outputFilename = `seed-${path.parse(sourceFilename).name}.webp`;
+  const outputPath = path.join(uploadDir, outputFilename);
+
+  if (!existsSync(outputPath)) {
+    const source = await readFile(path.join(SEED_ASSETS_DIR, sourceFilename));
+    const optimized = await sharp(source)
+      .resize({ width: MAX_IMAGE_DIMENSION_PX, height: MAX_IMAGE_DIMENSION_PX, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer();
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(outputPath, optimized);
+  }
+
+  return `/uploads/cards/${outputFilename}`;
 }
 
 async function upsertCategory(params: {
@@ -67,7 +124,7 @@ async function seedVerbCategoriesAndNouns() {
         phraseForm: noun.phraseForm,
         gender: noun.gender,
         cardType: "NOUN" as const,
-        imageUrl: null,
+        imageUrl: await resolveSeedCardImageUrl(noun.title),
         color: category.color,
         priority: index,
         // ttsText — короткая подпись (легаси), ttsPhrase — полная фраза озвучивания (редакция 4).
@@ -104,7 +161,7 @@ async function seedAdjectiveCards() {
       phraseFormFeminine: adjective.feminine,
       phraseFormNeuter: adjective.neuter,
       cardType: "ADJECTIVE" as const,
-      imageUrl: null,
+      imageUrl: await resolveSeedCardImageUrl(adjective.title),
       color: adjective.color,
       priority: index,
       ttsText: adjective.title,
@@ -134,7 +191,7 @@ async function seedYesNoCards() {
       title: card.title,
       phraseForm: card.title,
       cardType: "NOUN" as const,
-      imageUrl: null,
+      imageUrl: await resolveSeedCardImageUrl(card.title),
       color: card.color,
       priority: index,
       ttsText: card.ttsText,

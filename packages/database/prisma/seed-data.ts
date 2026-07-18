@@ -144,6 +144,43 @@ export const seedAdjectives: SeedAdjectiveCard[] = [
 export const YES_CARD = { title: "Да", ttsText: "Да", color: "#1D4ED8" };
 export const NO_CARD = { title: "Нет", ttsText: "Нет", color: "#B91C1C" };
 
+// Имя файла-иллюстрации в packages/database/seed-assets/cards/ для карточек, у которых есть
+// готовая базовая картинка (запрос заказчика — библиотека не должна оставаться без фото "из
+// коробки"). Не все карточки покрыты — для отсутствующих здесь ключей seed.ts просто не трогает
+// imageUrl. Единственное место, где живёт это соответствие — используется seed.ts, чтобы базовые
+// картинки применялись автоматически при обычном `prisma db seed`, без отдельного ручного шага.
+export const CARD_IMAGE_FILES: Record<string, string> = {
+  Мяч: "myach.png",
+  Сок: "sok.png",
+  Игрушка: "igrushka.png",
+  Печенье: "pechenye.png",
+  Вода: "voda.png",
+  Книга: "kniga.png",
+  Шар: "shar.png",
+  Машина: "mashina.png",
+  Живот: "zhivot.png",
+  Голова: "golova.png",
+  Зуб: "zub.png",
+  Горло: "gorlo.png",
+  Ухо: "ukho.png",
+  Нога: "noga.png",
+  Парк: "park.png",
+  Магазин: "magazin.png",
+  Дом: "dom.png",
+  Улица: "ulitsa.png",
+  Школа: "shkola.png",
+  Двор: "dvor.png",
+  Яблоко: "yabloko.png",
+  Банан: "banan.png",
+  Каша: "kasha.png",
+  Суп: "sup.png",
+  Йогурт: "yogurt.png",
+  Хлеб: "khleb.png",
+  Туалет: "tualet.png",
+  Мыться: "mytsya.png",
+  "Чистить зубы": "chistit-zuby.png",
+};
+
 export function slugify(value: string): string {
   return value
     .toLowerCase()
