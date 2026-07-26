@@ -33,6 +33,8 @@ import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavo
 import { useChild, useUpdateChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
 import { useCompleteScheduleItem, useSchedules } from "../../../features/schedule/useSchedules";
+import { isDemoMode } from "../../../shared/api/demoData";
+import { DemoVoiceCheck } from "../../../shared/ui/DemoVoiceCheck";
 
 // Избранные карточки показываются первыми в сетке категории (исходное ТЗ §6.7) —
 // стабильная сортировка, чтобы порядок внутри "избранных"/"остальных" не менялся сам по себе.
@@ -44,7 +46,8 @@ const FAVORITES_TAB = "__favorites__";
 const SCHEDULE_TAB = "__schedule__";
 
 // Режим редактирования (ТЗ §A.7) пока не защищён PIN-кодом — см. .env.example.
-const EDIT_MODE_ENABLED = process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
+// В офлайн-демо редактирование полностью убрано — только показ (TASK_DEMO_OFFLINE.md §4).
+const EDIT_MODE_ENABLED = !isDemoMode && process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
 
 // Границы числа карточек на экране (TASK_GRID_AND_TTS.md §A.2).
 const MIN_CARDS_PER_PAGE = 2;
@@ -515,6 +518,8 @@ export default function ChildScreenPage() {
     // пределы вьюпорта (документ скроллился бы целиком), а не оставался в границах видимой
     // области с собственными стрелочками пролистывания.
     <div className="flex h-screen flex-col" style={{ backgroundColor: tokens.background }}>
+      {/* Офлайн-демо: предупреждение, если на устройстве нет русского голоса (TASK_DEMO_OFFLINE.md §7). */}
+      {isDemoMode ? <DemoVoiceCheck /> : null}
       <nav
         className="flex items-center gap-2 overflow-x-auto p-3"
         style={{ borderBottom: `1px solid ${tokens.border}` }}

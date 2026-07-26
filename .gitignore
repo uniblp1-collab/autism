@@ -2,6 +2,8 @@ node_modules/
 dist/
 build/
 .next/
+# Статический экспорт офлайн-демо (регенерируется `next build`, см. DEMO_README.md) — не коммитим.
+out/
 .turbo/
 coverage/
 *.log

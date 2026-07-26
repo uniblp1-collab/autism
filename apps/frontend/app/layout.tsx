@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ReactNode } from "react";
 // Шрифты через @fontsource (self-hosted npm-пакет), а не next/font/google — последний
 // скачивает файлы с fonts.gstatic.com во время `next build`, что ломает сборку в Docker/CI
@@ -10,17 +10,34 @@ import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import { HighContrastThemeProvider } from "@autism-connect/ui";
 import { QueryProvider } from "../shared/api/QueryProvider";
+import { isDemoMode } from "../shared/api/demoData";
+import { PwaRegister } from "../shared/ui/PwaRegister";
 import "./globals.css";
 
+// В офлайн-демо (TASK_DEMO_OFFLINE.md §6) подключаем PWA-манифест и iOS-метаданные, чтобы
+// приложение ставилось на домашний экран планшета в полноэкранном режиме. В обычной серверной
+// сборке этих полей нет — isDemoMode вычисляется на этапе сборки.
 export const metadata: Metadata = {
-  title: "Autism Connect",
+  title: isDemoMode ? "Autism Connect — демо" : "Autism Connect",
   description: "AAC-платформа альтернативной коммуникации для детей с РАС",
+  ...(isDemoMode
+    ? {
+        manifest: "/manifest.json",
+        appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "AC демо" },
+        icons: { apple: "/icons/apple-touch-icon.png" },
+      }
+    : {}),
+};
+
+export const viewport: Viewport = {
+  ...(isDemoMode ? { themeColor: "#2F6FED" } : {}),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ru">
       <body className="font-sans">
+        {isDemoMode ? <PwaRegister /> : null}
         <QueryProvider>
           <HighContrastThemeProvider>{children}</HighContrastThemeProvider>
         </QueryProvider>

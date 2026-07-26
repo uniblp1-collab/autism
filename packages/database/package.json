@@ -10,7 +10,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "build": "prisma generate",
-    "fetch-images": "node scripts/fetch-opensymbols-images.mjs"
+    "fetch-images": "node scripts/fetch-opensymbols-images.mjs",
+    "export-demo": "node scripts/export-demo-data.mjs"
   },
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"

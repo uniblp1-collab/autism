@@ -5,8 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@autism-connect/ui";
 import { useRegister } from "../../../features/auth/useRegister";
+import { DemoRedirect } from "../../../shared/ui/DemoRedirect";
+import { isDemoMode } from "../../../shared/api/demoData";
 
 export default function RegisterPage() {
+  // Офлайн-демо: регистрация не участвует — уводим на экран ребёнка (TASK_DEMO_OFFLINE.md §4).
+  if (isDemoMode) return <DemoRedirect />;
+  return <RegisterPageInner />;
+}
+
+function RegisterPageInner() {
   const router = useRouter();
   const register = useRegister();
   const [email, setEmail] = useState("");

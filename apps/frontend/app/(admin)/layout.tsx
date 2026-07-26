@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, useTheme } from "@autism-connect/ui";
 import { useAuthStore } from "../../store/authStore";
+import { DemoRedirect } from "../../shared/ui/DemoRedirect";
+import { isDemoMode } from "../../shared/api/demoData";
 
 const NAV_ITEMS = [
   { href: "/admin/users", label: "Родители" },
@@ -15,6 +17,12 @@ const NAV_ITEMS = [
 // админ-интерфейса). Настоящая защита — RolesGuard + @Roles("ADMIN") на бэкенде
 // (apps/backend/src/modules/admin), эта проверка её не заменяет.
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  // Офлайн-демо: админка не участвует — уводим на экран ребёнка (TASK_DEMO_OFFLINE.md §4).
+  if (isDemoMode) return <DemoRedirect />;
+  return <AdminLayoutInner>{children}</AdminLayoutInner>;
+}
+
+function AdminLayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { tokens } = useTheme();
   const user = useAuthStore((state) => state.user);

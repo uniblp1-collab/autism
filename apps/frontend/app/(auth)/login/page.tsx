@@ -5,8 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@autism-connect/ui";
 import { useLogin } from "../../../features/auth/useLogin";
+import { DemoRedirect } from "../../../shared/ui/DemoRedirect";
+import { isDemoMode } from "../../../shared/api/demoData";
 
 export default function LoginPage() {
+  // Офлайн-демо: без авторизации — сразу на экран ребёнка (TASK_DEMO_OFFLINE.md §4).
+  if (isDemoMode) return <DemoRedirect />;
+  return <LoginPageInner />;
+}
+
+function LoginPageInner() {
   const router = useRouter();
   const login = useLogin();
   const [email, setEmail] = useState("");
