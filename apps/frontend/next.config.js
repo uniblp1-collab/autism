@@ -9,6 +9,11 @@ const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL ?? "http://backend
 // обращения к backend. Та же кодовая база, отдельный режим по флагу — не форк.
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
+// Префикс пути для размещения не в корне домена (напр. GitHub Pages: /autism). Пусто — хостинг
+// в корне (Cloudflare Pages). imageUrl карточек и регистрация SW учитывают этот префикс отдельно
+// (см. shared/api/demoData.ts и shared/ui/PwaRegister.tsx). Без завершающего слэша.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 /** @type {import('next').NextConfig} */
 const demoConfig = {
   reactStrictMode: true,
@@ -20,6 +25,9 @@ const demoConfig = {
   // офлайн-кэша PWA (в т.ч. вложенный /kid/<id>/).
   trailingSlash: true,
   transpilePackages: ["@autism-connect/ui", "@autism-connect/shared"],
+  // basePath проставляет префикс на роуты и ассеты Next (_next/...); нужен для размещения в
+  // подпапке (GitHub Pages). При пустом BASE_PATH поле не задаём — обычный корневой хостинг.
+  ...(BASE_PATH ? { basePath: BASE_PATH } : {}),
   // rewrites на backend в демо не нужны (и несовместимы с output: 'export') — данные берутся из
   // статичного JSON, картинки лежат в /demo-data/images/ той же статики.
 };

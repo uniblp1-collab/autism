@@ -28,8 +28,12 @@ pnpm --filter @autism-connect/frontend build:demo
 Готовые файлы появятся в `apps/frontend/out/` — это обычные HTML/CSS/JS, никакого сервера внутри.
 
 > Для разработчика: команда — это `NEXT_PUBLIC_DEMO_MODE=true next build` (статический экспорт
-> Next.js). Если понадобится обновить демо-данные из реальной БД — поднимите Postgres и выполните
-> `pnpm --filter @autism-connect/database export-demo` (один раз), затем пересоберите демо.
+> Next.js). Набор карточек/разделов/расписания демо задаётся явно в
+> `apps/frontend/scripts/build-demo-content.mjs` (курированный контент показа) — после правок
+> запустите `node apps/frontend/scripts/build-demo-content.mjs` и пересоберите демо. Для дословной
+> выгрузки из реальной БД есть отдельный `pnpm --filter @autism-connect/database export-demo`
+> (нужен поднятый Postgres). Для размещения в подпапке (GitHub Pages) сборка идёт с
+> `NEXT_PUBLIC_BASE_PATH=/<repo>` — этим занимается workflow, руками задавать не нужно.
 
 ---
 
@@ -86,6 +90,31 @@ pnpm --filter @autism-connect/frontend build:demo
 2. Перетащить туда **содержимое** папки `apps/frontend/out/` (файлы внутри папки, не саму папку).
 3. Cloudflare выдаст постоянную ссылку вида `https://имя-проекта.pages.dev` — это адрес демо.
 4. Открыть ссылку на планшете и установить (см. ниже).
+
+### Способ В — GitHub Pages (автосборка через GitHub Actions)
+
+Подходит, если Cloudflare недоступен из вашей сети. Публикует демо прямо из репозитория, `https`
+даётся автоматически. В проекте уже лежит workflow `.github/workflows/deploy-demo-pages.yml`,
+который собирает демо и выкладывает на Pages.
+
+Разово нужно включить Pages в репозитории:
+
+1. В репозитории на GitHub: **Settings → Pages → Build and deployment → Source: «GitHub Actions»**.
+2. Убедиться, что демо-ветка (`claude/demo-offline-99yb61`) запушена — workflow запускается на
+   push в неё (или вручную: вкладка **Actions → Deploy offline demo to GitHub Pages → Run workflow**).
+3. Дождаться зелёной галочки в **Actions**. Адрес демо появится в логе шага deploy и в **Settings → Pages**:
+
+   ```
+   https://<владелец>.github.io/<репозиторий>/
+   ```
+   для этого репозитория — **https://uniblp1-collab.github.io/autism/**
+
+> Почему адрес с подпапкой `/autism/`: GitHub Pages для обычного репозитория раздаёт сайт по
+> `…github.io/<репозиторий>/`. Демо это уже учитывает — workflow собирает его с префиксом пути
+> `/<репозиторий>` автоматически, картинки и офлайн-кэш работают корректно.
+>
+> Если Pages для репозитория недоступен (отключён политикой организации) — используйте Способ А
+> или Б; сама сборка одинаковая.
 
 ### Установка на домашний экран (после того как есть `https`-ссылка)
 
@@ -144,7 +173,7 @@ pnpm --filter @autism-connect/frontend build:demo
 | Шаг | Действие |
 |---|---|
 | Собрать | `pnpm --filter @autism-connect/frontend build:demo` → папка `apps/frontend/out/` |
-| Получить `https` | Способ А: `cloudflared tunnel --url http://localhost:8080` (временно) · Способ Б: залить `out/` на Cloudflare Pages (постоянно) |
+| Получить `https` | А: `cloudflared tunnel --url http://localhost:8080` (временно) · Б: залить `out/` на Cloudflare Pages · В: GitHub Pages (включить Source: GitHub Actions → `https://uniblp1-collab.github.io/autism/`) |
 | Установить | Открыть `https`-ссылку на планшете → «Добавить/Установить на домашний экран» |
 | Прогреть кэш | Один раз открыть с иконки при интернете, дождаться загрузки |
 | Пользоваться | Запуск с иконки, интернет не нужен |

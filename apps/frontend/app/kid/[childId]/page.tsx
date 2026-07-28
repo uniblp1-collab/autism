@@ -459,6 +459,17 @@ export default function ChildScreenPage() {
   const isCardsPerPageDirty = Boolean(child) && draftCardsPerPage !== savedCardsPerPage;
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
+  const primaryCategory = unlockedCategories.find((c) => c.isPrimary) ?? null;
+
+  // В офлайн-демо «Избранное» урезано (ничего не добавляется) — прячем вкладку, если избранного
+  // нет (запрос заказчика). В обычной версии вкладка есть всегда. Если активной оказалась
+  // скрытая вкладка «Избранное» — переключаемся на основной раздел (Дай).
+  const showFavoritesTab = !isDemoMode || favorites.length > 0;
+  useEffect(() => {
+    if (!showFavoritesTab && activeTab === FAVORITES_TAB && primaryCategory) {
+      setActiveTab(primaryCategory.id);
+    }
+  }, [showFavoritesTab, activeTab, primaryCategory]);
 
   const { data: yesNoCards = [] } = useCards({ isSystemCard: true });
   // Не полагаемся на порядок карточек в ответе API (он зависит от priority/сортировки
@@ -535,14 +546,16 @@ export default function ChildScreenPage() {
           active={activeTab === SCHEDULE_TAB}
           onClick={() => setActiveTab(SCHEDULE_TAB)}
         />
-        <CategoryPill
-          label="Избранное"
-          icon="star"
-          color={FAVORITES_PILL_COLOR}
-          showLabel={false}
-          active={activeTab === FAVORITES_TAB}
-          onClick={() => setActiveTab(FAVORITES_TAB)}
-        />
+        {showFavoritesTab ? (
+          <CategoryPill
+            label="Избранное"
+            icon="star"
+            color={FAVORITES_PILL_COLOR}
+            showLabel={false}
+            active={activeTab === FAVORITES_TAB}
+            onClick={() => setActiveTab(FAVORITES_TAB)}
+          />
+        ) : null}
         {unlockedCategories.map((category) => (
           <CategoryPill
             key={category.id}

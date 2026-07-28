@@ -13,9 +13,21 @@ export const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 export const DEMO_CHILD_ID: string = bundle.demoChildId;
 
+// Префикс пути размещения (см. next.config.js). Картинки карточек в JSON хранятся как
+// /demo-data/images/... (от корня); при размещении в подпапке (GitHub Pages: /autism) браузер
+// должен грузить их с этим префиксом. next/image/Link учитывают basePath сами, а обычный <img>
+// в CardButton — нет, поэтому дописываем префикс к imageUrl здесь, в единой точке данных.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+function withBasePath(url: string | null): string | null {
+  return url && url.startsWith("/") ? `${BASE_PATH}${url}` : url;
+}
+
 const demoChild = bundle.child as unknown as Child;
 const demoCategories = bundle.categories as unknown as Category[];
-const demoCards = bundle.cards as unknown as Card[];
+const demoCards = (bundle.cards as unknown as Card[]).map((card) => ({
+  ...card,
+  imageUrl: withBasePath(card.imageUrl),
+}));
 
 // Избранное и расписание в демо — мутабельны в памяти сессии (в рамках открытой вкладки),
 // не сохраняются между перезапусками. Для показа этого достаточно (TASK_DEMO_OFFLINE.md §4).

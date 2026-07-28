@@ -1,0 +1,68 @@
+# Публикация офлайн-демо (TASK_DEMO_OFFLINE.md) на GitHub Pages.
+#
+# ВАЖНО (разово): включите Pages в репозитории — Settings → Pages → Build and deployment →
+# Source: «GitHub Actions». Без этого шаг deploy упадёт с понятной ошибкой. После включения
+# каждый push в демо-ветку (или ручной запуск) пересобирает и публикует демо.
+#
+# Адрес после публикации: https://<owner>.github.io/<repo>/  (проектный сайт в подпапке —
+# поэтому сборка идёт с NEXT_PUBLIC_BASE_PATH=/<repo>, см. next.config.js / demoData.ts).
+name: Deploy offline demo to GitHub Pages
+
+on:
+  push:
+    branches: [claude/demo-offline-99yb61]
+    paths:
+      - "apps/frontend/**"
+      - "packages/ui/**"
+      - "packages/shared/**"
+      - ".github/workflows/deploy-demo-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Версия pnpm берётся из поля packageManager в корневом package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # --ignore-scripts: демо-сборке не нужны нативные postinstall'ы (prisma generate, сборка
+      # sharp) — фронтенд собирается из уже готовых демо-данных (public/demo-data/*, в репозитории).
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build static demo (basePath = /<repo> for project Pages)
+        run: pnpm --filter @autism-connect/frontend build:demo
+        env:
+          NEXT_PUBLIC_BASE_PATH: "/${{ github.event.repository.name }}"
+
+      # .nojekyll — иначе GitHub Pages (Jekyll) игнорирует папку _next/ (имена с подчёркиванием).
+      - run: touch apps/frontend/out/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/frontend/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
