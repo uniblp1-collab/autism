@@ -1,7 +1,7 @@
 {
   "_demo": true,
   "_demoContent": "curated (build-demo-content.mjs)",
-  "_exportedAt": "2026-07-28T16:56:16.274Z",
+  "_exportedAt": "2026-07-29T17:14:26.229Z",
   "demoChildId": "00000000-0000-4000-9000-000000000001",
   "child": {
     "id": "00000000-0000-4000-9000-000000000001",
@@ -130,7 +130,7 @@
       "categoryId": "af2e95b2-3056-49aa-a22d-d76be815384c",
       "childId": null,
       "title": "Планшет",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-planshet.webp",
       "color": "#4F46E5",
       "priority": 5,
       "ttsText": "Планшет",
@@ -144,15 +144,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "a1ec8698-6fd0-4356-8d05-54fa0aa22078",
       "categoryId": "af2e95b2-3056-49aa-a22d-d76be815384c",
       "childId": null,
       "title": "Пластилин",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-plastilin.webp",
       "color": "#4F46E5",
       "priority": 4,
       "ttsText": "Пластилин",
@@ -166,15 +166,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "9ecb6c8e-c338-4349-a6f7-0e522af05130",
       "categoryId": "af2e95b2-3056-49aa-a22d-d76be815384c",
       "childId": null,
       "title": "Карандаши",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-karandashi.webp",
       "color": "#4F46E5",
       "priority": 3,
       "ttsText": "Карандаши",
@@ -188,15 +188,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "a318856c-6875-4203-8da8-a50e1b2bea80",
       "categoryId": "af2e95b2-3056-49aa-a22d-d76be815384c",
       "childId": null,
       "title": "Игрушка",
-      "imageUrl": "/demo-data/images/seed-igrushka.webp",
+      "imageUrl": "/demo-data/images/demo-igrushka.webp",
       "color": "#4F46E5",
       "priority": 2,
       "ttsText": "Игрушка",
@@ -210,15 +210,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "31c3a472-e7a3-421f-9121-ba3d8ac38974",
       "categoryId": "af2e95b2-3056-49aa-a22d-d76be815384c",
       "childId": null,
       "title": "Книга",
-      "imageUrl": "/demo-data/images/seed-kniga.webp",
+      "imageUrl": "/demo-data/images/demo-kniga.webp",
       "color": "#4F46E5",
       "priority": 1,
       "ttsText": "Книга",
@@ -232,15 +232,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "06bd1514-4716-4018-84b0-a221342e8752",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Голова",
-      "imageUrl": "/demo-data/images/seed-golova.webp",
+      "imageUrl": "/demo-data/images/demo-golova.webp",
       "color": "#9B1C1C",
       "priority": 8,
       "ttsText": "Голова",
@@ -254,15 +254,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "37f3cd17-6645-4ab0-9756-1094f66ee40a",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Зуб",
-      "imageUrl": "/demo-data/images/seed-zub.webp",
+      "imageUrl": "/demo-data/images/demo-zub.webp",
       "color": "#9B1C1C",
       "priority": 7,
       "ttsText": "Зуб",
@@ -276,15 +276,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "53796b85-9813-4dc4-a51a-c959433355ae",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Горло",
-      "imageUrl": "/demo-data/images/seed-gorlo.webp",
+      "imageUrl": "/demo-data/images/demo-gorlo.webp",
       "color": "#9B1C1C",
       "priority": 6,
       "ttsText": "Горло",
@@ -298,15 +298,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "07af171e-6491-4f24-96a8-e6511eb12047",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Нос",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-nos.webp",
       "color": "#9B1C1C",
       "priority": 5,
       "ttsText": "Нос",
@@ -320,15 +320,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "721ac349-8236-4b17-8644-a8f3d690a666",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Живот",
-      "imageUrl": "/demo-data/images/seed-zhivot.webp",
+      "imageUrl": "/demo-data/images/demo-zhivot.webp",
       "color": "#9B1C1C",
       "priority": 4,
       "ttsText": "Живот",
@@ -342,15 +342,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "f9b1de87-3666-4807-9dd4-7f201ae2e790",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Ухо",
-      "imageUrl": "/demo-data/images/seed-ukho.webp",
+      "imageUrl": "/demo-data/images/demo-ukho.webp",
       "color": "#9B1C1C",
       "priority": 3,
       "ttsText": "Ухо",
@@ -364,15 +364,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "aced2ac1-b085-47dc-b357-3979053b1b51",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Нога",
-      "imageUrl": "/demo-data/images/seed-noga.webp",
+      "imageUrl": "/demo-data/images/demo-noga.webp",
       "color": "#9B1C1C",
       "priority": 2,
       "ttsText": "Нога",
@@ -386,15 +386,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "0d7cd156-3f22-4bd8-8424-21b6bbf16654",
       "categoryId": "cff47507-4a86-4956-8293-2456824a9bc9",
       "childId": null,
       "title": "Рука",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-ruka.webp",
       "color": "#9B1C1C",
       "priority": 1,
       "ttsText": "Рука",
@@ -408,15 +408,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "cfe2ef8f-ac57-42eb-913a-9dcfb9270521",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Садик",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-sadik.webp",
       "color": "#2F4F8C",
       "priority": 7,
       "ttsText": "Садик",
@@ -430,15 +430,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "c0af09f8-4bea-456a-97d0-ae0863ee4203",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Больница",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-bolnitsa.webp",
       "color": "#2F4F8C",
       "priority": 6,
       "ttsText": "Больница",
@@ -452,15 +452,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "1177d821-0c4d-4e31-a7de-50c1c415e179",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Улица",
-      "imageUrl": "/demo-data/images/seed-ulitsa.webp",
+      "imageUrl": "/demo-data/images/demo-ulitsa.webp",
       "color": "#2F4F8C",
       "priority": 5,
       "ttsText": "Улица",
@@ -474,15 +474,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "9bebc66d-344e-44bf-872e-04fd03705e9f",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Магазин",
-      "imageUrl": "/demo-data/images/seed-magazin.webp",
+      "imageUrl": "/demo-data/images/demo-magazin.webp",
       "color": "#2F4F8C",
       "priority": 4,
       "ttsText": "Магазин",
@@ -496,15 +496,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "01a196a1-80d0-430c-9c29-82e292c6cc35",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Дом",
-      "imageUrl": "/demo-data/images/seed-dom.webp",
+      "imageUrl": "/demo-data/images/demo-dom.webp",
       "color": "#2F4F8C",
       "priority": 3,
       "ttsText": "Дом",
@@ -518,15 +518,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "de673e6c-69a9-4ea4-a41a-c94384cd5358",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Бассейн",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-bassein.webp",
       "color": "#2F4F8C",
       "priority": 2,
       "ttsText": "Бассейн",
@@ -540,15 +540,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "3bc60fb5-30ba-450f-bcbf-764e143bb404",
       "categoryId": "68cf4418-326e-4344-9bab-1e2c3ffda8e3",
       "childId": null,
       "title": "Занятия",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-zanyatiya.webp",
       "color": "#2F4F8C",
       "priority": 1,
       "ttsText": "Занятия",
@@ -562,15 +562,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "c0ed661a-228a-4eb9-a95b-761deceb019d",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Суп",
-      "imageUrl": "/demo-data/images/seed-sup.webp",
+      "imageUrl": "/demo-data/images/demo-sup.webp",
       "color": "#712B13",
       "priority": 13,
       "ttsText": "Суп",
@@ -584,15 +584,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "de46a7e1-11ce-4a5c-b2db-ee5cfec3a136",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Макароны",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-makarony.webp",
       "color": "#712B13",
       "priority": 12,
       "ttsText": "Макароны",
@@ -606,15 +606,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "e687c622-91b3-462b-b6d1-0d61803dd5a6",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Картошка",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-kartoshka.webp",
       "color": "#712B13",
       "priority": 11,
       "ttsText": "Картошка",
@@ -628,15 +628,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "8ea1823a-a851-44b4-a7f0-52a602172d79",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Гречка",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-grechka.webp",
       "color": "#712B13",
       "priority": 10,
       "ttsText": "Гречка",
@@ -650,15 +650,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "8c930cdc-7649-4283-a2ba-348a8dd77043",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Каша",
-      "imageUrl": "/demo-data/images/seed-kasha.webp",
+      "imageUrl": "/demo-data/images/demo-kasha.webp",
       "color": "#712B13",
       "priority": 9,
       "ttsText": "Каша",
@@ -672,15 +672,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "b1237e7b-cc7f-4bac-90e3-65e745939805",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Курица",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-kuritsa.webp",
       "color": "#712B13",
       "priority": 8,
       "ttsText": "Курица",
@@ -694,15 +694,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "84d78bc6-6b95-4793-8bbd-7c0b6cc25a3c",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Салат",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-salat.webp",
       "color": "#712B13",
       "priority": 7,
       "ttsText": "Салат",
@@ -716,15 +716,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "cb2ae3d1-4dd5-4a92-89c6-57d0745531e5",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Творог",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-tvorog.webp",
       "color": "#712B13",
       "priority": 6,
       "ttsText": "Творог",
@@ -738,15 +738,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "60c284ba-bd04-456f-9eff-7bec33f0e3ad",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Мороженое",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-morozhenoe.webp",
       "color": "#712B13",
       "priority": 5,
       "ttsText": "Мороженое",
@@ -760,15 +760,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "a8d973d5-802d-4566-8367-bea346e12eef",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Печенье",
-      "imageUrl": "/demo-data/images/seed-pechenye.webp",
+      "imageUrl": "/demo-data/images/demo-pechenye.webp",
       "color": "#712B13",
       "priority": 4,
       "ttsText": "Печенье",
@@ -782,15 +782,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "70420896-10b0-40f8-9149-b4f8cc2fdee0",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Вода",
-      "imageUrl": "/demo-data/images/seed-voda.webp",
+      "imageUrl": "/demo-data/images/demo-voda.webp",
       "color": "#712B13",
       "priority": 3,
       "ttsText": "Вода",
@@ -804,15 +804,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "bea6574b-89f8-44b6-9c78-eb00b95da4ce",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Хлеб",
-      "imageUrl": "/demo-data/images/seed-khleb.webp",
+      "imageUrl": "/demo-data/images/demo-khleb.webp",
       "color": "#712B13",
       "priority": 2,
       "ttsText": "Хлеб",
@@ -826,15 +826,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "635d2ca7-048d-4540-8d23-b850e7df3fe4",
       "categoryId": "975d327b-4fbf-451a-beee-9f2f3d27b2c6",
       "childId": null,
       "title": "Яблоко",
-      "imageUrl": "/demo-data/images/seed-yabloko.webp",
+      "imageUrl": "/demo-data/images/demo-yabloko.webp",
       "color": "#712B13",
       "priority": 1,
       "ttsText": "Яблоко",
@@ -848,15 +848,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "cedd2087-308f-4ead-97eb-79057997b186",
       "categoryId": "2047b4f7-a9d6-48c8-878d-893a5f30e304",
       "childId": null,
       "title": "Чистить зубы",
-      "imageUrl": "/demo-data/images/seed-chistit-zuby.webp",
+      "imageUrl": "/demo-data/images/demo-chistit-zuby.webp",
       "color": "#0E6B6B",
       "priority": 4,
       "ttsText": "Чистить зубы",
@@ -870,15 +870,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "3a402ab1-b59c-4dcb-98b7-34bd3e21dfc6",
       "categoryId": "2047b4f7-a9d6-48c8-878d-893a5f30e304",
       "childId": null,
       "title": "Мыть руки",
-      "imageUrl": null,
+      "imageUrl": "/demo-data/images/demo-myt-ruki.webp",
       "color": "#0E6B6B",
       "priority": 3,
       "ttsText": "Мыть руки",
@@ -892,15 +892,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "1cfb4b38-2fdb-4fd6-a469-390f390f04f7",
       "categoryId": "2047b4f7-a9d6-48c8-878d-893a5f30e304",
       "childId": null,
       "title": "Туалет",
-      "imageUrl": "/demo-data/images/seed-tualet.webp",
+      "imageUrl": "/demo-data/images/demo-tualet.webp",
       "color": "#0E6B6B",
       "priority": 2,
       "ttsText": "Туалет",
@@ -914,15 +914,15 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "44647500-1b47-4b03-9179-3159f9f23d27",
       "categoryId": "2047b4f7-a9d6-48c8-878d-893a5f30e304",
       "childId": null,
       "title": "Мыться",
-      "imageUrl": "/demo-data/images/seed-mytsya.webp",
+      "imageUrl": "/demo-data/images/demo-mytsya.webp",
       "color": "#0E6B6B",
       "priority": 1,
       "ttsText": "Мыться",
@@ -936,8 +936,8 @@
       "source": "LIBRARY",
       "isCustom": false,
       "isSystemCard": false,
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "00ab5186-8f7b-4a73-85f2-5f2d49908376",
@@ -1021,8 +1021,8 @@
           "completedAt": null
         }
       ],
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "90c9679f-05a4-46c8-b5d0-24255830e708",
@@ -1057,8 +1057,8 @@
           "completedAt": null
         }
       ],
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     },
     {
       "id": "67c17eef-d410-4566-abc0-d1c4c1fc56da",
@@ -1093,8 +1093,8 @@
           "completedAt": null
         }
       ],
-      "createdAt": "2026-07-28T16:56:16.274Z",
-      "updatedAt": "2026-07-28T16:56:16.274Z"
+      "createdAt": "2026-07-29T17:14:26.229Z",
+      "updatedAt": "2026-07-29T17:14:26.229Z"
     }
   ]
 }

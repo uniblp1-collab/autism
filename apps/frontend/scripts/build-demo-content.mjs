@@ -37,7 +37,7 @@ function uuidFrom(seed) {
 
 // Спецификация демо. Порядок разделов = порядок пилюль; порядок карточек = порядок в массиве
 // (priority выставляется убыванием, сортировка на экране — priority desc). img — имя файла в
-// images/ без префикса "seed-"/расширения, либо null (карточка без картинки).
+// images/ (файл demo-<img>.webp), либо null (карточка без картинки — цветная плитка).
 //
 // Склонения проверены:
 //   Дай  → винительный падеж дополнения («Дай игрушку», «Дай книгу»).
@@ -49,9 +49,9 @@ const SECTIONS = [
   {
     category: "Дай", // isPrimary — оставляем как есть
     cards: [
-      { title: "Планшет", tts: "Дай планшет", img: null },
-      { title: "Пластилин", tts: "Дай пластилин", img: null },
-      { title: "Карандаши", tts: "Дай карандаши", img: null },
+      { title: "Планшет", tts: "Дай планшет", img: "planshet" },
+      { title: "Пластилин", tts: "Дай пластилин", img: "plastilin" },
+      { title: "Карандаши", tts: "Дай карандаши", img: "karandashi" },
       { title: "Игрушка", tts: "Дай игрушку", img: "igrushka" },
       { title: "Книга", tts: "Дай книгу", img: "kniga" },
     ],
@@ -62,23 +62,23 @@ const SECTIONS = [
       { title: "Голова", tts: "Болит голова", img: "golova" },
       { title: "Зуб", tts: "Болит зуб", img: "zub" },
       { title: "Горло", tts: "Болит горло", img: "gorlo" },
-      { title: "Нос", tts: "Болит нос", img: null },
+      { title: "Нос", tts: "Болит нос", img: "nos" },
       { title: "Живот", tts: "Болит живот", img: "zhivot" },
       { title: "Ухо", tts: "Болит ухо", img: "ukho" },
       { title: "Нога", tts: "Болит нога", img: "noga" },
-      { title: "Рука", tts: "Болит рука", img: null },
+      { title: "Рука", tts: "Болит рука", img: "ruka" },
     ],
   },
   {
     category: "Идти",
     cards: [
-      { title: "Садик", tts: "Идём в садик", img: null },
-      { title: "Больница", tts: "Идём в больницу", img: null },
+      { title: "Садик", tts: "Идём в садик", img: "sadik" },
+      { title: "Больница", tts: "Идём в больницу", img: "bolnitsa" },
       { title: "Улица", tts: "Идём на улицу", img: "ulitsa" },
       { title: "Магазин", tts: "Идём в магазин", img: "magazin" },
       { title: "Дом", tts: "Идём домой", img: "dom" },
-      { title: "Бассейн", tts: "Идём в бассейн", img: null },
-      { title: "Занятия", tts: "Идём на занятия", img: null },
+      { title: "Бассейн", tts: "Идём в бассейн", img: "bassein" },
+      { title: "Занятия", tts: "Идём на занятия", img: "zanyatiya" },
     ],
   },
   {
@@ -86,14 +86,14 @@ const SECTIONS = [
     renameTo: "Еда", // явный запрос заказчика
     cards: [
       { title: "Суп", tts: "Суп", img: "sup" },
-      { title: "Макароны", tts: "Макароны", img: null },
-      { title: "Картошка", tts: "Картошка", img: null },
-      { title: "Гречка", tts: "Гречка", img: null },
+      { title: "Макароны", tts: "Макароны", img: "makarony" },
+      { title: "Картошка", tts: "Картошка", img: "kartoshka" },
+      { title: "Гречка", tts: "Гречка", img: "grechka" },
       { title: "Каша", tts: "Каша", img: "kasha" },
-      { title: "Курица", tts: "Курица", img: null },
-      { title: "Салат", tts: "Салат", img: null },
-      { title: "Творог", tts: "Творог", img: null },
-      { title: "Мороженое", tts: "Мороженое", img: null },
+      { title: "Курица", tts: "Курица", img: "kuritsa" },
+      { title: "Салат", tts: "Салат", img: "salat" },
+      { title: "Творог", tts: "Творог", img: "tvorog" },
+      { title: "Мороженое", tts: "Мороженое", img: "morozhenoe" },
       { title: "Печенье", tts: "Печенье", img: "pechenye" },
       { title: "Вода", tts: "Вода", img: "voda" },
       { title: "Хлеб", tts: "Хлеб", img: "khleb" },
@@ -105,7 +105,7 @@ const SECTIONS = [
     cards: [
       // Озвучка без «хочу» — проговаривается само действие.
       { title: "Чистить зубы", tts: "Чистить зубы", img: "chistit-zuby" },
-      { title: "Мыть руки", tts: "Мыть руки", img: null },
+      { title: "Мыть руки", tts: "Мыть руки", img: "myt-ruki" },
       { title: "Туалет", tts: "Туалет", img: "tualet" },
       { title: "Мыться", tts: "Мыться", img: "mytsya" },
     ],
@@ -128,7 +128,7 @@ async function main() {
 
   function imageUrl(img) {
     if (!img) return null;
-    const file = `seed-${img}.webp`;
+    const file = `demo-${img}.webp`;
     if (!imageFiles.has(file)) {
       console.warn(`  [нет картинки] ${file} — карточка останется без изображения`);
       return null;
@@ -139,7 +139,10 @@ async function main() {
   const cards = [];
 
   for (const section of SECTIONS) {
-    const category = categoryByTitle.get(section.category);
+    // Идемпотентность: категория могла быть уже переименована прошлым прогоном (Есть→Еда),
+    // поэтому ищем и по исходному, и по новому названию.
+    const category =
+      categoryByTitle.get(section.category) ?? (section.renameTo ? categoryByTitle.get(section.renameTo) : undefined);
     if (!category) throw new Error(`Категория «${section.category}» не найдена в текущем cards.json`);
     if (section.renameTo) category.title = section.renameTo;
 

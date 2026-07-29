@@ -10,8 +10,8 @@
  * резолвятся от scope регистрации (см. DEMO_README.md и PwaRegister).
  */
 // Версию кэша поднимаем при изменении контента демо — старая генерация чистится в activate,
-// у уже установивших приложение подтягивается свежий набор карточек (v2 — курированный контент).
-const CACHE = "ac-demo-v2";
+// у уже установивших приложение подтягивается свежий набор (v3 — новые фото карточек).
+const CACHE = "ac-demo-v3";
 const CORE_ASSETS = ["./", "./manifest.json", "./demo-data/cards.json"];
 
 self.addEventListener("install", (event) => {
