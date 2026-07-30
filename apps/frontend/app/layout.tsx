@@ -14,13 +14,20 @@ import { isDemoMode } from "../shared/api/demoData";
 import { PwaRegister } from "../shared/ui/PwaRegister";
 import "./globals.css";
 
-// ?v=BUILD_ID — тот же build-id, что и в имени кэша service worker (см. scripts/generate-sw.mjs,
-// который версионирует так же src иконок в public/manifest.json). Без него смена файла лого по
-// тому же URL не гарантирует обновление значка на домашнем экране: у iOS Safari есть отдельный
-// системный кэш touch-иконки, привязанный к URL, а не к содержимому файла — обычное обновление
-// страницы его не затрагивает (жалоба «иконка не поменялась» после замены логотипа).
+// basePath приходится проставлять ВРУЧНУЮ для manifest и apple-touch-icon: Next.js применяет
+// basePath к _next-ассетам и next/link, но НЕ к metadata.manifest и metadata.icons — там строка
+// с ведущим "/" уходит в HTML как есть. На GitHub Pages (сайт в подпапке /autism) абсолютные
+// "/manifest.json" и "/icons/..." резолвятся от КОРНЯ домена (github.io/manifest.json) и дают
+// 404 — из-за этого iOS Safari не находил touch-иконку и при «Добавить на экран Домой» рисовал
+// серый квадрат с буквой вместо логотипа (а манифест был недоступен и для Android/Chrome).
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+// ?v=BUILD_ID (тот же build-id, что и в имени кэша service worker, см. scripts/generate-sw.mjs) —
+// делает URL иконки другим на каждую сборку, чтобы системный кэш touch-иконки iOS Safari (он
+// привязан к URL, а не к содержимому файла) перечитал новый логотип, а не отдавал старый.
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
-const appleTouchIconHref = BUILD_ID ? `/icons/apple-touch-icon.png?v=${BUILD_ID}` : "/icons/apple-touch-icon.png";
+const versionQuery = BUILD_ID ? `?v=${BUILD_ID}` : "";
+const manifestHref = `${BASE_PATH}/manifest.json`;
+const appleTouchIconHref = `${BASE_PATH}/icons/apple-touch-icon.png${versionQuery}`;
 
 // В офлайн-демо (TASK_DEMO_OFFLINE.md §6) подключаем PWA-манифест и iOS-метаданные, чтобы
 // приложение ставилось на домашний экран планшета в полноэкранном режиме. В обычной серверной
@@ -32,7 +39,7 @@ export const metadata: Metadata = {
   description: "AAC-платформа альтернативной коммуникации для детей с РАС",
   ...(isDemoMode
     ? {
-        manifest: "/manifest.json",
+        manifest: manifestHref,
         appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "Коммуникатор" },
         icons: { apple: appleTouchIconHref },
       }
