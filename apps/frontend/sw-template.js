@@ -18,7 +18,7 @@
  *  - demo-data/images/* — stale-while-revalidate (мгновенно из кэша, обновление в фоне);
  *  - всё остальное (manifest.json, иконки) — network-first как безопасный дефолт.
  */
-const CACHE = "communicator-vms6xn4zw";
+const CACHE = "communicator-v__BUILD_ID__";
 const CORE_ASSETS = ["./", "./manifest.json", "./demo-data/cards.json"];
 
 self.addEventListener("install", (event) => {

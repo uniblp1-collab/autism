@@ -19,9 +19,9 @@
 const PROFILE_KEY = "ac-demo-profile:v1";
 const SCHEDULE_STATE_KEY = "ac-demo-schedule-state:v1";
 
-// Тот же дефолт, что и раньше был жёстко в page.tsx (child?.cardsPerPage ?? 6) — теперь это
-// дефолт локального профиля демо, а не серверного Child.cardsPerPage.
-const DEFAULT_CARDS_PER_ROW = 6;
+// Дефолт локального профиля демо (не серверного Child.cardsPerPage) — 2 карточки в ряду по
+// запросу заказчика, крупнее для первого показа; родитель может изменить в режиме редактирования.
+const DEFAULT_CARDS_PER_ROW = 2;
 
 export const DEMO_PROFILE_VERSION = 1 as const;
 
