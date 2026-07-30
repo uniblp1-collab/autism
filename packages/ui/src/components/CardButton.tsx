@@ -47,6 +47,9 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
 
     // Если картинка недоступна — откатываемся на иконку вместо "битой" картинки браузера.
     const [imageFailed, setImageFailed] = useState(false);
+    // Пока картинка не отрисовалась — под ней виден нейтральный пульсирующий фон вместо пустоты
+    // (TASK_DEMO_ENHANCEMENTS.md §1); плавный fade, без резких/мигающих переходов (CLAUDE.md §5.3).
+    const [imageLoaded, setImageLoaded] = useState(false);
     // null = ещё не измерено — по умолчанию считаем картинку тёмной (белый текст на скриме).
     const [isLightImage, setIsLightImage] = useState<boolean | null>(null);
     const hasImage = Boolean(imageUrl) && !imageFailed;
@@ -74,6 +77,7 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       } catch {
         // Картинка с другого источника без CORS "заражает" canvas — читать пиксели нельзя.
       }
+      setImageLoaded(true);
     }
 
     const overlayTextColor = isLightImage ? "#1A1A1A" : "#FFFFFF";
@@ -107,6 +111,12 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
       >
         {hasImage ? (
           <>
+            {!imageLoaded ? (
+              // Нейтральный плейсхолдер вместо пустоты, пока картинка грузится/декодируется —
+              // мягкая пульсация (Tailwind animate-pulse — плавное изменение непрозрачности,
+              // не мигание), сменяется картинкой через fade, без скачка layout.
+              <div className="absolute inset-0 animate-pulse" style={{ backgroundColor: tokens.surfaceMuted }} />
+            ) : null}
             {/* Картинка на всю карточку (object-fit: cover), ленивая загрузка (ARCHITECTURE.md §7). */}
             {/* eslint-disable-next-line @next/next/no-img-element -- packages/ui не зависит от next/image */}
             <img
@@ -116,7 +126,10 @@ export const CardButton = forwardRef<HTMLButtonElement, CardButtonProps>(
               crossOrigin="anonymous"
               onLoad={handleImageLoad}
               onError={() => setImageFailed(true)}
-              className="absolute inset-0 h-full w-full object-cover"
+              className={clsx(
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ease-out",
+                imageLoaded ? "opacity-100" : "opacity-0",
+              )}
             />
             <div
               className="pointer-events-none absolute inset-0"

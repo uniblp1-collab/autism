@@ -18,12 +18,14 @@ import "./globals.css";
 // приложение ставилось на домашний экран планшета в полноэкранном режиме. В обычной серверной
 // сборке этих полей нет — isDemoMode вычисляется на этапе сборки.
 export const metadata: Metadata = {
-  title: isDemoMode ? "Autism Connect — демо" : "Autism Connect",
+  // Название демо-PWA — "Коммуникатор" (TASK_DEMO_ENHANCEMENTS.md §6); основная (не демо)
+  // сборка сохраняет "Autism Connect", это переименование касается только офлайн-демо.
+  title: isDemoMode ? "Коммуникатор" : "Autism Connect",
   description: "AAC-платформа альтернативной коммуникации для детей с РАС",
   ...(isDemoMode
     ? {
         manifest: "/manifest.json",
-        appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "AC демо" },
+        appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "Коммуникатор" },
         icons: { apple: "/icons/apple-touch-icon.png" },
       }
     : {}),

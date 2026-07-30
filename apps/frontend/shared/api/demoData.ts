@@ -2,10 +2,21 @@ import type { Card, Category, Child, Favorite, Schedule } from "@autism-connect/
 // Демо-срез реальной БД, вшитый в сборку (выгружается packages/database/scripts/export-demo-data.mjs).
 // В офлайн-демо это ЕДИНСТВЕННЫЙ источник данных вместо backend (TASK_DEMO_OFFLINE.md §3).
 import bundle from "../../public/demo-data/cards.json";
+import {
+  addFavoriteCardId,
+  applyStoredOrder,
+  getCardsPerRow,
+  getFavoriteCardIds,
+  getScheduleCompletion,
+  removeFavoriteCardId,
+  setCardsPerRow,
+  setScheduleCompletion,
+  type DemoScheduleStructure,
+} from "./demoLocalStorage";
 
 /**
  * Флаг офлайн-демо. Единственная точка, где приложение узнаёт, что backend недоступен —
- * дальше вся продуктовая логика (сетка, пагинация, озвучивание, избранное, расписание)
+ * дальше вся продуктовая логика (сетка, прокрутка, озвучивание, избранное, расписание)
  * работает как обычно, не зная, откуда пришли данные (TASK_DEMO_OFFLINE.md §1/§3).
  * NEXT_PUBLIC_ — значение инлайнится на этапе сборки, поэтому не-демо-сборка вырезает демо-ветку.
  */
@@ -29,14 +40,30 @@ const demoCards = (bundle.cards as unknown as Card[]).map((card) => ({
   imageUrl: withBasePath(card.imageUrl),
 }));
 
-// Избранное и расписание в демо — мутабельны в памяти сессии (в рамках открытой вкладки),
-// не сохраняются между перезапусками. Для показа этого достаточно (TASK_DEMO_OFFLINE.md §4).
-let demoFavorites: Favorite[] = deepClone(bundle.favorites as unknown as Favorite[]);
-const demoSchedules: Schedule[] = deepClone(bundle.schedules as unknown as Schedule[]);
+/** Все URL картинок карточек демо — используется для предзагрузки при старте (TASK_DEMO_ENHANCEMENTS.md §1),
+ * чтобы переход между разделами не ждал сеть/декодирование даже до того, как service worker
+ * успел закэшировать всё при установке. */
+export const demoCardImageUrls: string[] = Array.from(
+  new Set(demoCards.map((c) => c.imageUrl).filter((u): u is string => Boolean(u))),
+);
 
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+// Структура расписания (шаги дня, БЕЗ ежедневных отметок) — статична, приходит из демо-JSON
+// конкретной сборки. Нужна отдельно для экспорта профиля (раздел 4.1) и для наложения
+// сохранённых в localStorage ежедневных отметок (раздел 5) при каждом GET.
+const demoScheduleStructure: DemoScheduleStructure[] = (bundle.schedules as unknown as Schedule[]).map((s) => ({
+  id: s.id,
+  title: s.title,
+  items: s.items.map((i) => ({ id: i.id, title: i.title, order: i.order })),
+}));
+export function getDemoScheduleStructure(): DemoScheduleStructure[] {
+  return deepClone(demoScheduleStructure);
+}
+
+const demoSchedulesStatic: Schedule[] = deepClone(bundle.schedules as unknown as Schedule[]);
 
 function parseBool(value: string | null): boolean | undefined {
   if (value === null) return undefined;
@@ -46,7 +73,9 @@ function parseBool(value: string | null): boolean | undefined {
 /**
  * Повторяет серверную фильтрацию/сортировку карточек (PrismaCardRepository.search) поверх
  * статичного JSON — чтобы demo-режим отдавал ровно то же, что отдал бы backend на `GET /cards`.
- * Держать в синхроне с apps/backend/.../infrastructure/prisma-card.repository.ts.
+ * Держать в синхроне с apps/backend/.../infrastructure/prisma-card.repository.ts. Дополнительно
+ * (чего на сервере нет) — если задан categoryId, поверх серверной сортировки накладывается
+ * локально сохранённый порядок карточек этого раздела (drag-reorder, TASK_DEMO_ENHANCEMENTS.md §3).
  */
 function searchCards(params: URLSearchParams): Card[] {
   const categoryId = params.get("categoryId") ?? undefined;
@@ -69,7 +98,8 @@ function searchCards(params: URLSearchParams): Card[] {
     return card.childId === null;
   });
 
-  return result.sort((a, b) => b.priority - a.priority || a.title.localeCompare(b.title));
+  const sorted = result.sort((a, b) => b.priority - a.priority || a.title.localeCompare(b.title));
+  return categoryId ? applyStoredOrder(categoryId, sorted) : sorted;
 }
 
 function splitPath(path: string): { segments: string[]; params: URLSearchParams } {
@@ -80,8 +110,10 @@ function splitPath(path: string): { segments: string[]; params: URLSearchParams 
 
 /**
  * Мини-«backend» демо-режима: разбирает путь/метод ровно тех ручек, что использует экран
- * ребёнка, и отвечает из статичного JSON. Всё, что связано с записью на сервер (история,
- * статистика, правки), — no-op: демо только показывает (TASK_DEMO_OFFLINE.md §4).
+ * ребёнка, и отвечает из статичного JSON + localStorage. Всё, что связано с записью
+ * СОДЕРЖИМОГО на сервер (история, статистика, правки карточек/разделов), — по-прежнему no-op:
+ * демо разрешает менять порядок и настройки, но не содержимое (TASK_DEMO_ENHANCEMENTS.md, вводная
+ * часть — это осознанное расширение рамок TASK_DEMO_OFFLINE.md, а не отмена).
  */
 export async function handleDemoRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method ?? "GET").toUpperCase();
@@ -102,56 +134,73 @@ export async function handleDemoRequest<T>(path: string, options: RequestInit = 
     return searchCards(params) as unknown as T;
   }
 
-  // --- Ребёнок -------------------------------------------------------------
+  // --- Ребёнок ---------------------------------------------------------------
+  // cardsPerPage подменяется на локально сохранённое "карточек в ряду" (раздел 2/4) — контент
+  // ребёнка (имя, возраст и т.п.) в демо не редактируется, поэтому остальные поля — из JSON как есть.
   if (resource === "children" && method === "GET") {
-    if (second) return demoChild as unknown as T;
-    return [demoChild] as unknown as T;
+    const child = { ...demoChild, cardsPerPage: getCardsPerRow() };
+    if (second) return child as unknown as T;
+    return [child] as unknown as T;
   }
-  // Правки ребёнка в демо не сохраняются (режим редактирования отключён) — no-op.
   if (resource === "children" && method === "PATCH") {
-    return demoChild as unknown as T;
+    const body = JSON.parse((options.body as string) ?? "{}");
+    if (typeof body.cardsPerPage === "number") setCardsPerRow(body.cardsPerPage);
+    return { ...demoChild, cardsPerPage: getCardsPerRow() } as unknown as T;
   }
 
-  // --- Избранное -----------------------------------------------------------
+  // --- Избранное (localStorage — переживает перезапуск, раздел 3/4) --------
   if (resource === "favorites" && method === "GET") {
-    const childId = params.get("childId");
-    return demoFavorites.filter((f) => f.childId === childId) as unknown as T;
+    const favoriteIds = getFavoriteCardIds();
+    const favorites: Favorite[] = favoriteIds.map((cardId, index) => ({
+      id: `demo-fav-${cardId}`,
+      childId: params.get("childId") ?? DEMO_CHILD_ID,
+      cardId,
+      order: index,
+      createdAt: new Date(0).toISOString(),
+    }));
+    return favorites as unknown as T;
   }
   if (resource === "favorites" && method === "POST") {
-    const { childId, cardId } = JSON.parse((options.body as string) ?? "{}");
-    const existing = demoFavorites.find((f) => f.childId === childId && f.cardId === cardId);
-    if (existing) return existing as unknown as T;
+    const { cardId } = JSON.parse((options.body as string) ?? "{}");
+    addFavoriteCardId(cardId);
     const favorite: Favorite = {
       id: `demo-fav-${cardId}`,
-      childId,
+      childId: DEMO_CHILD_ID,
       cardId,
-      order: demoFavorites.length,
+      order: getFavoriteCardIds().indexOf(cardId),
       createdAt: new Date().toISOString(),
     };
-    demoFavorites = [...demoFavorites, favorite];
     return favorite as unknown as T;
   }
   if (resource === "favorites" && method === "DELETE") {
     // /favorites/:childId/:cardId
-    demoFavorites = demoFavorites.filter((f) => !(f.childId === second && f.cardId === third));
+    removeFavoriteCardId(third);
     return undefined as T;
   }
 
-  // --- Расписание ----------------------------------------------------------
+  // --- Расписание (структура из JSON + отметки из localStorage, раздел 5) --
   if (resource === "schedules" && method === "GET") {
     const childId = params.get("childId");
-    return demoSchedules.filter((s) => s.childId === childId) as unknown as T;
+    const schedules = demoSchedulesStatic
+      .filter((s) => s.childId === childId)
+      .map((schedule) => ({
+        ...schedule,
+        items: schedule.items.map((item) => {
+          const isCompleted = getScheduleCompletion(item.id);
+          return { ...item, isCompleted, completedAt: isCompleted ? item.completedAt ?? new Date().toISOString() : null };
+        }),
+      }));
+    return schedules as unknown as T;
   }
   if (resource === "schedules" && second === "items" && method === "PATCH") {
     // /schedules/items/:itemId
     const itemId = third;
     const { isCompleted } = JSON.parse((options.body as string) ?? "{}");
-    for (const schedule of demoSchedules) {
+    setScheduleCompletion(itemId, Boolean(isCompleted));
+    for (const schedule of demoSchedulesStatic) {
       const item = schedule.items.find((i) => i.id === itemId);
       if (item) {
-        item.isCompleted = Boolean(isCompleted);
-        item.completedAt = item.isCompleted ? new Date().toISOString() : null;
-        return item as unknown as T;
+        return { ...item, isCompleted: Boolean(isCompleted), completedAt: isCompleted ? new Date().toISOString() : null } as unknown as T;
       }
     }
     return undefined as T;
@@ -162,7 +211,7 @@ export async function handleDemoRequest<T>(path: string, options: RequestInit = 
     return {} as T;
   }
 
-  // Любая другая ручка (авторизация, админка) в демо не должна вызываться — экраны, которые
-  // их дергают, в демо не открываются. Явная ошибка помогает поймать пропущенный случай.
+  // Любая другая ручка (авторизация, админка, правки карточек/разделов) в демо не должна
+  // вызываться — экраны/действия, которые их дёргают, в демо не показываются (раздел 8).
   throw new Error(`Демо-режим: запрос ${method} ${path} не поддерживается (backend отключён).`);
 }
