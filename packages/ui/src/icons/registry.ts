@@ -10,6 +10,7 @@ import {
   IconChevronUp,
   IconClock,
   IconCup,
+  IconDownload,
   IconGift,
   IconHome,
   IconMinus,
@@ -27,6 +28,7 @@ import {
   IconStethoscope,
   IconSun,
   IconTag,
+  IconUpload,
   IconUsers,
   IconX,
   type Icon as TablerIcon,
@@ -66,6 +68,10 @@ export const iconRegistry: Record<string, TablerIcon> = {
   "chevron-up": IconChevronUp,
   "chevron-down": IconChevronDown,
   "arrow-bar-to-left": IconArrowBarToLeft,
+  // Экспорт/импорт профиля настроек офлайн-демо (TASK_DEMO_ENHANCEMENTS.md §4) — служебные
+  // иконки интерфейса, не предлагаются в пикере иконки раздела (см. CATEGORY_ICON_PRESETS ниже).
+  download: IconDownload,
+  upload: IconUpload,
 };
 
 export const FALLBACK_ICON_KEY = "tag";

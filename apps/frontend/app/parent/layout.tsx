@@ -7,6 +7,8 @@ import { Button, useTheme } from "@autism-connect/ui";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { ChildSelector } from "../../shared/ui/ChildSelector";
+import { DemoRedirect } from "../../shared/ui/DemoRedirect";
+import { isDemoMode } from "../../shared/api/demoData";
 
 const NAV_ITEMS = [
   { href: "/parent/children", label: "Дети" },
@@ -19,6 +21,13 @@ const NAV_ITEMS = [
 // родительского интерфейса для ADMIN-аккаунта), см. тот же паттерн в (admin)/layout.tsx.
 // Настоящая защита — сами API-эндпоинты бэкенда, эта проверка её не заменяет.
 export default function ParentLayout({ children }: { children: ReactNode }) {
+  // Офлайн-демо: родительская зона не собирается для показа — уводим на экран ребёнка
+  // (TASK_DEMO_OFFLINE.md §4). isDemoMode — константа сборки, ветвление стабильно.
+  if (isDemoMode) return <DemoRedirect />;
+  return <ParentLayoutInner>{children}</ParentLayoutInner>;
+}
+
+function ParentLayoutInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { tokens } = useTheme();
   const user = useAuthStore((state) => state.user);

@@ -1,4 +1,5 @@
 import { useAuthStore } from "../../store/authStore";
+import { handleDemoRequest, isDemoMode } from "./demoData";
 
 // Относительный путь того же origin: браузер шлёт запрос на /api/..., Next.js проксирует его
 // на backend (см. next.config.js rewrites). Абсолютный адрес backend больше не нужен фронтенду.
@@ -41,6 +42,13 @@ async function refreshSession(): Promise<boolean> {
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
+  // Единственная точка переключения источника данных для офлайн-демо (TASK_DEMO_OFFLINE.md §3):
+  // при NEXT_PUBLIC_DEMO_MODE=true запросы обслуживаются из статичного JSON, а не с backend.
+  // Компоненты и хуки об этом не знают — контракт apiFetch не меняется.
+  if (isDemoMode) {
+    return handleDemoRequest<T>(path, options);
+  }
+
   const { accessToken } = useAuthStore.getState();
   // FormData (загрузка файлов) — браузер сам проставляет Content-Type с boundary,
   // явный "application/json" здесь сломал бы multipart-запрос.

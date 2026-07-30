@@ -2,6 +2,7 @@
 
 import { ChangeEvent, Children, FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   AddCardTile,
   Button,
@@ -33,6 +34,16 @@ import { useFavorites, useToggleFavorite } from "../../../features/cards/useFavo
 import { useChild, useUpdateChild } from "../../../features/children/useChildren";
 import { useSentenceBuilder } from "../../../features/sentence-builder/useSentenceBuilder";
 import { useCompleteScheduleItem, useSchedules } from "../../../features/schedule/useSchedules";
+import { demoCardImageUrls, getDemoScheduleStructure, isDemoMode } from "../../../shared/api/demoData";
+import {
+  DemoImportError,
+  applyImportedBundle,
+  buildExportBundle,
+  parseImportBundle,
+  setCardOrder,
+} from "../../../shared/api/demoLocalStorage";
+import { DemoVoiceCheck } from "../../../shared/ui/DemoVoiceCheck";
+import { DemoScrollCardGrid } from "../../../features/cards/DemoScrollCardGrid";
 
 // Избранные карточки показываются первыми в сетке категории (исходное ТЗ §6.7) —
 // стабильная сортировка, чтобы порядок внутри "избранных"/"остальных" не менялся сам по себе.
@@ -44,6 +55,10 @@ const FAVORITES_TAB = "__favorites__";
 const SCHEDULE_TAB = "__schedule__";
 
 // Режим редактирования (ТЗ §A.7) пока не защищён PIN-кодом — см. .env.example.
+// В офлайн-демо TASK_DEMO_OFFLINE.md §4 полностью убирал редактирование; TASK_DEMO_ENHANCEMENTS.md
+// осознанно расширяет рамки — включён и в демо, но состав действий внутри различается (см. рендер
+// тулбара/карточек ниже: контента карточек в демо по-прежнему нельзя добавлять/удалять/менять,
+// разрешены только порядок и настройки).
 const EDIT_MODE_ENABLED = process.env.NEXT_PUBLIC_EDIT_MODE_ENABLED !== "false";
 
 // Границы числа карточек на экране (TASK_GRID_AND_TTS.md §A.2).
@@ -456,6 +471,17 @@ export default function ChildScreenPage() {
   const isCardsPerPageDirty = Boolean(child) && draftCardsPerPage !== savedCardsPerPage;
 
   const activeCategory = unlockedCategories.find((c) => c.id === activeTab) ?? null;
+  const primaryCategory = unlockedCategories.find((c) => c.isPrimary) ?? null;
+
+  // В офлайн-демо «Избранное» урезано (ничего не добавляется) — прячем вкладку, если избранного
+  // нет (запрос заказчика). В обычной версии вкладка есть всегда. Если активной оказалась
+  // скрытая вкладка «Избранное» — переключаемся на основной раздел (Дай).
+  const showFavoritesTab = !isDemoMode || favorites.length > 0;
+  useEffect(() => {
+    if (!showFavoritesTab && activeTab === FAVORITES_TAB && primaryCategory) {
+      setActiveTab(primaryCategory.id);
+    }
+  }, [showFavoritesTab, activeTab, primaryCategory]);
 
   const { data: yesNoCards = [] } = useCards({ isSystemCard: true });
   // Не полагаемся на порядок карточек в ответе API (он зависит от priority/сортировки
@@ -506,6 +532,69 @@ export default function ChildScreenPage() {
     }
   }
 
+  const queryClient = useQueryClient();
+
+  // Предзагрузка картинок всех карточек демо (TASK_DEMO_ENHANCEMENTS.md §1) — набор небольшой
+  // (десятки файлов, уже в кэше service worker после установки), поэтому декодируем их в фоне
+  // сразу при открытии экрана, а не по факту первого перехода в раздел: переключение между
+  // категориями не ждёт сеть/декодирование картинки, которую браузер уже видел.
+  useEffect(() => {
+    if (!isDemoMode) return;
+    demoCardImageUrls.forEach((url) => {
+      const img = new window.Image();
+      img.src = url;
+    });
+  }, []);
+
+  // "Поставить карточку на первое место" через drag-and-drop (TASK_DEMO_ENHANCEMENTS.md §3) —
+  // порядок сохраняется в localStorage per-раздел; инвалидация ["cards"] заставляет useCards
+  // перечитать демо-«API» (searchCards) и применить applyStoredOrder к следующему запросу.
+  function handleReorderCategoryCards(categoryId: string, nextOrderedIds: string[]) {
+    setCardOrder(categoryId, nextOrderedIds);
+    queryClient.invalidateQueries({ queryKey: ["cards"] });
+  }
+
+  // --- Экспорт/импорт профиля настроек (TASK_DEMO_ENHANCEMENTS.md §4) — только демо, только
+  // режим редактирования. Полный профиль: порядок карточек по разделам, карточек в ряду,
+  // избранное, структура расписания (без ежедневных отметок — раздел 5).
+  const [profileMessage, setProfileMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+
+  function handleExportProfile() {
+    const bundle = buildExportBundle(getDemoScheduleStructure());
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 10);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `communicator-profile-${date}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setProfileMessage({ type: "success", text: "Файл настроек сохранён." });
+  }
+
+  async function handleImportProfileFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const bundle = parseImportBundle(parsed);
+      applyImportedBundle(bundle);
+      // Профиль лежит в localStorage — существующие результаты React Query об этом не знают,
+      // поэтому инвалидируем всё, что от него зависит (порядок карточек, карточек в ряду, избранное).
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cards"] }),
+        queryClient.invalidateQueries({ queryKey: ["children"] }),
+        queryClient.invalidateQueries({ queryKey: ["favorites"] }),
+      ]);
+      setProfileMessage({ type: "success", text: "Настройки импортированы." });
+    } catch (error) {
+      const text = error instanceof DemoImportError ? error.message : "Файл настроек не подходит или повреждён";
+      setProfileMessage({ type: "error", text });
+    }
+  }
+
   const showYesNo = activeTab !== SCHEDULE_TAB;
 
   return (
@@ -515,6 +604,8 @@ export default function ChildScreenPage() {
     // пределы вьюпорта (документ скроллился бы целиком), а не оставался в границах видимой
     // области с собственными стрелочками пролистывания.
     <div className="flex h-screen flex-col" style={{ backgroundColor: tokens.background }}>
+      {/* Офлайн-демо: предупреждение, если на устройстве нет русского голоса (TASK_DEMO_OFFLINE.md §7). */}
+      {isDemoMode ? <DemoVoiceCheck /> : null}
       <nav
         className="flex items-center gap-2 overflow-x-auto p-3"
         style={{ borderBottom: `1px solid ${tokens.border}` }}
@@ -530,14 +621,16 @@ export default function ChildScreenPage() {
           active={activeTab === SCHEDULE_TAB}
           onClick={() => setActiveTab(SCHEDULE_TAB)}
         />
-        <CategoryPill
-          label="Избранное"
-          icon="star"
-          color={FAVORITES_PILL_COLOR}
-          showLabel={false}
-          active={activeTab === FAVORITES_TAB}
-          onClick={() => setActiveTab(FAVORITES_TAB)}
-        />
+        {showFavoritesTab ? (
+          <CategoryPill
+            label="Избранное"
+            icon="star"
+            color={FAVORITES_PILL_COLOR}
+            showLabel={false}
+            active={activeTab === FAVORITES_TAB}
+            onClick={() => setActiveTab(FAVORITES_TAB)}
+          />
+        ) : null}
         {unlockedCategories.map((category) => (
           <CategoryPill
             key={category.id}
@@ -575,13 +668,16 @@ export default function ChildScreenPage() {
           className="flex flex-wrap items-center gap-2 p-3"
           style={{ borderBottom: `1px solid ${tokens.border}` }}
         >
-          {/* Число карточек на экране (2–10) — задаёт и размер плиток (адаптивная сетка), и
-              порог пагинации (TASK_GRID_AND_TTS.md §A.2). */}
-          <span style={{ fontSize: 14, color: tokens.textSecondary }}>Карточек на экране:</span>
+          {/* Число карточек в ряду задаёт размер плиток (TASK_GRID_AND_TTS.md §A.2). В демо
+              это больше не порог пагинации (её нет, раздел прокручивается, TASK_DEMO_ENHANCEMENTS.md
+              §2) — только число колонок; подпись поэтому различается. */}
+          <span style={{ fontSize: 14, color: tokens.textSecondary }}>
+            {isDemoMode ? "Карточек в ряду:" : "Карточек на экране:"}
+          </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              aria-label="Меньше карточек на экране"
+              aria-label="Меньше карточек в ряду"
               disabled={draftCardsPerPage <= MIN_CARDS_PER_PAGE}
               onClick={() => setDraftCardsPerPage((n) => Math.max(MIN_CARDS_PER_PAGE, n - 1))}
               className="flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 disabled:opacity-40"
@@ -599,7 +695,7 @@ export default function ChildScreenPage() {
             </span>
             <button
               type="button"
-              aria-label="Больше карточек на экране"
+              aria-label="Больше карточек в ряду"
               disabled={draftCardsPerPage >= MAX_CARDS_PER_PAGE}
               onClick={() => setDraftCardsPerPage((n) => Math.min(MAX_CARDS_PER_PAGE, n + 1))}
               className="flex h-8 w-8 items-center justify-center rounded-full focus:outline-none focus-visible:ring-4 disabled:opacity-40"
@@ -613,9 +709,9 @@ export default function ChildScreenPage() {
               <Icon name="plus" size={16} strokeWidth={2.5} />
             </button>
           </div>
-          {/* Переименование активного раздела (TASK_GRID_AND_TTS.md §B.5). Только для настоящих
-              разделов — не для «Избранного»/«Расписания» (activeCategory там null). */}
-          {activeCategory ? (
+          {/* Переименование активного раздела (TASK_GRID_AND_TTS.md §B.5) — это правка содержимого,
+              в демо запрещена (TASK_DEMO_ENHANCEMENTS.md, раздел 8), поэтому кнопки нет. */}
+          {activeCategory && !isDemoMode ? (
             <button
               type="button"
               onClick={() => setEditingCategory(activeCategory)}
@@ -633,6 +729,44 @@ export default function ChildScreenPage() {
               Раздел
             </button>
           ) : null}
+          {isDemoMode ? (
+            <>
+              {/* Экспорт/импорт переносимого профиля настроек (TASK_DEMO_ENHANCEMENTS.md §4) —
+                  только демо, только режим редактирования: порядок карточек, карточек в ряду,
+                  избранное, структура расписания (без сегодняшних отметок выполнения). */}
+              <button
+                type="button"
+                onClick={handleExportProfile}
+                className="flex items-center gap-1 px-3 py-1 focus:outline-none focus-visible:ring-4"
+                style={{
+                  borderRadius: 999,
+                  fontSize: 14,
+                  backgroundColor: tokens.surfaceMuted,
+                  color: tokens.textSecondary,
+                  // @ts-expect-error CSS custom property for focus ring color
+                  "--tw-ring-color": tokens.focusRing,
+                }}
+              >
+                <Icon name="download" size={14} />
+                Экспорт настроек
+              </button>
+              <label
+                className="flex cursor-pointer items-center gap-1 px-3 py-1 focus-within:ring-4"
+                style={{
+                  borderRadius: 999,
+                  fontSize: 14,
+                  backgroundColor: tokens.surfaceMuted,
+                  color: tokens.textSecondary,
+                  // @ts-expect-error CSS custom property for focus ring color
+                  "--tw-ring-color": tokens.focusRing,
+                }}
+              >
+                <Icon name="upload" size={14} />
+                Импорт настроек
+                <input type="file" accept="application/json" className="hidden" onChange={handleImportProfileFile} />
+              </label>
+            </>
+          ) : null}
           <Button
             type="button"
             className="ml-auto"
@@ -641,6 +775,15 @@ export default function ChildScreenPage() {
           >
             {updateChild.isPending ? "Сохраняем..." : "Сохранить"}
           </Button>
+          {profileMessage ? (
+            <p
+              role="status"
+              className="w-full"
+              style={{ fontSize: 13, color: profileMessage.type === "error" ? tokens.danger : tokens.textSecondary }}
+            >
+              {profileMessage.text}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -670,47 +813,98 @@ export default function ChildScreenPage() {
             ))}
           </div>
         ) : activeTab === FAVORITES_TAB ? (
-          <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
-            {visibleFavoriteCards.map((card) => (
-              <CardButton
-                key={card.id}
-                title={card.title}
-                imageUrl={card.imageUrl}
-                accentColor={card.color}
-                // В режиме редактирования тап открывает редактирование; иначе — озвучивает
-                // готовую фразу карточки (редакция 4, независимо от уровня сложности).
-                onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
-                // Раздел «Избранное» никогда не показывает крестик удаления карточки из
-                // библиотеки — только «убрать из избранного» (TASK_PATCH_3 §3). Звезда доступна
-                // только в режиме редактирования (TASK_PATCH_3 §2).
-                favorite
-                onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
-              />
-            ))}
-          </PagedCardGrid>
+          isDemoMode ? (
+            <DemoScrollCardGrid
+              key={activeTab}
+              cardsPerRow={draftCardsPerPage}
+              cardIds={visibleFavoriteCards.map((c) => c.id)}
+              renderCard={(cardId) => {
+                const card = visibleFavoriteCards.find((c) => c.id === cardId);
+                if (!card) return null;
+                return (
+                  <CardButton
+                    title={card.title}
+                    imageUrl={card.imageUrl}
+                    accentColor={card.color}
+                    onClick={() => sb.speakCard(card)}
+                    favorite
+                    onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                  />
+                );
+              }}
+            />
+          ) : (
+            <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
+              {visibleFavoriteCards.map((card) => (
+                <CardButton
+                  key={card.id}
+                  title={card.title}
+                  imageUrl={card.imageUrl}
+                  accentColor={card.color}
+                  // В режиме редактирования тап открывает редактирование; иначе — озвучивает
+                  // готовую фразу карточки (редакция 4, независимо от уровня сложности).
+                  onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
+                  // Раздел «Избранное» никогда не показывает крестик удаления карточки из
+                  // библиотеки — только «убрать из избранного» (TASK_PATCH_3 §3). Звезда доступна
+                  // только в режиме редактирования (TASK_PATCH_3 §2).
+                  favorite
+                  onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                />
+              ))}
+            </PagedCardGrid>
+          )
         ) : activeCategory ? (
-          <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
-            {sortFavoritesFirst(nounCards, favoriteCardIds).map((card) => (
-              <CardButton
-                key={card.id}
-                title={card.title}
-                imageUrl={card.imageUrl}
-                accentColor={card.color}
-                // В режиме редактирования тап по карточке открывает редактирование, а не
-                // озвучивает — включая библиотечные карточки (бэкенд защищает только Да/Нет).
-                // Иначе — озвучивает готовую фразу карточки (Card.ttsPhrase, редакция 4).
-                onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
-                onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
-                favorite={favoriteCardIds.has(card.id)}
-                // Звезда видна только в режиме редактирования (TASK_PATCH_3 §2).
-                onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
-                // "Поставить на первое место в разделе" — по запросу заказчика, только в режиме
-                // редактирования (см. usePromoteCard/PromoteCardUseCase).
-                onPromote={isEditMode ? () => promoteCard.mutate({ cardId: card.id, childId }) : undefined}
-              />
-            ))}
-            {isEditMode ? <AddCardTile onClick={() => setIsAddModalOpen(true)} /> : null}
-          </PagedCardGrid>
+          isDemoMode ? (
+            <DemoScrollCardGrid
+              key={activeTab}
+              cardsPerRow={draftCardsPerPage}
+              cardIds={sortFavoritesFirst(nounCards, favoriteCardIds).map((c) => c.id)}
+              // Перетаскивание — только в режиме редактирования (раздел 3): в обычном показе
+              // ребёнок не должен случайно переставить карточки и сломать привычную раскладку.
+              reorderable={isEditMode}
+              onReorder={(nextIds) => activeCategory && handleReorderCategoryCards(activeCategory.id, nextIds)}
+              renderCard={(cardId) => {
+                const card = nounCards.find((c) => c.id === cardId);
+                if (!card) return null;
+                return (
+                  <CardButton
+                    title={card.title}
+                    imageUrl={card.imageUrl}
+                    accentColor={card.color}
+                    // В демо тап всегда озвучивает — контент карточек не редактируется (раздел 8),
+                    // поэтому режим редактирования не подменяет действие по тапу, только открывает
+                    // перетаскивание/звезду/настройки вокруг карточки.
+                    onClick={() => sb.speakCard(card)}
+                    favorite={favoriteCardIds.has(card.id)}
+                    onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                  />
+                );
+              }}
+            />
+          ) : (
+            <PagedCardGrid key={activeTab} cardsPerPage={draftCardsPerPage}>
+              {sortFavoritesFirst(nounCards, favoriteCardIds).map((card) => (
+                <CardButton
+                  key={card.id}
+                  title={card.title}
+                  imageUrl={card.imageUrl}
+                  accentColor={card.color}
+                  // В режиме редактирования тап по карточке открывает редактирование, а не
+                  // озвучивает — включая библиотечные карточки (бэкенд защищает только Да/Нет).
+                  // Иначе — озвучивает готовую фразу карточки (Card.ttsPhrase, редакция 4).
+                  onClick={() => (isEditMode ? setEditingCard(card) : sb.speakCard(card))}
+                  onDelete={isEditMode ? () => deleteCard.mutate(card.id) : undefined}
+                  favorite={favoriteCardIds.has(card.id)}
+                  // Звезда видна только в режиме редактирования (TASK_PATCH_3 §2).
+                  onToggleFavorite={isEditMode ? () => handleToggleFavorite(card.id) : undefined}
+                  // "Поставить на первое место в разделе" — по запросу заказчика, только в режиме
+                  // редактирования (см. usePromoteCard/PromoteCardUseCase).
+                  onPromote={isEditMode ? () => promoteCard.mutate({ cardId: card.id, childId }) : undefined}
+                />
+              ))}
+              {isEditMode ? <AddCardTile onClick={() => setIsAddModalOpen(true)} /> : null}
+            </PagedCardGrid>
+          )
         ) : null}
       </main>
 
