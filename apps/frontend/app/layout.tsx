@@ -14,6 +14,14 @@ import { isDemoMode } from "../shared/api/demoData";
 import { PwaRegister } from "../shared/ui/PwaRegister";
 import "./globals.css";
 
+// ?v=BUILD_ID — тот же build-id, что и в имени кэша service worker (см. scripts/generate-sw.mjs,
+// который версионирует так же src иконок в public/manifest.json). Без него смена файла лого по
+// тому же URL не гарантирует обновление значка на домашнем экране: у iOS Safari есть отдельный
+// системный кэш touch-иконки, привязанный к URL, а не к содержимому файла — обычное обновление
+// страницы его не затрагивает (жалоба «иконка не поменялась» после замены логотипа).
+const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
+const appleTouchIconHref = BUILD_ID ? `/icons/apple-touch-icon.png?v=${BUILD_ID}` : "/icons/apple-touch-icon.png";
+
 // В офлайн-демо (TASK_DEMO_OFFLINE.md §6) подключаем PWA-манифест и iOS-метаданные, чтобы
 // приложение ставилось на домашний экран планшета в полноэкранном режиме. В обычной серверной
 // сборке этих полей нет — isDemoMode вычисляется на этапе сборки.
@@ -26,7 +34,7 @@ export const metadata: Metadata = {
     ? {
         manifest: "/manifest.json",
         appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "Коммуникатор" },
-        icons: { apple: "/icons/apple-touch-icon.png" },
+        icons: { apple: appleTouchIconHref },
       }
     : {}),
 };

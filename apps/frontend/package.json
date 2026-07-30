@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "build:demo": "node scripts/generate-sw.mjs && NEXT_PUBLIC_DEMO_MODE=true next build"
+    "build:demo": "export BUILD_ID=$(date +%s) && node scripts/generate-sw.mjs && NEXT_PUBLIC_DEMO_MODE=true NEXT_PUBLIC_BUILD_ID=$BUILD_ID next build"
   },
   "dependencies": {
     "@autism-connect/shared": "workspace:*",
